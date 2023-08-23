@@ -1,0 +1,21 @@
+{
+    "name": "JanSharp.ItemSystem",
+    "references": [
+        "JanSharp.Common",
+        "JanSharp.LockStep",
+        "UdonSharp.Runtime",
+        "Unity.TextMeshPro",
+        "VRC.SDK3",
+        "VRC.SDKBase",
+        "VRC.Udon"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

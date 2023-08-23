@@ -1,0 +1,26 @@
+{
+    "name": "Jansharp.ItemSystem.Editor",
+    "references": [
+        "JanSharp.ItemSystem",
+        "JanSharp.Common",
+        "JanSharp.Common.Editor",
+        "JanSharp.LockStep",
+        "UdonSharp.Runtime",
+        "UdonSharp.Editor",
+        "Unity.TextMeshPro",
+        "VRC.SDK3",
+        "VRC.SDKBase",
+        "VRC.Udon"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

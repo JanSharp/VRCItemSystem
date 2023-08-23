@@ -3,12 +3,6 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
-#if UNITY_EDITOR && !COMPILER_UDONSHARP
-using UnityEditor;
-using UdonSharpEditor;
-using System.Linq;
-using System.Collections.Generic;
-#endif
 
 namespace JanSharp
 {
@@ -23,11 +17,11 @@ namespace JanSharp
         #endif
 
         // set OnBuild
-        [HideInInspector] public UpdateManager updateManager;
-        [HideInInspector] public VRC_Pickup pickup;
+        [SerializeField] [HideInInspector] private UpdateManager updateManager;
+        [SerializeField] [HideInInspector] private VRC_Pickup pickup;
         // NOTE: VRCPlayerApi.GetBoneTransform is not exposed so we have to use a dummy transform and teleport it around
         // because InverseTransformDirection and TransformDirection require an instance of a Transform
-        [HideInInspector] public Transform dummyTransform;
+        [SerializeField] [HideInInspector] private Transform dummyTransform;
 
         private const byte IdleState = 0; // the only state with CustomUpdate deregistered
         private const byte VRWaitingForConsistentOffsetState = 1;
@@ -562,74 +556,4 @@ namespace JanSharp
             }
         }
     }
-
-    #if !COMPILER_UDONSHARP && UNITY_EDITOR
-
-    [InitializeOnLoad]
-    public static class ItemSyncOnBuild
-    {
-        static ItemSyncOnBuild() => JanSharp.OnBuildUtil.RegisterType<ItemSync>(OnBuild);
-
-        private static bool OnBuild(ItemSync itemSync)
-        {
-            itemSync.pickup = itemSync.GetComponent<VRC_Pickup>();
-            Debug.Assert(itemSync.pickup != null, "ItemSync must be on a GameObject with a VRC_Pickup component.");
-            var updateManagerObj = GameObject.Find("/UpdateManager");
-            itemSync.updateManager = updateManagerObj?.GetComponent<UpdateManager>();
-            itemSync.dummyTransform = updateManagerObj?.transform;
-            Debug.Assert(itemSync.updateManager != null, "ItemSync requires a GameObject that must be at the root of the scene"
-                + " with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour."
-            );
-
-            #if ItemSyncDebug
-            debugController = GameObject.Find("/DebugController")?.GetComponent<ItemSyncDebugController>();
-            #endif
-
-            return itemSync != null && itemSync != null;
-        }
-    }
-
-    [CanEditMultipleObjects]
-    [CustomEditor(typeof(ItemSync))]
-    public class ItemSyncEditor : Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(targets))
-                return;
-            EditorGUILayout.Space();
-            base.OnInspectorGUI(); // draws public/serializable fields
-            EditorGUILayout.Space();
-
-            var rigidbodies = targets.Cast<ItemSync>()
-                .Select(i => i.GetComponent<Rigidbody>())
-                .Where(r => r != null)
-                .ToArray();
-
-            bool showButton = false;
-            if (rigidbodies.Any(r => r.useGravity))
-            {
-                EditorGUILayout.LabelField("Rigidbodies using Gravity are not supported by the Item Sync script. They don't break it, "
-                    + "but gravity related movement will not sync.", EditorStyles.wordWrappedLabel);
-                showButton = true;
-            }
-            if (rigidbodies.Any(r => !r.isKinematic))
-            {
-                EditorGUILayout.LabelField("Non Kinematic Rigidbodies are not supported by the Item Sync script. They don't break it, "
-                    + "but collision related movement will not sync.", EditorStyles.wordWrappedLabel);
-                showButton = true;
-            }
-            if (showButton && GUILayout.Button(new GUIContent("Configure Rigidbody", "Sets: useGravity = false; isKinematic = true;")))
-                ConfigureRigidbodies(rigidbodies);
-        }
-
-        public static void ConfigureRigidbodies(Rigidbody[] rigidbodies)
-        {
-            SerializedObject rigidbodiesProxy = new SerializedObject(rigidbodies);
-            rigidbodiesProxy.FindProperty("m_UseGravity").boolValue = false;
-            rigidbodiesProxy.FindProperty("m_IsKinematic").boolValue = true;
-            rigidbodiesProxy.ApplyModifiedProperties();
-        }
-    }
-    #endif
 }

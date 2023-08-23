@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -181,6 +181,25 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 18
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &31749207 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1094421957795851142, guid: 8894fa7e4588a5c4fab98453e558847d,
+    type: 3}
+  m_PrefabInstance: {fileID: 1562253867}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &31749213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 31749207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 229740497, guid: 4ecd63eff847044b68db9453ce219299, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contentType: 1
 --- !u!1 &33490750
 GameObject:
   m_ObjectHideFlags: 0
@@ -279,7 +298,7 @@ GameObject:
   m_IsActive: 1
 --- !u!114 &33732482
 MonoBehaviour:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 2
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -1372,9 +1391,23 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 288749862}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 33732484}
   updateManager: {fileID: 1389386002}
   pickup: {fileID: 288749863}
   dummyTransform: {fileID: 1389385999}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &295631010
 GameObject:
   m_ObjectHideFlags: 0
@@ -2406,9 +2439,23 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 503405711}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 33732484}
   updateManager: {fileID: 1389386002}
   pickup: {fileID: 503405712}
   dummyTransform: {fileID: 1389385999}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &516255271
 GameObject:
   m_ObjectHideFlags: 0
@@ -3620,9 +3667,23 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 802250669}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 33732484}
   updateManager: {fileID: 1389386002}
   pickup: {fileID: 802250670}
   dummyTransform: {fileID: 1389385999}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &828272607
 GameObject:
   m_ObjectHideFlags: 0
@@ -4166,9 +4227,23 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 945337528}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 33732484}
   updateManager: {fileID: 1389386002}
   pickup: {fileID: 945337529}
   dummyTransform: {fileID: 1389385999}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &989949411
 GameObject:
   m_ObjectHideFlags: 0
@@ -4608,9 +4683,23 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1077977422}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 33732484}
   updateManager: {fileID: 1389386002}
   pickup: {fileID: 1077977423}
   dummyTransform: {fileID: 1389385999}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &1081967843
 GameObject:
   m_ObjectHideFlags: 0
@@ -6984,9 +7073,23 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1561017111}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 33732484}
   updateManager: {fileID: 1389386002}
   pickup: {fileID: 1561017112}
   dummyTransform: {fileID: 1389385999}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1001 &1562253867
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7082,39 +7185,184 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
+      propertyPath: NetworkIDs.Array.size
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
       propertyPath: DynamicMaterials.Array.size
       value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
+      propertyPath: NetworkIDs.Array.data[0].ID
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[1].ID
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[2].ID
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[3].ID
+      value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[4].ID
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[5].ID
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[6].ID
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[7].ID
+      value: 17
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[8].ID
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[9].ID
+      value: 19
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[10].ID
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[11].ID
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[12].ID
+      value: 22
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[13].ID
+      value: 23
+      objectReference: {fileID: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
       propertyPath: DynamicMaterials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: 4c407f0fc5eb5b217bc6523475b1f257, type: 2}
-    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
-        type: 3}
-      propertyPath: DynamicMaterials.Array.data[1]
-      value: 
-      objectReference: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
-    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
-        type: 3}
-      propertyPath: DynamicMaterials.Array.data[2]
       value: 
       objectReference: {fileID: 2100000, guid: c815f7613a04b724089c206857e57c6a, type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
-      propertyPath: DynamicMaterials.Array.data[3]
+      propertyPath: DynamicMaterials.Array.data[1]
       value: 
       objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
+      propertyPath: DynamicMaterials.Array.data[2]
+      value: 
+      objectReference: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: DynamicMaterials.Array.data[3]
+      value: 
+      objectReference: {fileID: 2100000, guid: d3fa0d60ba7e3cfd0a27279ec2e775d3, type: 2}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
       propertyPath: DynamicMaterials.Array.data[4]
       value: 
-      objectReference: {fileID: 2100000, guid: 798550b9b3541cfc09519d87bf3ef243, type: 2}
+      objectReference: {fileID: 2100000, guid: 210e6bd36aefe428c8a766ae4313e97e, type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[5]
       value: 
-      objectReference: {fileID: 2100000, guid: 210e6bd36aefe428c8a766ae4313e97e, type: 2}
+      objectReference: {fileID: 2100000, guid: 4c407f0fc5eb5b217bc6523475b1f257, type: 2}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[0].gameObject
+      value: 
+      objectReference: {fileID: 33732481}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[1].gameObject
+      value: 
+      objectReference: {fileID: 1731445640}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[2].gameObject
+      value: 
+      objectReference: {fileID: 2006262648}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[3].gameObject
+      value: 
+      objectReference: {fileID: 1979369268}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[4].gameObject
+      value: 
+      objectReference: {fileID: 1683155521}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[5].gameObject
+      value: 
+      objectReference: {fileID: 1077977421}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[6].gameObject
+      value: 
+      objectReference: {fileID: 1561017110}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[7].gameObject
+      value: 
+      objectReference: {fileID: 2074089974}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[8].gameObject
+      value: 
+      objectReference: {fileID: 288749861}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[9].gameObject
+      value: 
+      objectReference: {fileID: 802250668}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[10].gameObject
+      value: 
+      objectReference: {fileID: 945337527}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[11].gameObject
+      value: 
+      objectReference: {fileID: 503405710}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[12].gameObject
+      value: 
+      objectReference: {fileID: 1389385997}
+    - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
+        type: 3}
+      propertyPath: NetworkIDs.Array.data[13].gameObject
+      value: 
+      objectReference: {fileID: 31749207}
     - target: {fileID: 8464459589408506562, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: serializedProgramAsset
@@ -7711,9 +7959,23 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1683155522}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 33732484}
   updateManager: {fileID: 1389386002}
   pickup: {fileID: 1683155523}
   dummyTransform: {fileID: 1389385999}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &1731445640
 GameObject:
   m_ObjectHideFlags: 0
@@ -7907,9 +8169,23 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1731445641}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 33732484}
   updateManager: {fileID: 1389386002}
   pickup: {fileID: 1731445642}
   dummyTransform: {fileID: 1389385999}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &1734542944
 GameObject:
   m_ObjectHideFlags: 0
@@ -8767,9 +9043,23 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1979369270}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 33732484}
   updateManager: {fileID: 1389386002}
   pickup: {fileID: 1979369271}
   dummyTransform: {fileID: 1389385999}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &2006262648
 GameObject:
   m_ObjectHideFlags: 0
@@ -8963,9 +9253,23 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 2006262650}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 33732484}
   updateManager: {fileID: 1389386002}
   pickup: {fileID: 2006262651}
   dummyTransform: {fileID: 1389385999}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &2071922901
 GameObject:
   m_ObjectHideFlags: 0
@@ -9239,6 +9543,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 2074089975}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 33732484}
   updateManager: {fileID: 1389386002}
   pickup: {fileID: 2074089976}
   dummyTransform: {fileID: 1389385999}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
