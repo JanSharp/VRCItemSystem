@@ -9,6 +9,9 @@
     "email": "steinmeister36@gmail.com",
     "url": "https://jansharp.github.io"
   },
+  "dependencies": {
+    "com.unity.textmeshpro": "2.1.6"
+  },
   "license": "MIT",
   "vpmDependencies": {
     "com.vrchat.worlds": "^3.1.x",
