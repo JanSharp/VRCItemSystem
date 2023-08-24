@@ -7,9 +7,15 @@ using VRC.Udon.Common;
 namespace JanSharp
 {
     [RequireComponent(typeof(VRC.SDK3.Components.VRCPickup))]
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ItemSync : UdonSharpBehaviour
     {
+        [System.NonSerialized] public uint id; // Part of game state.
+        [System.NonSerialized] public int prefabIndex; // Part of game state.
+        [System.NonSerialized] public Vector3 position; // Part of game state.
+        [System.NonSerialized] public Quaternion rotation; // Part of game state.
+
+        #if false
         #if ItemSyncDebug
         [HideInInspector] public int debugIndex;
         [HideInInspector] public int debugNonIdleIndex;
@@ -555,5 +561,6 @@ namespace JanSharp
                 State = ReceivingFloatingState;
             }
         }
+        #endif
     }
 }

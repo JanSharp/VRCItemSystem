@@ -10,6 +10,7 @@ using System.Collections.Generic;
 
 namespace JanSharp
 {
+    #if false
     [InitializeOnLoad]
     public static class ItemSyncOnBuild
     {
@@ -91,4 +92,5 @@ namespace JanSharp
             rigidbodiesProxy.ApplyModifiedProperties();
         }
     }
+    #endif
 }
