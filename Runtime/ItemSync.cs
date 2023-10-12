@@ -6,28 +6,71 @@ using VRC.Udon.Common;
 
 namespace JanSharp
 {
+    // TODO: use rigidbody.position to set position and use rigidbody.MovePosition for interpolation
+
+    // public enum ItemSyncState
+    // {
+    //     IdleState = 0, // the only state with CustomUpdate deregistered
+    //     VRWaitingForConsistentOffsetState = 1,
+    //     VRAttachedSendingState = 2, // attached to hand
+    //     DesktopWaitingForConsistentOffsetState = 3,
+    //     DesktopAttachedSendingState = 4, // attached to hand
+    //     DesktopAttachedRotatingState = 5, // attached to hand
+    //     ExactAttachedSendingState = 6, // attached to hand
+    //     ReceivingFloatingState = 7,
+    //     ReceivingMovingToBoneState = 8, // attached to hand, but interpolating offset towards the actual attached position
+    //     ReceivingAttachedState = 9, // attached to hand
+    // }
+
     [RequireComponent(typeof(VRC.SDK3.Components.VRCPickup))]
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ItemSync : UdonSharpBehaviour
     {
+        [System.NonSerialized] public ItemSystem itemSystem;
+        [System.NonSerialized] public VRCPlayerApi localPlayer;
+        [System.NonSerialized] public int localPlayerId;
+
         [System.NonSerialized] public uint id; // Part of game state.
         [System.NonSerialized] public int prefabIndex; // Part of game state.
-        [System.NonSerialized] public Vector3 position; // Part of game state.
-        [System.NonSerialized] public Quaternion rotation; // Part of game state.
+        [System.NonSerialized] public bool isAttached; // Part of game state.
+        private int holdingPlayerId = -1; // Part of game state.
+        [System.NonSerialized] public Vector3 targetPosition; // Part of game state.
+        [System.NonSerialized] public Quaternion targetRotation; // Part of game state.
+        [System.NonSerialized] public bool isLeftHand; // Part of game state.
 
-        #if false
+        public int HoldingPlayerId // TODO: Convert this into a function taking the player id and the is left hand bool.
+        {
+            get => holdingPlayerId;
+            set
+            {
+                if (value == holdingPlayerId)
+                    return;
+                holdingPlayerId = value;
+                attachedBone = isLeftHand
+                    ? HumanBodyBones.LeftHand
+                    : HumanBodyBones.RightHand;
+                attachedTracking = isLeftHand
+                    ? VRCPlayerApi.TrackingDataType.LeftHand
+                    : VRCPlayerApi.TrackingDataType.RightHand;
+
+                if (holdingPlayerId == localPlayerId) // Confirmed, game state now matches latency state.
+                    return;
+                isAttached = false; // After an item is picked up, it is not attached yet.
+                attachedPlayer = VRCPlayerApi.GetPlayerById(holdingPlayerId);
+                LocalState = IdleState;
+            }
+        }
+
         #if ItemSyncDebug
         [HideInInspector] public int debugIndex;
         [HideInInspector] public int debugNonIdleIndex;
         [SerializeField] [HideInInspector] private ItemSyncDebugController debugController;
         #endif
 
-        // set OnBuild
-        [SerializeField] [HideInInspector] private UpdateManager updateManager;
-        [SerializeField] [HideInInspector] private VRC_Pickup pickup;
+        [System.NonSerialized] public VRC_Pickup pickup;
         // NOTE: VRCPlayerApi.GetBoneTransform is not exposed so we have to use a dummy transform and teleport it around
         // because InverseTransformDirection and TransformDirection require an instance of a Transform
-        [SerializeField] [HideInInspector] private Transform dummyTransform;
+        [System.NonSerialized] public Transform dummyTransform;
 
         private const byte IdleState = 0; // the only state with CustomUpdate deregistered
         private const byte VRWaitingForConsistentOffsetState = 1;
@@ -39,36 +82,37 @@ namespace JanSharp
         private const byte ReceivingFloatingState = 7;
         private const byte ReceivingMovingToBoneState = 8; // attached to hand, but interpolating offset towards the actual attached position
         private const byte ReceivingAttachedState = 9; // attached to hand
-        private byte state = IdleState;
+        private byte localState = IdleState;
         #if ItemSyncDebug
         public
         #else
         private
         #endif
-        byte State
+        byte LocalState
         {
-            get => state;
+            get => localState;
             set
             {
-                if (state != value)
+                if (localState != value)
                 {
                     #if ItemSyncDebug
-                    Debug.Log($"Switching from {StateToString(state)} to {StateToString(value)}.");
+                    Debug.Log($"Switching from {StateToString(localState)} to {StateToString(value)}.");
                     if (debugController != null)
                     {
-                        if (state == IdleState)
+                        if (localState == IdleState)
                             debugController.RegisterNonIdle(this);
                         else if (value == IdleState)
                             debugController.DeregisterNonIdle(this);
                     }
                     #endif
-                    if (value == IdleState)
-                        updateManager.Deregister(this);
-                    else if (state == IdleState)
-                        updateManager.Register(this);
-                    state = value;
+                    if (localState == IdleState)
+                        itemSystem.MarkAsActive(this);
+                    else if (value == IdleState)
+                        itemSystem.MarkAsInactive(this);
+                    localState = value;
                     #if ItemSyncDebug
-                    debugController.UpdateItemStatesText();
+                    if (debugController != null)
+                        debugController.UpdateItemStatesText();
                     #endif
                 }
             }
@@ -107,18 +151,56 @@ namespace JanSharp
             }
         }
 
+        public void SetFloatingPosition(Vector3 position, Quaternion rotation)
+        {
+            targetPosition = position;
+            targetRotation = rotation;
+            if (holdingPlayerId == localPlayerId)
+                return; // The local player is in latency state and sending, ignore the game state.
+            posInterpolationDiff = targetPosition - ItemPosition;
+            interpolationStartRotation = ItemRotation;
+            interpolationStartTime = Time.time;
+            LocalState = ReceivingFloatingState;
+        }
+
+        public void SetAttached(Vector3 position, Quaternion rotation)
+        {
+            isAttached = true;
+            targetPosition = position;
+            targetRotation = rotation;
+            if (holdingPlayerId == localPlayerId)
+                return; // The local player is in latency state and sending, ignore the game state.
+
+            if (LocalState == ReceivingAttachedState) // interpolate from old to new offset
+            {
+                posInterpolationDiff = syncedPosition - attachedLocalOffset;
+                interpolationStartRotation = attachedRotationOffset;
+            }
+            else // figure out current local offset and interpolate starting from there
+            {
+                MoveDummyToBone();
+                posInterpolationDiff = syncedPosition - GetLocalPositionToBone(ItemPosition);
+                interpolationStartRotation = GetLocalRotationToBone(ItemRotation);
+            }
+            attachedLocalOffset = syncedPosition;
+            attachedRotationOffset = syncedRotation;
+            interpolationStartTime = Time.time;
+            LocalState = ReceivingMovingToBoneState;
+        }
+
         ///<summary>
         ///First bit being 1 indicates the item is attached.
         ///Second bit is used when attached, 0 means attached to right hand, 1 means left hand.
         ///</summary>
-        [UdonSynced] private byte syncedFlags;
-        [UdonSynced] private Vector3 syncedPosition;
-        [UdonSynced] private Quaternion syncedRotation;
+        /*[UdonSynced]*/ private byte syncedFlags;
+        /*[UdonSynced]*/ private Vector3 syncedPosition;
+        /*[UdonSynced]*/ private Quaternion syncedRotation;
         // 29 bytes (1 + 12 + 16) worth of data, and we get 48 bytes as the byte count in OnPostSerialization. I'll leave it at that
 
         // attachment data for both sending and receiving
         private VRCPlayerApi attachedPlayer;
         private HumanBodyBones attachedBone;
+        private VRCPlayerApi.TrackingDataType attachedTracking;
         private Vector3 attachedLocalOffset;
         private Quaternion attachedRotationOffset;
 
@@ -184,8 +266,7 @@ namespace JanSharp
         private Quaternion interpolationStartRotation;
         private float interpolationStartTime;
 
-        // for the update manager
-        private int customUpdateInternalIndex;
+        [System.NonSerialized] public int activeIndex;
 
         // properties for my laziness
         private Vector3 ItemPosition => this.transform.position;
@@ -196,9 +277,9 @@ namespace JanSharp
         #if ItemSyncDebug
         private void Start()
         {
-            var renderer = dummyTransform.GetComponent<MeshRenderer>();
-            if (renderer != null)
-                renderer.enabled = true;
+            // var renderer = dummyTransform.GetComponent<MeshRenderer>();
+            // if (renderer != null)
+            //     renderer.enabled = true;
             if (debugController != null)
                 debugController.Register(this);
         }
@@ -214,12 +295,12 @@ namespace JanSharp
             => Quaternion.Inverse(transform.rotation) * worldRotation;
         private Quaternion GetLocalRotationToBone(Quaternion worldRotation)
             => GetLocalRotationToTransform(dummyTransform, worldRotation);
-        private bool IsReceivingState() => State >= ReceivingFloatingState;
+        private bool IsReceivingState() => LocalState >= ReceivingFloatingState;
         private bool IsAttachedSendingState()
-            => State == VRAttachedSendingState
-            || State == DesktopAttachedSendingState
-            || State == DesktopAttachedRotatingState
-            || State == ExactAttachedSendingState;
+            => LocalState == VRAttachedSendingState
+            || LocalState == DesktopAttachedSendingState
+            || LocalState == DesktopAttachedRotatingState
+            || LocalState == ExactAttachedSendingState;
 
         public override void OnPickup()
         {
@@ -234,11 +315,16 @@ namespace JanSharp
                 return;
             }
 
-            attachedPlayer = pickup.currentPlayer;
-            attachedBone = pickup.currentHand == VRC_Pickup.PickupHand.Left ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
+            attachedPlayer = localPlayer;
+            var currentHand = pickup.currentHand;
+            attachedBone = currentHand == VRC_Pickup.PickupHand.Left
+                ? HumanBodyBones.LeftHand
+                : HumanBodyBones.RightHand;
+            attachedTracking = currentHand == VRC_Pickup.PickupHand.Left
+                ? VRCPlayerApi.TrackingDataType.LeftHand
+                : VRCPlayerApi.TrackingDataType.RightHand;
 
-            // technically redundant because the VRCPickup script already does this, but I do not trust it nor do I trust order of operation
-            Networking.SetOwner(attachedPlayer, this.gameObject);
+            itemSystem.SendSetHoldingPlayerIA(id, localPlayerId, currentHand == VRC_Pickup.PickupHand.Left);
 
             // if (pickup.orientation == VRC_Pickup.PickupOrientation.Gun)
             // {
@@ -256,7 +342,7 @@ namespace JanSharp
                 prevPositionOffset = GetLocalPositionToBone(ItemPosition);
                 prevRotationOffset = GetLocalRotationToBone(ItemRotation);
                 stillFrameCount = 0;
-                State = VRWaitingForConsistentOffsetState;
+                LocalState = VRWaitingForConsistentOffsetState;
                 consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
             }
             else
@@ -264,7 +350,7 @@ namespace JanSharp
                 prevPositionOffset = GetLocalPositionToBone(ItemPosition);
                 prevRotationOffset = GetLocalRotationToBone(ItemRotation);
                 stillFrameCount = 0;
-                State = DesktopWaitingForConsistentOffsetState;
+                LocalState = DesktopWaitingForConsistentOffsetState;
                 consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
             }
         }
@@ -280,8 +366,8 @@ namespace JanSharp
             // TODO: fix exact offsets
             attachedRotationOffset = rotationOffset * Quaternion.Inverse(GetLocalRotationToTransform(exact, ItemRotation));
             attachedLocalOffset = attachedRotationOffset * GetLocalPositionToTransform(exact, ItemPosition);
-            SendChanges();
-            State = ExactAttachedSendingState;
+            SendFloatingData();
+            LocalState = ExactAttachedSendingState;
             return true;
         }
 
@@ -290,16 +376,16 @@ namespace JanSharp
             // if we already switched to receiving state before this player dropped this item don't do anything
             if (IsReceivingState())
                 return;
-            State = IdleState;
-            SendChanges();
+            LocalState = IdleState;
+            SendFloatingData();
             #if ItemSyncDebug
             dummyTransform.SetPositionAndRotation(ItemPosition, ItemRotation);
             #endif
         }
 
-        public void CustomUpdate()
+        public void UpdateActiveItem()
         {
-            if (State == IdleState)
+            if (LocalState == IdleState)
             {
                 Debug.LogError($"It should truly be impossible for CustomUpdate to run when an item is in IdleState. Item name: ${this.name}.", this);
                 return;
@@ -368,13 +454,13 @@ namespace JanSharp
 
         private void UpdateSender()
         {
-            if (State == VRAttachedSendingState)
+            if (LocalState == VRAttachedSendingState)
             {
                 if (VRLocalAttachment)
                     MoveItemToBoneWithOffset(attachedLocalOffset, attachedRotationOffset);
                 return;
             }
-            if (State == DesktopAttachedSendingState || State == DesktopAttachedRotatingState)
+            if (LocalState == DesktopAttachedSendingState || LocalState == DesktopAttachedRotatingState)
             {
                 if (DesktopLocalAttachment)
                 {
@@ -390,38 +476,46 @@ namespace JanSharp
                     var rotOffset = GetLocalRotationToBone(ItemRotation);
                     if (Quaternion.Angle(attachedRotationOffset, rotOffset) > DesktopRotationTolerance)
                     {
-                        State = DesktopAttachedRotatingState;
+                        LocalState = DesktopAttachedRotatingState;
                         slowDownTime = nextRotationCheckTime + DesktopRotationCheckFastInterval * DesktopRotationFastFalloff;
                         attachedRotationOffset = rotOffset;
-                        SendChanges();
+                        SendAttachedData();
                     }
                     else if (time >= slowDownTime)
                     {
-                        State = DesktopAttachedSendingState;
+                        LocalState = DesktopAttachedSendingState;
+                        // SendAttachedData(); // TODO: Should this be here? Or just not at all? I don't think it should.
                     }
-                    nextRotationCheckTime += State == DesktopAttachedRotatingState ? DesktopRotationCheckFastInterval : DesktopRotationCheckInterval;
+                    nextRotationCheckTime += LocalState == DesktopAttachedRotatingState ? DesktopRotationCheckFastInterval : DesktopRotationCheckInterval;
                 }
                 return;
             }
-            if (State == ExactAttachedSendingState)
+            if (LocalState == ExactAttachedSendingState)
                 return;
 
             MoveDummyToBone();
 
-            if (State == VRWaitingForConsistentOffsetState)
+            if (LocalState == VRWaitingForConsistentOffsetState)
             {
                 if (ItemOffsetWasConsistent())
-                    State = VRAttachedSendingState;
+                {
+                    LocalState = VRAttachedSendingState;
+                    SendAttachedData();
+                    return;
+                }
             }
             else
             {
                 if (ItemOffsetWasConsistent())
                 {
-                    State = DesktopAttachedSendingState;
+                    LocalState = DesktopAttachedSendingState;
                     nextRotationCheckTime = Time.time + DesktopRotationCheckInterval;
+                    SendAttachedData();
+                    return;
                 }
             }
-            SendChanges(); // regardless of what happened, it has to sync
+
+            SendFloatingData(); // otherwise it's still floating
         }
 
         private void MoveItemToBoneWithOffset(Vector3 offset, Quaternion rotationOffset)
@@ -443,124 +537,134 @@ namespace JanSharp
             if (pickup.IsHeld)
                 return;
 
-            if (State == ReceivingAttachedState)
-                MoveItemToBoneWithOffset(attachedLocalOffset, attachedRotationOffset);
+            if (LocalState == ReceivingAttachedState)
+                MoveItemToBoneWithOffset(targetPosition, targetRotation);
             else
             {
                 var percent = (Time.time - interpolationStartTime) / InterpolationDuration;
-                if (State == ReceivingFloatingState)
+                if (LocalState == ReceivingFloatingState)
                 {
                     if (percent >= 1f)
                     {
-                        this.transform.SetPositionAndRotation(syncedPosition, syncedRotation);
-                        State = IdleState;
+                        this.transform.SetPositionAndRotation(targetPosition, targetRotation);
+                        LocalState = IdleState;
                     }
                     else
                     {
                         this.transform.SetPositionAndRotation(
-                            syncedPosition - posInterpolationDiff * (1f - percent),
-                            Quaternion.Lerp(interpolationStartRotation, syncedRotation, percent)
+                            targetPosition - posInterpolationDiff * (1f - percent),
+                            Quaternion.Lerp(interpolationStartRotation, targetRotation, percent)
                         );
                     }
                 }
-                else
+                else // ReceivingMovingToBoneState
                 {
                     if (percent >= 1f)
                     {
-                        MoveItemToBoneWithOffset(attachedLocalOffset, attachedRotationOffset);
-                        State = ReceivingAttachedState;
+                        MoveItemToBoneWithOffset(targetPosition, targetRotation);
+                        LocalState = ReceivingAttachedState;
                     }
                     else
                     {
                         MoveItemToBoneWithOffset(
-                            attachedLocalOffset - posInterpolationDiff * (1f - percent),
-                            Quaternion.Lerp(interpolationStartRotation, attachedRotationOffset, percent)
+                            targetPosition - posInterpolationDiff * (1f - percent),
+                            Quaternion.Lerp(interpolationStartRotation, targetRotation, percent)
                         );
                     }
                 }
             }
         }
 
-        private void SendChanges()
+        private float nextFloatingSendTime = -1f;
+
+        private void SendFloatingData()
         {
-            RequestSerialization();
+            if (Time.time < nextFloatingSendTime)
+                return;
+            nextFloatingSendTime = Time.time + 0.2f;
+
+            itemSystem.SendFloatingPositionIA(id, transform.position, transform.rotation);
         }
 
-        public override void OnPreSerialization()
+        private void SendAttachedData()
         {
-            if (IsReceivingState())
-            {
-                Debug.LogWarning("// TODO: uh idk what to do, shouldn't this be impossible?", this);
-            }
-            syncedFlags = 0;
-            if (IsAttachedSendingState())
-            {
-                syncedFlags += 1; // set attached flag
-                syncedPosition = attachedLocalOffset;
-                syncedRotation = attachedRotationOffset;
-                if (attachedBone == HumanBodyBones.LeftHand)
-                    syncedFlags += 2; // set left hand flag, otherwise it's right hand
-            }
-            else
-            {
-                // not attached, don't set the attached flag and just sync current position and rotation
-                syncedPosition = ItemPosition;
-                syncedRotation = ItemRotation;
-            }
+            itemSystem.SendSetAttachedIA(id, attachedLocalOffset, attachedRotationOffset);
         }
 
-        public override void OnPostSerialization(SerializationResult result)
-        {
-            if (!result.success)
-            {
-                Debug.LogWarning($"Syncing request was dropped for {this.name}, trying again.", this);
-                SendChanges(); // TODO: somehow test if this kind of retry even works or if the serialization request got reset right afterwards
-            }
-            else
-            {
-                #if ItemSyncDebug
-                Debug.Log($"Sending {result.byteCount} bytes");
-                #endif
-            }
-        }
+        // public override void OnPreSerialization()
+        // {
+        //     if (IsReceivingState())
+        //     {
+        //         Debug.LogWarning("// TODO: uh idk what to do, shouldn't this be impossible?", this);
+        //     }
+        //     syncedFlags = 0;
+        //     if (IsAttachedSendingState())
+        //     {
+        //         syncedFlags += 1; // set attached flag
+        //         syncedPosition = attachedLocalOffset;
+        //         syncedRotation = attachedRotationOffset;
+        //         if (attachedBone == HumanBodyBones.LeftHand)
+        //             syncedFlags += 2; // set left hand flag, otherwise it's right hand
+        //     }
+        //     else
+        //     {
+        //         // not attached, don't set the attached flag and just sync current position and rotation
+        //         syncedPosition = ItemPosition;
+        //         syncedRotation = ItemRotation;
+        //     }
+        // }
 
-        public override void OnDeserialization()
-        {
-            if (State != IdleState && pickup.IsHeld) // did someone steal the item?
-                pickup.Drop(); // drop it
+        // public override void OnPostSerialization(SerializationResult result)
+        // {
+        //     if (!result.success)
+        //     {
+        //         Debug.LogWarning($"Syncing request was dropped for {this.name}, trying again.", this);
+        //         SendChanges(); // TODO: somehow test if this kind of retry even works or if the serialization request got reset right afterwards
+        //     }
+        //     else
+        //     {
+        //         #if ItemSyncDebug
+        //         Debug.Log($"Sending {result.byteCount} bytes");
+        //         #endif
+        //     }
+        // }
 
-            bool isAttached = (syncedFlags & 1) != 0;
-            if (pickup.DisallowTheft)
-                pickup.pickupable = !isAttached;
+        // public override void OnDeserialization()
+        // {
+        //     if (LocalState != IdleState && pickup.IsHeld) // did someone steal the item?
+        //         pickup.Drop(); // drop it
 
-            if (isAttached)
-            {
-                attachedPlayer = Networking.GetOwner(this.gameObject); // ensure it is up to date
-                attachedBone = (syncedFlags & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
-                if (State == ReceivingAttachedState) // interpolate from old to new offset
-                {
-                    posInterpolationDiff = syncedPosition - attachedLocalOffset;
-                    interpolationStartRotation = attachedRotationOffset;
-                }
-                else // figure out current local offset and interpolate starting from there
-                {
-                    MoveDummyToBone();
-                    posInterpolationDiff = syncedPosition - GetLocalPositionToBone(ItemPosition);
-                    interpolationStartRotation = GetLocalRotationToBone(ItemRotation);
-                }
-                attachedLocalOffset = syncedPosition;
-                attachedRotationOffset = syncedRotation;
-                interpolationStartTime = Time.time;
-                State = ReceivingMovingToBoneState;
-            }
-            else // not attached
-            {
-                posInterpolationDiff = syncedPosition - ItemPosition;
-                interpolationStartRotation = ItemRotation;
-                interpolationStartTime = Time.time;
-                State = ReceivingFloatingState;
-            }
-        }
-        #endif
+        //     bool isAttached = (syncedFlags & 1) != 0;
+        //     if (pickup.DisallowTheft)
+        //         pickup.pickupable = !isAttached;
+
+        //     if (isAttached)
+        //     {
+        //         attachedPlayer = Networking.GetOwner(this.gameObject); // ensure it is up to date
+        //         attachedBone = (syncedFlags & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
+        //         if (LocalState == ReceivingAttachedState) // interpolate from old to new offset
+        //         {
+        //             posInterpolationDiff = syncedPosition - attachedLocalOffset;
+        //             interpolationStartRotation = attachedRotationOffset;
+        //         }
+        //         else // figure out current local offset and interpolate starting from there
+        //         {
+        //             MoveDummyToBone();
+        //             posInterpolationDiff = syncedPosition - GetLocalPositionToBone(ItemPosition);
+        //             interpolationStartRotation = GetLocalRotationToBone(ItemRotation);
+        //         }
+        //         attachedLocalOffset = syncedPosition;
+        //         attachedRotationOffset = syncedRotation;
+        //         interpolationStartTime = Time.time;
+        //         LocalState = ReceivingMovingToBoneState;
+        //     }
+        //     else // not attached
+        //     {
+        //         posInterpolationDiff = syncedPosition - ItemPosition;
+        //         interpolationStartRotation = ItemRotation;
+        //         interpolationStartTime = Time.time;
+        //         LocalState = ReceivingFloatingState;
+        //     }
+        // }
     }
 }

@@ -187,19 +187,6 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 1562253867}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &31749213
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 31749207}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 229740497, guid: 4ecd63eff847044b68db9453ce219299, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  contentType: 1
 --- !u!1 &33490750
 GameObject:
   m_ObjectHideFlags: 0
@@ -358,6 +345,18 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 33732482}
+  smallMagnitudeDiffGUI: {fileID: 0}
+  smallAngleDiffGUI: {fileID: 0}
+  consistentOffsetDurationGUI: {fileID: 0}
+  consistentOffsetFrameCountGUI: {fileID: 0}
+  interpolationDurationGUI: {fileID: 0}
+  desktopRotationCheckIntervalGUI: {fileID: 0}
+  desktopRotationCheckFastIntervalGUI: {fileID: 0}
+  desktopRotationToleranceGUI: {fileID: 0}
+  desktopRotationFastFalloffGUI: {fileID: 0}
+  vRLocalAttachmentGUI: {fileID: 0}
+  desktopLocalAttachmentGUI: {fileID: 0}
+  itemStatesText: {fileID: 0}
 --- !u!1 &48444009
 GameObject:
   m_ObjectHideFlags: 0
@@ -1490,6 +1489,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 288749862}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 0}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &295631010
 GameObject:
   m_ObjectHideFlags: 0
@@ -2677,6 +2690,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 503405711}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 0}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &516255271
 GameObject:
   m_ObjectHideFlags: 0
@@ -5259,6 +5286,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 802250669}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 0}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &828272607
 GameObject:
   m_ObjectHideFlags: 0
@@ -5957,6 +5998,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 945337528}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 0}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &946784544
 GameObject:
   m_ObjectHideFlags: 0
@@ -6111,7 +6166,11 @@ MonoBehaviour:
   itemPrefabs:
   - {fileID: 1471834677278387968, guid: 4df57e16098a3136c9f67f649e970dc2, type: 3}
   - {fileID: 3665338677871577122, guid: 9a5b51cf4ea04d0e4bb97012fadf6b5d, type: 3}
+  dummyTransform: {fileID: 1656164519}
   spawnItemIAId: 5
+  floatingPositionIAId: 6
+  setHoldingPlayerIAId: 7
+  setAttachedIAId: 8
 --- !u!114 &1026883659
 MonoBehaviour:
   m_ObjectHideFlags: 2
@@ -6148,7 +6207,8 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 1656164519}
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -6529,6 +6589,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1077977422}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 0}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &1081967843
 GameObject:
   m_ObjectHideFlags: 0
@@ -8451,12 +8525,12 @@ PrefabInstance:
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
       propertyPath: inputActionHandlerInstances.Array.size
-      value: 6
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
       propertyPath: inputActionHandlerEventNames.Array.size
-      value: 6
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
@@ -8490,6 +8564,21 @@ PrefabInstance:
       objectReference: {fileID: 1026883658}
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
+      propertyPath: inputActionHandlerInstances.Array.data[6]
+      value: 
+      objectReference: {fileID: 1026883658}
+    - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
+        type: 3}
+      propertyPath: inputActionHandlerInstances.Array.data[7]
+      value: 
+      objectReference: {fileID: 1026883658}
+    - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
+        type: 3}
+      propertyPath: inputActionHandlerInstances.Array.data[8]
+      value: 
+      objectReference: {fileID: 1026883658}
+    - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
+        type: 3}
       propertyPath: inputActionHandlerEventNames.Array.data[0]
       value: OnMasterChangedIA
       objectReference: {fileID: 0}
@@ -8517,6 +8606,21 @@ PrefabInstance:
         type: 3}
       propertyPath: inputActionHandlerEventNames.Array.data[5]
       value: OnSpawnItemIA
+      objectReference: {fileID: 0}
+    - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
+        type: 3}
+      propertyPath: inputActionHandlerEventNames.Array.data[6]
+      value: OnFloatingPositionIA
+      objectReference: {fileID: 0}
+    - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
+        type: 3}
+      propertyPath: inputActionHandlerEventNames.Array.data[7]
+      value: OnSetHoldingPlayerIA
+      objectReference: {fileID: 0}
+    - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
+        type: 3}
+      propertyPath: inputActionHandlerEventNames.Array.data[8]
+      value: OnSetAttachedIA
       objectReference: {fileID: 0}
     - target: {fileID: 4878089997896310911, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
@@ -9394,6 +9498,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1561017111}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 0}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1001 &1562253867
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10522,6 +10640,36 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1647029936}
   m_CullTransparentMesh: 0
+--- !u!1 &1656164518
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1656164519}
+  m_Layer: 0
+  m_Name: DummyTransform
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1656164519
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1656164518}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 11.609182, y: 1.4226284, z: -0.776847}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1026883660}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1683155521
 GameObject:
   m_ObjectHideFlags: 0
@@ -10717,6 +10865,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1683155522}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 0}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &1731445640
 GameObject:
   m_ObjectHideFlags: 0
@@ -10910,6 +11072,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1731445641}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 0}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &1734542944
 GameObject:
   m_ObjectHideFlags: 0
@@ -11896,6 +12072,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1979369270}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 0}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &1988851694 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3057684914458451640, guid: 372c3866f50da30a3be75144005c5fe5,
@@ -12170,6 +12360,20 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 2006262650}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 0}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2
 --- !u!1 &2021171270 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1950353619036897889, guid: 4f5050760fb932762b18e249c98c7afd,
@@ -12455,3 +12659,17 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 2074089975}
+  debugIndex: 0
+  debugNonIdleIndex: 0
+  debugController: {fileID: 0}
+  VRLocalAttachment: 1
+  DesktopLocalAttachment: 1
+  SmallMagnitudeDiff: 0.01
+  SmallAngleDiff: 7
+  ConsistentOffsetDuration: 0.2
+  ConsistentOffsetFrameCount: 4
+  DesktopRotationCheckInterval: 1
+  DesktopRotationCheckFastInterval: 0.15
+  DesktopRotationTolerance: 3
+  DesktopRotationFastFalloff: 10
+  InterpolationDuration: 0.2

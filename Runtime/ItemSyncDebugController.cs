@@ -10,7 +10,6 @@ namespace JanSharp
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class ItemSyncDebugController : UdonSharpBehaviour
     {
-        #if false
         [UdonSynced] private float smallMagnitudeDiff = 0.01f;
         [UdonSynced] private float smallAngleDiff = 7f;
         [UdonSynced] private float consistentOffsetDuration = 0.2f;
@@ -201,11 +200,10 @@ namespace JanSharp
             {
                 str = str == null ? "" : "\n" + str;
                 var item = nonIdleItems[i];
-                str = $"'{item.name}', {Networking.GetOwner(item.gameObject).displayName}:   {item.StateToString(item.State)}{str}";
+                str = $"'{item.name}', {Networking.GetOwner(item.gameObject).displayName}:   {item.StateToString(item.LocalState)}{str}";
             }
             itemStatesText.text = str;
         }
-        #endif
         #endif
     }
 }
