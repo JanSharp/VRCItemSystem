@@ -96,7 +96,7 @@ namespace JanSharp
                 if (localState != value)
                 {
                     #if ItemSyncDebug
-                    Debug.Log($"Switching from {StateToString(localState)} to {StateToString(value)}.");
+                    Debug.Log($"[ItemSystemDebug] Switching from {StateToString(localState)} to {StateToString(value)}.");
                     if (debugController != null)
                     {
                         if (localState == IdleState)
@@ -304,14 +304,15 @@ namespace JanSharp
 
         public override void OnPickup()
         {
+            Debug.Log($"[ItemSystem] ItemSync  OnPickup  itemId: {this.id}");
             if (!pickup.IsHeld)
             {
-                Debug.LogError("Picked up but not held?!", this);
+                Debug.LogError("[ItemSystem] Picked up but not held?!", this);
                 return;
             }
             if (pickup.currentHand == VRC_Pickup.PickupHand.None)
             {
-                Debug.LogError("Held but not in either hand?!", this);
+                Debug.LogError("[ItemSystem] Held but not in either hand?!", this);
                 return;
             }
 
@@ -373,6 +374,7 @@ namespace JanSharp
 
         public override void OnDrop()
         {
+            Debug.Log($"[ItemSystem] ItemSync  OnDrop  itemId: {this.id}");
             // if we already switched to receiving state before this player dropped this item don't do anything
             if (IsReceivingState())
                 return;
@@ -387,7 +389,7 @@ namespace JanSharp
         {
             if (LocalState == IdleState)
             {
-                Debug.LogError($"It should truly be impossible for CustomUpdate to run when an item is in IdleState. Item name: ${this.name}.", this);
+                Debug.LogError($"[ItemSystem] It should truly be impossible for CustomUpdate to run when an item is in IdleState. Item name: ${this.name}.", this);
                 return;
             }
             if (IsReceivingState())
@@ -417,7 +419,7 @@ namespace JanSharp
             var posOffset = GetLocalPositionToBone(ItemPosition);
             var rotOffset = GetLocalRotationToBone(ItemRotation);
             #if ItemSyncDebug
-            Debug.Log($"*WaitingForConsistentOffsetState: offset diff: {posOffset - prevPositionOffset}, "
+            Debug.Log($"[ItemSystemDebug] WaitingForConsistentOffsetState: offset diff: {posOffset - prevPositionOffset}, "
                 + $"offset diff magnitude {(posOffset - prevPositionOffset).magnitude}, "
                 + $"angle diff: {Quaternion.Angle(rotOffset, prevRotationOffset)}.");
             #endif
@@ -426,12 +428,12 @@ namespace JanSharp
             {
                 stillFrameCount++;
                 #if ItemSyncDebug
-                Debug.Log($"stillFrameCount: {stillFrameCount}, Time.time: {Time.time}, stop time: {consistentOffsetStopTime}.");
+                Debug.Log($"[ItemSystemDebug] stillFrameCount: {stillFrameCount}, Time.time: {Time.time}, stop time: {consistentOffsetStopTime}.");
                 #endif
                 if (stillFrameCount >= ConsistentOffsetFrameCount && Time.time >= consistentOffsetStopTime)
                 {
                     #if ItemSyncDebug
-                    Debug.Log("Setting attached offset.");
+                    Debug.Log("[ItemSystemDebug] Setting attached offset.");
                     #endif
                     attachedLocalOffset = posOffset;
                     attachedRotationOffset = rotOffset;
@@ -441,7 +443,7 @@ namespace JanSharp
             else
             {
                 #if ItemSyncDebug
-                Debug.Log("Moved too much, resetting timer.");
+                Debug.Log("[ItemSystemDebug] Moved too much, resetting timer.");
                 #endif
                 stillFrameCount = 0;
                 consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
