@@ -31,6 +31,7 @@ namespace JanSharp
 
         public void SendSpawnItemIA(int prefabIndex, Vector3 position, Quaternion rotation)
         {
+            Debug.Log($"[ItemSystem] ItemSystem  SendSpawnItemIA  prefabIndex: {prefabIndex}, position: {position}, rotation: {rotation}");
             iaData = new DataList();
             iaData.Add((double)prefabIndex);
             WriteVector3(iaData, position);
@@ -42,6 +43,7 @@ namespace JanSharp
         [LockStepInputAction(nameof(spawnItemIAId))]
         public void OnSpawnItemIA()
         {
+            Debug.Log($"[ItemSystem] ItemSystem  OnSpawnItemIA");
             int i = 0;
             SpawnItem(
                 (int)iaData[i++].Double,
@@ -52,11 +54,13 @@ namespace JanSharp
 
         private void SpawnItem(int prefabIndex, Vector3 position, Quaternion rotation)
         {
+            Debug.Log($"[ItemSystem] ItemSystem  SpawnItem  prefabIndex: {prefabIndex}, position: {position}, rotation: {rotation}");
             SpawnItem(prefabIndex, position, rotation, nextItemId++);
         }
 
         private void SpawnItem(int prefabIndex, Vector3 position, Quaternion rotation, uint id)
         {
+            Debug.Log($"[ItemSystem] ItemSystem  SpawnItem  prefabIndex: {prefabIndex}, position: {position}, rotation: {rotation}, id: {id}");
             GameObject inst = Instantiate(itemPrefabs[prefabIndex], position, rotation, transform);
             ItemSync item = inst.GetComponent<ItemSync>();
             item.itemSystem = this;
@@ -73,6 +77,7 @@ namespace JanSharp
 
         private bool TryGetItem(uint itemId, out ItemSync itemSync)
         {
+            Debug.Log($"[ItemSystem] ItemSystem  TryGetItem  itemId: {itemId}");
             if (!allItems.TryGetValue(itemId, out DataToken itemSyncToken))
             {
                 // If it's not in the dictionary then it's been deleted already.
@@ -85,6 +90,7 @@ namespace JanSharp
 
         public void SendFloatingPositionIA(uint itemId, Vector3 position, Quaternion rotation)
         {
+            Debug.Log($"[ItemSystem] ItemSystem  SendFloatingPositionIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
             iaData = new DataList();
             iaData.Add((double)itemId);
             WriteVector3(iaData, position);
@@ -96,6 +102,7 @@ namespace JanSharp
         [LockStepInputAction(nameof(floatingPositionIAId))]
         public void OnFloatingPositionIA()
         {
+            Debug.Log($"[ItemSystem] ItemSystem  OnFloatingPositionIA");
             int i = 0;
             uint itemId = (uint)iaData[i++].Double;
             Vector3 position = ReadVector3(iaData, ref i);
@@ -108,6 +115,7 @@ namespace JanSharp
 
         public void SendSetHoldingPlayerIA(uint itemId, int holdingPlayerId, bool isLeftHand)
         {
+            Debug.Log($"[ItemSystem] ItemSystem  SendSetHoldingPlayerIA  itemId: {itemId}, holdingPlayerId: {holdingPlayerId}, isLeftHand: {isLeftHand}");
             iaData = new DataList();
             iaData.Add((double)itemId);
             iaData.Add((double)holdingPlayerId);
@@ -119,6 +127,7 @@ namespace JanSharp
         [LockStepInputAction(nameof(setHoldingPlayerIAId))]
         public void OnSetHoldingPlayerIA()
         {
+            Debug.Log($"[ItemSystem] ItemSystem  OnSetHoldingPlayerIA");
             int i = 0;
             uint itemId = (uint)iaData[i++].Double;
             int holdingPlayerId = (int)iaData[i++].Double;
@@ -132,6 +141,7 @@ namespace JanSharp
 
         public void SendSetAttachedIA(uint itemId, Vector3 position, Quaternion rotation)
         {
+            Debug.Log($"[ItemSystem] ItemSystem  SendSetAttachedIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
             iaData = new DataList();
             iaData.Add((double)itemId);
             WriteVector3(iaData, position);
@@ -143,6 +153,7 @@ namespace JanSharp
         [LockStepInputAction(nameof(setAttachedIAId))]
         public void OnSetAttachedIA()
         {
+            Debug.Log($"[ItemSystem] ItemSystem  OnSetAttachedIA");
             int i = 0;
             uint itemId = (uint)iaData[i++].Double;
             Vector3 position = ReadVector3(iaData, ref i);
@@ -155,12 +166,14 @@ namespace JanSharp
 
         public void MarkAsActive(ItemSync item)
         {
+            Debug.Log($"[ItemSystem] ItemSystem  MarkAsActive  itemId: {item.id}");
             item.activeIndex = activeItemsCount;
             ArrList.Add(ref activeItems, ref activeItemsCount, item);
         }
 
         public void MarkAsInactive(ItemSync item)
         {
+            Debug.Log($"[ItemSystem] ItemSystem  MarkAsInactive  itemId: {item.id}");
             ItemSync lastItem = activeItems[--activeItemsCount];
             int activeIndex = item.activeIndex;
             activeItems[activeIndex] = lastItem;
@@ -169,6 +182,7 @@ namespace JanSharp
 
         public override DataList SerializeGameState()
         {
+            Debug.Log($"[ItemSystem] ItemSystem  SerializeGameState");
             DataList stream = new DataList();
 
             stream.Add((double)nextItemId);
@@ -189,6 +203,7 @@ namespace JanSharp
 
         public override string DeserializeGameState(DataList stream)
         {
+            Debug.Log($"[ItemSystem] ItemSystem  DeserializeGameState");
             int i = 0;
 
             nextItemId = (uint)stream[i++].Double;
