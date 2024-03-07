@@ -517,7 +517,7 @@ namespace JanSharp
                 }
             }
 
-            SendFloatingData(); // otherwise it's still floating
+            SendFloatingData(rateLimited: true); // otherwise it's still floating
         }
 
         private void MoveItemToBoneWithOffset(Vector3 offset, Quaternion rotationOffset)
@@ -579,11 +579,14 @@ namespace JanSharp
 
         private float nextFloatingSendTime = -1f;
 
-        private void SendFloatingData()
+        private void SendFloatingData(bool rateLimited = false)
         {
-            if (Time.time < nextFloatingSendTime)
-                return;
-            nextFloatingSendTime = Time.time + 0.2f;
+            if (rateLimited)
+            {
+                if (Time.time < nextFloatingSendTime)
+                    return;
+                nextFloatingSendTime = Time.time + 0.2f;
+            }
 
             itemSystem.SendFloatingPositionIA(id, transform.position, transform.rotation);
         }
