@@ -199,6 +199,7 @@ namespace JanSharp
 
         // attachment data for both sending and receiving
         private VRCPlayerApi attachedPlayer;
+        private bool isAttachedPlayerValid => attachedPlayer != null && attachedPlayer.IsValid();
         private HumanBodyBones attachedBone;
         private VRCPlayerApi.TrackingDataType attachedTracking;
         private Vector3 attachedLocalOffset;
@@ -286,7 +287,10 @@ namespace JanSharp
         #endif
 
         private void MoveDummyToBone()
-            => dummyTransform.SetPositionAndRotation(AttachedBonePosition, AttachedBoneRotation);
+        {
+            if (isAttachedPlayerValid)
+                dummyTransform.SetPositionAndRotation(AttachedBonePosition, AttachedBoneRotation);
+        }
         private Vector3 GetLocalPositionToTransform(Transform transform, Vector3 worldPosition)
             => transform.InverseTransformDirection(worldPosition - transform.position);
         private Vector3 GetLocalPositionToBone(Vector3 worldPosition)
@@ -400,11 +404,14 @@ namespace JanSharp
                 #if ItemSyncDebug
                 if (IsAttachedSendingState())
                 {
-                    MoveDummyToBone();
-                    dummyTransform.SetPositionAndRotation(
-                        AttachedBonePosition + dummyTransform.TransformDirection(attachedLocalOffset),
-                        AttachedBoneRotation * attachedRotationOffset
-                    );
+                    if (isAttachedPlayerValid)
+                    {
+                        MoveDummyToBone();
+                        dummyTransform.SetPositionAndRotation(
+                            AttachedBonePosition + dummyTransform.TransformDirection(attachedLocalOffset),
+                            AttachedBoneRotation * attachedRotationOffset
+                        );
+                    }
                 }
                 else
                 {
@@ -464,7 +471,7 @@ namespace JanSharp
             }
             if (LocalState == DesktopAttachedSendingState || LocalState == DesktopAttachedRotatingState)
             {
-                if (DesktopLocalAttachment)
+                if (DesktopLocalAttachment && isAttachedPlayerValid)
                 {
                     // only set position, because you can rotate items on desktop
                     MoveDummyToBone();
@@ -522,6 +529,8 @@ namespace JanSharp
 
         private void MoveItemToBoneWithOffset(Vector3 offset, Quaternion rotationOffset)
         {
+            if (!isAttachedPlayerValid)
+                return;
             var bonePos = AttachedBonePosition;
             var boneRotation = AttachedBoneRotation;
             this.transform.SetPositionAndRotation(bonePos, boneRotation);

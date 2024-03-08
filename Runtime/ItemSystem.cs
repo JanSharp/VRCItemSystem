@@ -12,6 +12,7 @@ namespace JanSharp
         public override string GameStateDisplayName => "Item System";
         [SerializeField] [HideInInspector] LockStep lockStep;
         private DataList iaData;
+        private int lockStepPlayerId;
 
         [SerializeField] private GameObject[] itemPrefabs;
         [SerializeField] private Transform dummyTransform;
@@ -178,6 +179,39 @@ namespace JanSharp
             int activeIndex = item.activeIndex;
             activeItems[activeIndex] = lastItem;
             lastItem.activeIndex = activeIndex;
+        }
+
+        [LockStepEvent(LockStepEventType.OnClientLeft)]
+        public void OnClientLeft()
+        {
+            Debug.Log($"[ItemSystem] ItemSystem  OnClientLeft  playerId: {lockStepPlayerId}");
+            if (!lockStep.IsMaster)
+                return;
+            // Drop items held by the left player.
+            for (int i = 0; i < activeItemsCount; i++)
+            {
+                ItemSync item = activeItems[i];
+                if (item.HoldingPlayerId == lockStepPlayerId)
+                    SendFloatingPositionIA(item.id, item.transform.position, item.transform.rotation);
+            }
+        }
+
+        [LockStepEvent(LockStepEventType.OnMasterChanged)]
+        public void OnMasterChanged()
+        {
+            Debug.Log($"[ItemSystem] ItemSystem  OnMasterChanged");
+            if (!lockStep.IsMaster)
+                return;
+            // Check if any items are held by players that no longer exist.
+            for (int i = 0; i < activeItemsCount; i++)
+            {
+                ItemSync item = activeItems[i];
+                int playerId = item.HoldingPlayerId;
+                if (playerId == -1)
+                    continue;
+                if (VRCPlayerApi.GetPlayerById(playerId) == null)
+                    SendFloatingPositionIA(item.id, item.transform.position, item.transform.rotation);
+            }
         }
 
         public override DataList SerializeGameState()
