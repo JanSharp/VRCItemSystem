@@ -10,7 +10,7 @@ namespace JanSharp
     public class ItemSystem : LockStepGameState
     {
         public override string GameStateDisplayName => "Item System";
-        [SerializeField] [HideInInspector] LockStep lockStep;
+        [HideInInspector] public LockStep lockStep;
         private DataList iaData;
         private int lockStepPlayerId;
 
@@ -74,6 +74,28 @@ namespace JanSharp
             item.prefabIndex = prefabIndex;
             item.targetPosition = position;
             item.targetRotation = rotation;
+        }
+
+        public void SendDespawnItemIA(uint itemId)
+        {
+            Debug.Log($"[ItemSystem] ItemSystem  SendDespawnItemIA  itemId: {itemId}");
+            iaData = new DataList();
+            iaData.Add((double)itemId);
+            lockStep.SendInputAction(despawnItemIAId, iaData);
+        }
+
+        [SerializeField] [HideInInspector] private uint despawnItemIAId;
+        [LockStepInputAction(nameof(despawnItemIAId))]
+        public void OnDespawnItemIA()
+        {
+            Debug.Log($"[ItemSystem] ItemSystem  OnDespawnItemIA");
+            int i = 0;
+            if (!allItems.Remove((uint)iaData[i++].Double, out DataToken itemSyncToken))
+                return;
+            ItemSync item = (ItemSync)itemSyncToken.Reference;
+            MarkAsInactive(item);
+            // Debug.Log($"<dlt> itemSyncToken: {itemSyncToken}, type: {itemSyncToken.TokenType}, ref: {itemSyncToken.Reference}, item: {item}");
+            GameObject.Destroy(item.gameObject); // TODO: pooling.
         }
 
         private bool TryGetItem(uint itemId, out ItemSync itemSync)
@@ -168,6 +190,8 @@ namespace JanSharp
         public void MarkAsActive(ItemSync item)
         {
             Debug.Log($"[ItemSystem] ItemSystem  MarkAsActive  itemId: {item.id}");
+            if (item.activeIndex != -1)
+                return;
             item.activeIndex = activeItemsCount;
             ArrList.Add(ref activeItems, ref activeItemsCount, item);
         }
@@ -175,10 +199,13 @@ namespace JanSharp
         public void MarkAsInactive(ItemSync item)
         {
             Debug.Log($"[ItemSystem] ItemSystem  MarkAsInactive  itemId: {item.id}");
+            if (item.activeIndex == -1)
+                return;
             ItemSync lastItem = activeItems[--activeItemsCount];
             int activeIndex = item.activeIndex;
             activeItems[activeIndex] = lastItem;
             lastItem.activeIndex = activeIndex;
+            item.activeIndex = -1;
         }
 
         [LockStepEvent(LockStepEventType.OnClientLeft)]

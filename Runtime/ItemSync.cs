@@ -37,6 +37,7 @@ namespace JanSharp
         [System.NonSerialized] public Vector3 targetPosition; // Part of game state.
         [System.NonSerialized] public Quaternion targetRotation; // Part of game state.
         [System.NonSerialized] public bool isLeftHand; // Part of game state.
+        public bool LocalPlayerIsInControl => isAttached ? holdingPlayerId == localPlayerId : itemSystem.lockStep.IsMaster;
 
         public int HoldingPlayerId // TODO: Convert this into a function taking the player id and the is left hand bool.
         {
@@ -267,7 +268,7 @@ namespace JanSharp
         private Quaternion interpolationStartRotation;
         private float interpolationStartTime;
 
-        [System.NonSerialized] public int activeIndex;
+        [System.NonSerialized] public int activeIndex = -1;
 
         // properties for my laziness
         private Vector3 ItemPosition => this.transform.position;
@@ -285,6 +286,11 @@ namespace JanSharp
                 debugController.Register(this);
         }
         #endif
+
+        public void Despawn()
+        {
+            itemSystem.SendDespawnItemIA(this.id);
+        }
 
         private void MoveDummyToBone()
         {
