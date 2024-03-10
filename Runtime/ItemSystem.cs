@@ -15,7 +15,6 @@ namespace JanSharp
         private int lockStepPlayerId;
 
         [SerializeField] private GameObject[] itemPrefabs;
-        [SerializeField] private Transform dummyTransform;
 
         /// <summary>uint id => ItemSync</summary>
         private DataDictionary allItems = new DataDictionary(); // Part of game state.
@@ -65,7 +64,6 @@ namespace JanSharp
             GameObject inst = Instantiate(itemPrefabs[prefabIndex], position, rotation, transform);
             ItemSync item = inst.GetComponent<ItemSync>();
             item.itemSystem = this;
-            item.dummyTransform = dummyTransform;
             item.localPlayer = Networking.LocalPlayer;
             item.localPlayerId = Networking.LocalPlayer.playerId;
             item.pickup = item.GetComponent<VRC_Pickup>();

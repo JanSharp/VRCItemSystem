@@ -69,9 +69,47 @@ namespace JanSharp
         #endif
 
         [System.NonSerialized] public VRC_Pickup pickup;
-        // NOTE: VRCPlayerApi.GetBoneTransform is not exposed so we have to use a dummy transform and teleport it around
-        // because InverseTransformDirection and TransformDirection require an instance of a Transform
-        [System.NonSerialized] public Transform dummyTransform;
+
+
+        private Vector3 parentPos;
+        private Quaternion parentRot;
+        private Vector3 worldPos;
+        private Quaternion worldRot;
+        private Vector3 localPos;
+        private Quaternion localRot;
+
+        private void WorldToLocal()
+        {
+            Quaternion inverseParentRot = Quaternion.Inverse(parentRot);
+            localPos = inverseParentRot * (worldPos - parentPos);
+            localRot = inverseParentRot * worldRot;
+        }
+
+        private void LocalToWorld()
+        {
+            worldPos = parentPos + (parentRot * localPos);
+            worldRot = parentRot * localRot;
+        }
+
+        ///<summary>Does nothing when returning false, otherwise sets parentPos and parentRot.</summary>
+        private bool TryLoadHandPos()
+        {
+            if (!isAttachedPlayerValid)
+                return false;
+            VRCPlayerApi player = attachedPlayer;
+            HumanBodyBones bone = attachedBone;
+            parentPos = player.GetBonePosition(bone);
+            if (parentPos != Vector3.zero)
+            {
+                parentRot = player.GetBoneRotation(bone);
+                return true;
+            }
+            var trackingData = player.GetTrackingData(attachedTracking);
+            parentPos = trackingData.position;
+            parentRot = trackingData.rotation;
+            return true;
+        }
+
 
         private const byte IdleState = 0; // the only state with CustomUpdate deregistered
         private const byte VRWaitingForConsistentOffsetState = 1;
@@ -177,11 +215,13 @@ namespace JanSharp
                 posInterpolationDiff = syncedPosition - attachedLocalOffset;
                 interpolationStartRotation = attachedRotationOffset;
             }
-            else // figure out current local offset and interpolate starting from there
+            else if (TryLoadHandPos()) // figure out current local offset and interpolate starting from there
             {
-                MoveDummyToBone();
-                posInterpolationDiff = syncedPosition - GetLocalPositionToBone(ItemPosition);
-                interpolationStartRotation = GetLocalRotationToBone(ItemRotation);
+                worldPos = ItemPosition;
+                worldRot = ItemRotation;
+                WorldToLocal();
+                posInterpolationDiff = syncedPosition - localPos;
+                interpolationStartRotation = localRot;
             }
             attachedLocalOffset = syncedPosition;
             attachedRotationOffset = syncedRotation;
@@ -273,15 +313,10 @@ namespace JanSharp
         // properties for my laziness
         private Vector3 ItemPosition => this.transform.position;
         private Quaternion ItemRotation => this.transform.rotation;
-        private Vector3 AttachedBonePosition => attachedPlayer.GetBonePosition(attachedBone);
-        private Quaternion AttachedBoneRotation => attachedPlayer.GetBoneRotation(attachedBone);
 
         #if ItemSyncDebug
         private void Start()
         {
-            // var renderer = dummyTransform.GetComponent<MeshRenderer>();
-            // if (renderer != null)
-            //     renderer.enabled = true;
             if (debugController != null)
                 debugController.Register(this);
         }
@@ -292,19 +327,10 @@ namespace JanSharp
             itemSystem.SendDespawnItemIA(this.id);
         }
 
-        private void MoveDummyToBone()
-        {
-            if (isAttachedPlayerValid)
-                dummyTransform.SetPositionAndRotation(AttachedBonePosition, AttachedBoneRotation);
-        }
         private Vector3 GetLocalPositionToTransform(Transform transform, Vector3 worldPosition)
             => transform.InverseTransformDirection(worldPosition - transform.position);
-        private Vector3 GetLocalPositionToBone(Vector3 worldPosition)
-            => GetLocalPositionToTransform(dummyTransform, worldPosition);
         private Quaternion GetLocalRotationToTransform(Transform transform, Quaternion worldRotation)
             => Quaternion.Inverse(transform.rotation) * worldRotation;
-        private Quaternion GetLocalRotationToBone(Quaternion worldRotation)
-            => GetLocalRotationToTransform(dummyTransform, worldRotation);
         private bool IsReceivingState() => LocalState >= ReceivingFloatingState;
         private bool IsAttachedSendingState()
             => LocalState == VRAttachedSendingState
@@ -348,18 +374,23 @@ namespace JanSharp
             //         return;
             // }
 
+            if (!TryLoadHandPos())
+                return;
+            worldPos = ItemPosition;
+            worldRot = ItemRotation;
+            WorldToLocal();
             if (attachedPlayer.IsUserInVR())
             {
-                prevPositionOffset = GetLocalPositionToBone(ItemPosition);
-                prevRotationOffset = GetLocalRotationToBone(ItemRotation);
+                prevPositionOffset = localPos;
+                prevRotationOffset = localRot;
                 stillFrameCount = 0;
                 LocalState = VRWaitingForConsistentOffsetState;
                 consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
             }
             else
             {
-                prevPositionOffset = GetLocalPositionToBone(ItemPosition);
-                prevRotationOffset = GetLocalRotationToBone(ItemRotation);
+                prevPositionOffset = localPos;
+                prevRotationOffset = localRot;
                 stillFrameCount = 0;
                 LocalState = DesktopWaitingForConsistentOffsetState;
                 consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
@@ -390,9 +421,6 @@ namespace JanSharp
                 return;
             LocalState = IdleState;
             SendFloatingData();
-            #if ItemSyncDebug
-            dummyTransform.SetPositionAndRotation(ItemPosition, ItemRotation);
-            #endif
         }
 
         public void UpdateActiveItem()
@@ -407,37 +435,21 @@ namespace JanSharp
             else
             {
                 UpdateSender();
-                #if ItemSyncDebug
-                if (IsAttachedSendingState())
-                {
-                    if (isAttachedPlayerValid)
-                    {
-                        MoveDummyToBone();
-                        dummyTransform.SetPositionAndRotation(
-                            AttachedBonePosition + dummyTransform.TransformDirection(attachedLocalOffset),
-                            AttachedBoneRotation * attachedRotationOffset
-                        );
-                    }
-                }
-                else
-                {
-                    dummyTransform.SetPositionAndRotation(ItemPosition, ItemRotation);
-                }
-                #endif
             }
         }
 
         private bool ItemOffsetWasConsistent()
         {
-            var posOffset = GetLocalPositionToBone(ItemPosition);
-            var rotOffset = GetLocalRotationToBone(ItemRotation);
+            worldPos = ItemPosition;
+            worldRot = ItemRotation;
+            WorldToLocal();
             #if ItemSyncDebug
-            Debug.Log($"[ItemSystemDebug] WaitingForConsistentOffsetState: offset diff: {posOffset - prevPositionOffset}, "
-                + $"offset diff magnitude {(posOffset - prevPositionOffset).magnitude}, "
-                + $"angle diff: {Quaternion.Angle(rotOffset, prevRotationOffset)}.");
+            Debug.Log($"[ItemSystemDebug] WaitingForConsistentOffsetState: offset diff: {localPos - prevPositionOffset}, "
+                + $"offset diff magnitude {(localPos - prevPositionOffset).magnitude}, "
+                + $"angle diff: {Quaternion.Angle(localRot, prevRotationOffset)}.");
             #endif
-            if ((posOffset - prevPositionOffset).magnitude <= SmallMagnitudeDiff
-                && Quaternion.Angle(rotOffset, prevRotationOffset) <= SmallAngleDiff)
+            if ((localPos - prevPositionOffset).magnitude <= SmallMagnitudeDiff
+                && Quaternion.Angle(localRot, prevRotationOffset) <= SmallAngleDiff)
             {
                 stillFrameCount++;
                 #if ItemSyncDebug
@@ -448,8 +460,8 @@ namespace JanSharp
                     #if ItemSyncDebug
                     Debug.Log("[ItemSystemDebug] Setting attached offset.");
                     #endif
-                    attachedLocalOffset = posOffset;
-                    attachedRotationOffset = rotOffset;
+                    attachedLocalOffset = localPos;
+                    attachedRotationOffset = localRot;
                     return true;
                 }
             }
@@ -462,8 +474,8 @@ namespace JanSharp
                 consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
             }
 
-            prevPositionOffset = posOffset;
-            prevRotationOffset = rotOffset;
+            prevPositionOffset = localPos;
+            prevRotationOffset = localRot;
             return false;
         }
 
@@ -477,23 +489,26 @@ namespace JanSharp
             }
             if (LocalState == DesktopAttachedSendingState || LocalState == DesktopAttachedRotatingState)
             {
-                if (DesktopLocalAttachment && isAttachedPlayerValid)
+                if (!TryLoadHandPos())
+                    return;
+                if (DesktopLocalAttachment)
                 {
                     // only set position, because you can rotate items on desktop
-                    MoveDummyToBone();
-                    this.transform.position = AttachedBonePosition + dummyTransform.TransformDirection(attachedLocalOffset);
+                    localPos = attachedLocalOffset;
+                    LocalToWorld();
+                    this.transform.position = worldPos;
                 }
                 // sync item rotation
                 float time = Time.time;
                 if (time >= nextRotationCheckTime)
                 {
-                    MoveDummyToBone();
-                    var rotOffset = GetLocalRotationToBone(ItemRotation);
-                    if (Quaternion.Angle(attachedRotationOffset, rotOffset) > DesktopRotationTolerance)
+                    worldRot = ItemRotation;
+                    WorldToLocal();
+                    if (Quaternion.Angle(attachedRotationOffset, localRot) > DesktopRotationTolerance)
                     {
                         LocalState = DesktopAttachedRotatingState;
                         slowDownTime = nextRotationCheckTime + DesktopRotationCheckFastInterval * DesktopRotationFastFalloff;
-                        attachedRotationOffset = rotOffset;
+                        attachedRotationOffset = localRot;
                         SendAttachedData();
                     }
                     else if (time >= slowDownTime)
@@ -508,9 +523,9 @@ namespace JanSharp
             if (LocalState == ExactAttachedSendingState)
                 return;
 
-            MoveDummyToBone();
+            bool success = TryLoadHandPos();
 
-            if (LocalState == VRWaitingForConsistentOffsetState)
+            if (LocalState == VRWaitingForConsistentOffsetState && success)
             {
                 if (ItemOffsetWasConsistent())
                 {
@@ -519,7 +534,7 @@ namespace JanSharp
                     return;
                 }
             }
-            else
+            else if (success)
             {
                 if (ItemOffsetWasConsistent())
                 {
@@ -535,15 +550,12 @@ namespace JanSharp
 
         private void MoveItemToBoneWithOffset(Vector3 offset, Quaternion rotationOffset)
         {
-            if (!isAttachedPlayerValid)
+            if (!TryLoadHandPos())
                 return;
-            var bonePos = AttachedBonePosition;
-            var boneRotation = AttachedBoneRotation;
-            this.transform.SetPositionAndRotation(bonePos, boneRotation);
-            this.transform.SetPositionAndRotation(
-                bonePos + this.transform.TransformDirection(offset),
-                boneRotation * rotationOffset
-            );
+            localPos = offset;
+            localRot = rotationOffset;
+            LocalToWorld();
+            this.transform.SetPositionAndRotation(worldPos, worldRot);
         }
 
         private void UpdateReceiver()
