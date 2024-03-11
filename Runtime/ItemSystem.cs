@@ -16,15 +16,23 @@ namespace JanSharp
 
         [SerializeField] private GameObject[] itemPrefabs;
 
-        /// <summary>uint id => ItemSync</summary>
+        ///<summary>uint id => object[] itemData</summary>
         private DataDictionary allItems = new DataDictionary(); // Part of game state.
-        private uint nextItemId = 0u; // Part of game state.
+        ///<summary>0 is an invalid id.</summary>
+        private uint nextItemId = 1u; // Part of game state.
 
         private ItemSync[] activeItems = new ItemSync[ArrList.MinCapacity];
         private int activeItemsCount = 0;
 
+        ///<summary>ItemData[]</summary>
+        private object[][] itemsWaitingForSpawn = new object[ArrList.MinCapacity][];
+        private int itemsWaitingForSpawnCount = 0;
+
         private void Update()
         {
+            if (itemsWaitingForSpawnCount != 0)
+                SpawnItem(itemsWaitingForSpawn[--itemsWaitingForSpawnCount]);
+
             for (int i = 0; i < activeItemsCount; i++)
                 activeItems[i].UpdateActiveItem();
         }
@@ -45,34 +53,40 @@ namespace JanSharp
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnSpawnItemIA");
             int i = 0;
-            SpawnItem(
-                (int)iaData[i++].Double,
-                ReadVector3(iaData, ref i),
-                ReadQuaternion(iaData, ref i)
+            uint id = nextItemId++;
+            object[] itemData = ItemData.New(
+                id: id,
+                prefabIndex: (int)iaData[i++].Double,
+                position: ReadVector3(iaData, ref i),
+                rotation: ReadQuaternion(iaData, ref i)
             );
+            allItems.Add(id, new DataToken(itemData));
+            ArrList.Add(ref itemsWaitingForSpawn, ref itemsWaitingForSpawnCount, itemData);
         }
 
-        private void SpawnItem(int prefabIndex, Vector3 position, Quaternion rotation)
+        private void SpawnItem(object[] itemData)
         {
-            Debug.Log($"[ItemSystem] ItemSystem  SpawnItem  prefabIndex: {prefabIndex}, position: {position}, rotation: {rotation}");
-            SpawnItem(prefabIndex, position, rotation, nextItemId++);
-        }
-
-        private void SpawnItem(int prefabIndex, Vector3 position, Quaternion rotation, uint id)
-        {
-            Debug.Log($"[ItemSystem] ItemSystem  SpawnItem  prefabIndex: {prefabIndex}, position: {position}, rotation: {rotation}, id: {id}");
-            GameObject inst = Instantiate(itemPrefabs[prefabIndex], position, rotation, transform);
-            ItemSync item = inst.GetComponent<ItemSync>();
-            item.itemSystem = this;
-            item.localPlayer = Networking.LocalPlayer;
-            item.localPlayerId = Networking.LocalPlayer.playerId;
-            item.pickup = item.GetComponent<VRC_Pickup>();
-            item.rb = item.GetComponent<Rigidbody>();
-            item.id = id;
-            allItems.Add(id, item);
-            item.prefabIndex = prefabIndex;
-            item.targetPosition = position;
-            item.targetRotation = rotation;
+            Debug.Log($"[ItemSystem] ItemSystem  SpawnItem  itemId: {ItemData.GetId(itemData)}");
+            GameObject obj = Instantiate(
+                itemPrefabs[ItemData.GetPrefabIndex(itemData)],
+                ItemData.GetPosition(itemData),
+                ItemData.GetRotation(itemData),
+                transform);
+            ItemSync itemSync = obj.GetComponent<ItemSync>();
+            ItemData.SetInst(itemData, itemSync);
+            itemSync.itemSystem = this;
+            itemSync.localPlayer = Networking.LocalPlayer;
+            itemSync.localPlayerId = Networking.LocalPlayer.playerId;
+            itemSync.pickup = itemSync.GetComponent<VRC_Pickup>();
+            itemSync.rb = itemSync.GetComponent<Rigidbody>();
+            itemSync.id = ItemData.GetId(itemData);
+            itemSync.data = itemData;
+            itemSync.indexInPool = 0; // TODO: index in pool
+            int holdingPlayerId = ItemData.GetHoldingPlayerId(itemData);
+            if (holdingPlayerId != -1)
+                itemSync.SetHoldingPlayer(holdingPlayerId, ItemData.GetIsLeftHand(itemData));
+            if (ItemData.GetIsAttached(itemData))
+                itemSync.SetAttached(ItemData.GetPosition(itemData), ItemData.GetRotation(itemData));
         }
 
         public void SendDespawnItemIA(uint itemId)
@@ -88,25 +102,25 @@ namespace JanSharp
         public void OnDespawnItemIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnDespawnItemIA");
-            int i = 0;
-            if (!allItems.Remove((uint)iaData[i++].Double, out DataToken itemSyncToken))
-                return;
-            ItemSync item = (ItemSync)itemSyncToken.Reference;
-            MarkAsInactive(item);
-            // Debug.Log($"<dlt> itemSyncToken: {itemSyncToken}, type: {itemSyncToken.TokenType}, ref: {itemSyncToken.Reference}, item: {item}");
-            GameObject.Destroy(item.gameObject); // TODO: pooling.
+            // int i = 0;
+            // if (!allItemsOld.Remove((uint)iaData[i++].Double, out DataToken itemSyncToken))
+            //     return;
+            // ItemSync item = (ItemSync)itemSyncToken.Reference;
+            // MarkAsInactive(item);
+            // // Debug.Log($"<dlt> itemSyncToken: {itemSyncToken}, type: {itemSyncToken.TokenType}, ref: {itemSyncToken.Reference}, item: {item}");
+            // GameObject.Destroy(item.gameObject); // TODO: pooling.
         }
 
-        private bool TryGetItem(uint itemId, out ItemSync itemSync)
+        private bool TryGetItemData(uint itemId, out object[] itemData)
         {
             Debug.Log($"[ItemSystem] ItemSystem  TryGetItem  itemId: {itemId}");
-            if (!allItems.TryGetValue(itemId, out DataToken itemSyncToken))
+            if (!allItems.TryGetValue(itemId, out DataToken itemDataToken))
             {
                 // If it's not in the dictionary then it's been deleted already.
-                itemSync = null;
+                itemData = null;
                 return false;
             }
-            itemSync = (ItemSync)itemSyncToken.Reference;
+            itemData = (object[])itemDataToken.Reference;
             return true;
         }
 
@@ -130,9 +144,13 @@ namespace JanSharp
             Vector3 position = ReadVector3(iaData, ref i);
             Quaternion rotation = ReadQuaternion(iaData, ref i);
 
-            if (!TryGetItem(itemId, out ItemSync itemSync))
+            if (!TryGetItemData(itemId, out object[] itemData))
                 return;
-            itemSync.SetFloatingPosition(position, rotation);
+            ItemData.SetPosition(itemData, position);
+            ItemData.SetRotation(itemData, rotation);
+            ItemSync itemSync = ItemData.GetInst(itemData);
+            if (itemSync != null)
+                itemSync.SetFloatingPosition(position, rotation);
         }
 
         public void SendPickupIA(uint itemId, int holdingPlayerId, bool isLeftHand)
@@ -141,7 +159,7 @@ namespace JanSharp
             iaData = new DataList();
             iaData.Add((double)itemId);
             iaData.Add((double)holdingPlayerId);
-            iaData.Add((double)(isLeftHand ? 1.0 : 0.0));
+            iaData.Add(isLeftHand ? 1.0 : 0.0);
             lockStep.SendInputAction(pickupIAId, iaData);
         }
 
@@ -155,9 +173,13 @@ namespace JanSharp
             int holdingPlayerId = (int)iaData[i++].Double;
             bool isLeftHand = iaData[i++].Double == 1.0;
 
-            if (!TryGetItem(itemId, out ItemSync itemSync))
+            if (!TryGetItemData(itemId, out object[] itemData))
                 return;
-            itemSync.SetHoldingPlayer(holdingPlayerId, isLeftHand);
+            ItemData.SetHoldingPlayerId(itemData, holdingPlayerId);
+            ItemData.SetIsLeftHand(itemData, isLeftHand);
+            ItemSync itemSync = ItemData.GetInst(itemData);
+            if (itemSync != null)
+                itemSync.SetHoldingPlayer(holdingPlayerId, isLeftHand);
         }
 
         public void SendDropIA(uint itemId, Vector3 position, Quaternion rotation)
@@ -180,34 +202,44 @@ namespace JanSharp
             Vector3 position = ReadVector3(iaData, ref i);
             Quaternion rotation = ReadQuaternion(iaData, ref i);
 
-            if (!TryGetItem(itemId, out ItemSync itemSync))
+            if (!TryGetItemData(itemId, out object[] itemData))
                 return;
-            itemSync.UnsetHoldingPlayer(position, rotation);
+            ItemData.SetHoldingPlayerId(itemData, -1);
+            ItemData.SetPosition(itemData, position);
+            ItemData.SetRotation(itemData, rotation);
+            ItemSync itemSync = ItemData.GetInst(itemData);
+            if (itemSync != null)
+                itemSync.UnsetHoldingPlayer(position, rotation);
         }
 
-        public void SendSetAttachedIA(uint itemId, Vector3 position, Quaternion rotation)
+        public void SendAttachIA(uint itemId, Vector3 position, Quaternion rotation)
         {
-            Debug.Log($"[ItemSystem] ItemSystem  SendSetAttachedIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
+            Debug.Log($"[ItemSystem] ItemSystem  SendAttachIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
             iaData = new DataList();
             iaData.Add((double)itemId);
             WriteVector3(iaData, position);
             WriteQuaternion(iaData, rotation);
-            lockStep.SendInputAction(setAttachedIAId, iaData);
+            lockStep.SendInputAction(attachIAId, iaData);
         }
 
-        [SerializeField] [HideInInspector] private uint setAttachedIAId;
-        [LockStepInputAction(nameof(setAttachedIAId))]
-        public void OnSetAttachedIA()
+        [SerializeField] [HideInInspector] private uint attachIAId;
+        [LockStepInputAction(nameof(attachIAId))]
+        public void OnAttachIA()
         {
-            Debug.Log($"[ItemSystem] ItemSystem  OnSetAttachedIA");
+            Debug.Log($"[ItemSystem] ItemSystem  OnAttachIA");
             int i = 0;
             uint itemId = (uint)iaData[i++].Double;
             Vector3 position = ReadVector3(iaData, ref i);
             Quaternion rotation = ReadQuaternion(iaData, ref i);
 
-            if (!TryGetItem(itemId, out ItemSync itemSync))
+            if (!TryGetItemData(itemId, out object[] itemData))
                 return;
-            itemSync.SetAttached(position, rotation);
+            ItemData.SetIsAttached(itemData, true);
+            ItemData.SetPosition(itemData, position);
+            ItemData.SetRotation(itemData, rotation);
+            ItemSync itemSync = ItemData.GetInst(itemData);
+            if (itemSync != null)
+                itemSync.SetAttached(position, rotation);
         }
 
         public void MarkAsActive(ItemSync item)
@@ -275,11 +307,18 @@ namespace JanSharp
             stream.Add((double)count);
             for (int i = 0; i < count; i++)
             {
-                ItemSync item = (ItemSync)items[i].Reference;
-                stream.Add((double)item.id);
-                stream.Add((double)item.prefabIndex);
-                WriteVector3(stream, item.targetPosition);
-                WriteQuaternion(stream, item.targetRotation);
+                object[] itemData = (object[])items[i].Reference;
+                stream.Add((double)ItemData.GetId(itemData));
+                stream.Add((double)ItemData.GetPrefabIndex(itemData));
+                WriteVector3(stream, ItemData.GetPosition(itemData));
+                WriteQuaternion(stream, ItemData.GetRotation(itemData));
+                int holdingPlayerId = ItemData.GetHoldingPlayerId(itemData);
+                stream.Add((double)holdingPlayerId);
+                if (holdingPlayerId != -1)
+                {
+                    stream.Add((ItemData.GetIsLeftHand(itemData) ? 1.0 : 0.0)
+                        + (ItemData.GetIsAttached(itemData) ? 2.0 : 0.0));
+                }
             }
 
             return stream;
@@ -295,10 +334,22 @@ namespace JanSharp
             for (int j = 0; j < count; j++)
             {
                 uint id = (uint)stream[i++].Double;
-                int prefabIndex = (int)stream[i++].Double;
-                Vector3 position = ReadVector3(stream, ref i);
-                Quaternion rotation = ReadQuaternion(stream, ref i);
-                SpawnItem(prefabIndex, position, rotation, id);
+                object[] itemData = ItemData.New(
+                    id: id,
+                    prefabIndex: (int)stream[i++].Double,
+                    position: ReadVector3(stream, ref i),
+                    rotation: ReadQuaternion(stream, ref i)
+                );
+                int holdingPlayerId = (int)stream[i++].Double;
+                ItemData.SetHoldingPlayerId(itemData, holdingPlayerId);
+                if (holdingPlayerId != -1)
+                {
+                    int flags = (int)stream[i++].Double;
+                    ItemData.SetIsLeftHand(itemData, (flags & 1) != 0);
+                    ItemData.SetIsAttached(itemData, (flags & 2) != 0);
+                }
+                allItems.Add(id, new DataToken(itemData));
+                ArrList.Add(ref itemsWaitingForSpawn, ref itemsWaitingForSpawnCount, itemData);
             }
 
             return null;

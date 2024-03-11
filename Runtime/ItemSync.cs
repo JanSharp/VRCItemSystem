@@ -1,4 +1,4 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -32,13 +32,13 @@ namespace JanSharp
         [System.NonSerialized] public VRCPlayerApi localPlayer;
         [System.NonSerialized] public int localPlayerId;
 
-        [System.NonSerialized] public uint id; // Part of game state.
-        [System.NonSerialized] public int prefabIndex; // Part of game state.
-        [System.NonSerialized] public bool isAttached; // Part of game state.
-        private int holdingPlayerId = -1; // Part of game state.
-        [System.NonSerialized] public Vector3 targetPosition; // Part of game state.
-        [System.NonSerialized] public Quaternion targetRotation; // Part of game state.
-        [System.NonSerialized] public bool isLeftHand; // Part of game state.
+        ///<summary>ItemData</summary>
+        [System.NonSerialized] public object[] data;
+        [System.NonSerialized] public uint id;
+        private bool isAttached;
+        private int holdingPlayerId = -1;
+        private Vector3 targetPosition;
+        private Quaternion targetRotation;
         public bool LocalPlayerIsInControl => holdingPlayerId != -1 ? holdingPlayerId == localPlayerId : itemSystem.lockStep.IsMaster;
 
         public int HoldingPlayerId => holdingPlayerId;
@@ -48,7 +48,6 @@ namespace JanSharp
             if (playerId == holdingPlayerId)
                 return;
             holdingPlayerId = playerId;
-            this.isLeftHand = isLeftHand;
             attachedBone = isLeftHand
                 ? HumanBodyBones.LeftHand
                 : HumanBodyBones.RightHand;
@@ -432,9 +431,7 @@ namespace JanSharp
             if (IsReceivingState())
                 UpdateReceiver();
             else
-            {
                 UpdateSender();
-            }
         }
 
         private bool ItemOffsetWasConsistent()
@@ -619,7 +616,7 @@ namespace JanSharp
 
         private void SendAttachedData()
         {
-            itemSystem.SendSetAttachedIA(id, attachedLocalOffset, attachedRotationOffset);
+            itemSystem.SendAttachIA(id, attachedLocalOffset, attachedRotationOffset);
         }
 
         // public override void OnPreSerialization()
