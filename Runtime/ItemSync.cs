@@ -34,6 +34,7 @@ namespace JanSharp
 
         [System.NonSerialized] public uint id;
         private int holdingPlayerId = -1;
+        private bool isLeftHand;
         private Vector3 targetPosition;
         private Quaternion targetRotation;
         private bool isVisible = true;
@@ -43,9 +44,10 @@ namespace JanSharp
 
         public void SetHoldingPlayer(int playerId, bool isLeftHand)
         {
-            if (playerId == holdingPlayerId)
+            if (playerId == holdingPlayerId && isLeftHand == this.isLeftHand)
                 return;
             holdingPlayerId = playerId;
+            this.isLeftHand = isLeftHand;
             attachedBone = isLeftHand
                 ? HumanBodyBones.LeftHand
                 : HumanBodyBones.RightHand;
@@ -67,10 +69,10 @@ namespace JanSharp
 
         public void Disable()
         {
+            isVisible = false;
             holdingPlayerId = -1;
             LocalState = IdleState;
             pickup.Drop();
-            isVisible = false;
             this.gameObject.SetActive(false);
         }
 
