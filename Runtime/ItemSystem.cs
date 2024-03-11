@@ -1,4 +1,4 @@
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
@@ -15,6 +15,10 @@ namespace JanSharp
         private int lockStepPlayerId;
 
         [SerializeField] private GameObject[] itemPrefabs;
+        ///<summary>unusedItemInsts[prefabIndex][itemSync.instIndex]</summary>
+        private ItemSync[][] unusedItemInsts;
+        ///<summary>unusedItemInstsCounts[prefabIndex]</summary>
+        private int[] unusedItemInstsCounts;
 
         ///<summary>uint id => object[] itemData</summary>
         private DataDictionary allItems = new DataDictionary(); // Part of game state.
@@ -27,6 +31,15 @@ namespace JanSharp
         ///<summary>ItemData[]</summary>
         private object[][] itemsWaitingForSpawn = new object[ArrList.MinCapacity][];
         private int itemsWaitingForSpawnCount = 0;
+
+        private void Start()
+        {
+            int prefabCount = itemPrefabs.Length;
+            unusedItemInsts = new ItemSync[prefabCount][];
+            unusedItemInstsCounts = new int[prefabCount];
+            for (int i = 0; i < prefabCount; i++)
+                unusedItemInsts[i] = new ItemSync[ArrList.MinCapacity];
+        }
 
         private void Update()
         {
@@ -64,24 +77,46 @@ namespace JanSharp
             ArrList.Add(ref itemsWaitingForSpawn, ref itemsWaitingForSpawnCount, itemData);
         }
 
-        private void SpawnItem(object[] itemData)
+        private ItemSync GetItemInst(object[] itemData)
         {
-            Debug.Log($"[ItemSystem] ItemSystem  SpawnItem  itemId: {ItemData.GetId(itemData)}");
+            ItemSync itemSync;
+            int prefabIndex = ItemData.GetPrefabIndex(itemData);
+            int unusedCount = unusedItemInstsCounts[prefabIndex];
+            if (unusedCount > 0)
+            {
+                itemSync = unusedItemInsts[prefabIndex][--unusedCount];
+                unusedItemInstsCounts[prefabIndex] = unusedCount;
+                itemSync.id = ItemData.GetId(itemData);
+                // Cannot use Rigidbody position and rotation because that's not instant enough, therefore the
+                // reactivated item could still be in a despawner trigger, causing it to instantly disappear.
+                itemSync.transform.position = ItemData.GetPosition(itemData);
+                itemSync.transform.rotation = ItemData.GetRotation(itemData);
+                itemSync.Enable();
+                return itemSync;
+            }
+
+            GameObject prefab = itemPrefabs[prefabIndex];
             GameObject obj = Instantiate(
-                itemPrefabs[ItemData.GetPrefabIndex(itemData)],
+                prefab,
                 ItemData.GetPosition(itemData),
                 ItemData.GetRotation(itemData),
                 transform);
-            ItemSync itemSync = obj.GetComponent<ItemSync>();
-            ItemData.SetInst(itemData, itemSync);
+            obj.name = prefab.name;
+            itemSync = obj.GetComponent<ItemSync>();
             itemSync.itemSystem = this;
             itemSync.localPlayer = Networking.LocalPlayer;
             itemSync.localPlayerId = Networking.LocalPlayer.playerId;
             itemSync.pickup = itemSync.GetComponent<VRC_Pickup>();
             itemSync.rb = itemSync.GetComponent<Rigidbody>();
+            return itemSync;
+        }
+
+        private void SpawnItem(object[] itemData)
+        {
+            Debug.Log($"[ItemSystem] ItemSystem  SpawnItem  itemId: {ItemData.GetId(itemData)}");
+            ItemSync itemSync = GetItemInst(itemData);
+            ItemData.SetInst(itemData, itemSync);
             itemSync.id = ItemData.GetId(itemData);
-            itemSync.data = itemData;
-            itemSync.indexInPool = 0; // TODO: index in pool
             int holdingPlayerId = ItemData.GetHoldingPlayerId(itemData);
             if (holdingPlayerId != -1)
                 itemSync.SetHoldingPlayer(holdingPlayerId, ItemData.GetIsLeftHand(itemData));
@@ -102,13 +137,22 @@ namespace JanSharp
         public void OnDespawnItemIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnDespawnItemIA");
-            // int i = 0;
-            // if (!allItemsOld.Remove((uint)iaData[i++].Double, out DataToken itemSyncToken))
-            //     return;
-            // ItemSync item = (ItemSync)itemSyncToken.Reference;
-            // MarkAsInactive(item);
-            // // Debug.Log($"<dlt> itemSyncToken: {itemSyncToken}, type: {itemSyncToken.TokenType}, ref: {itemSyncToken.Reference}, item: {item}");
-            // GameObject.Destroy(item.gameObject); // TODO: pooling.
+            int i = 0;
+            if (!allItems.Remove((uint)iaData[i++].Double, out DataToken itemDataToken))
+                return;
+            object[] itemData = (object[])itemDataToken.Reference;
+            ItemData.SetIsAttached(itemData, false);
+            ItemData.SetHoldingPlayerId(itemData, -1);
+            ItemSync itemSync = ItemData.GetInst(itemData);
+            if (itemSync == null)
+                return;
+            itemSync.Disable();
+            int prefabIndex = ItemData.GetPrefabIndex(itemData);
+            ItemSync[] unused = unusedItemInsts[prefabIndex];
+            int unusedCount = unusedItemInstsCounts[prefabIndex];
+            ArrList.Add(ref unused, ref unusedCount, itemSync);
+            unusedItemInsts[prefabIndex] = unused;
+            unusedItemInstsCounts[prefabIndex] = unusedCount;
         }
 
         private bool TryGetItemData(uint itemId, out object[] itemData)
@@ -175,6 +219,7 @@ namespace JanSharp
 
             if (!TryGetItemData(itemId, out object[] itemData))
                 return;
+            ItemData.SetIsAttached(itemData, false); // After an item is picked up, it is not attached yet.
             ItemData.SetHoldingPlayerId(itemData, holdingPlayerId);
             ItemData.SetIsLeftHand(itemData, isLeftHand);
             ItemSync itemSync = ItemData.GetInst(itemData);

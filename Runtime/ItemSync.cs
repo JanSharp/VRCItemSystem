@@ -1,4 +1,4 @@
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -32,13 +32,11 @@ namespace JanSharp
         [System.NonSerialized] public VRCPlayerApi localPlayer;
         [System.NonSerialized] public int localPlayerId;
 
-        ///<summary>ItemData</summary>
-        [System.NonSerialized] public object[] data;
         [System.NonSerialized] public uint id;
-        private bool isAttached;
         private int holdingPlayerId = -1;
         private Vector3 targetPosition;
         private Quaternion targetRotation;
+        private bool isVisible = true;
         public bool LocalPlayerIsInControl => holdingPlayerId != -1 ? holdingPlayerId == localPlayerId : itemSystem.lockStep.IsMaster;
 
         public int HoldingPlayerId => holdingPlayerId;
@@ -57,7 +55,6 @@ namespace JanSharp
 
             if (holdingPlayerId == localPlayerId) // Confirmed, game state now matches latency state.
                 return;
-            isAttached = false; // After an item is picked up, it is not attached yet.
             attachedPlayer = VRCPlayerApi.GetPlayerById(holdingPlayerId);
             LocalState = IdleState;
         }
@@ -66,6 +63,21 @@ namespace JanSharp
         {
             holdingPlayerId = -1;
             SetFloatingPosition(droppedPosition, droppedRotation);
+        }
+
+        public void Disable()
+        {
+            holdingPlayerId = -1;
+            LocalState = IdleState;
+            pickup.Drop();
+            isVisible = false;
+            this.gameObject.SetActive(false);
+        }
+
+        public void Enable()
+        {
+            isVisible = true;
+            this.gameObject.SetActive(true);
         }
 
         #if ItemSyncDebug
@@ -211,7 +223,6 @@ namespace JanSharp
 
         public void SetAttached(Vector3 position, Quaternion rotation)
         {
-            isAttached = true;
             targetPosition = position;
             targetRotation = rotation;
             if (holdingPlayerId == localPlayerId)
@@ -414,6 +425,8 @@ namespace JanSharp
         public override void OnDrop()
         {
             Debug.Log($"[ItemSystem] ItemSync  OnDrop  itemId: {this.id}");
+            if (!isVisible)
+                return;
             if (!IsReceivingState()) // Doing an if check just for better latency state handling.
                 LocalState = IdleState;
             itemSystem.SendDropIA(id, holdingPlayerId, transform.position, transform.rotation);
