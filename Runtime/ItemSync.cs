@@ -215,7 +215,7 @@ namespace JanSharp
 
             if (LocalState == ReceivingAttachedState) // interpolate from old to new offset
             {
-                posInterpolationDiff = syncedPosition - attachedLocalOffset;
+                posInterpolationDiff = position - attachedLocalOffset;
                 interpolationStartRotation = attachedRotationOffset;
             }
             else if (TryLoadHandPos()) // figure out current local offset and interpolate starting from there
@@ -223,23 +223,14 @@ namespace JanSharp
                 worldPos = ItemPosition;
                 worldRot = ItemRotation;
                 WorldToLocal();
-                posInterpolationDiff = syncedPosition - localPos;
+                posInterpolationDiff = position - localPos;
                 interpolationStartRotation = localRot;
             }
-            attachedLocalOffset = syncedPosition;
-            attachedRotationOffset = syncedRotation;
+            attachedLocalOffset = position;
+            attachedRotationOffset = rotation;
             interpolationStartTime = Time.time;
             LocalState = ReceivingMovingToBoneState;
         }
-
-        ///<summary>
-        ///First bit being 1 indicates the item is attached.
-        ///Second bit is used when attached, 0 means attached to right hand, 1 means left hand.
-        ///</summary>
-        /*[UdonSynced]*/ private byte syncedFlags;
-        /*[UdonSynced]*/ private Vector3 syncedPosition;
-        /*[UdonSynced]*/ private Quaternion syncedRotation;
-        // 29 bytes (1 + 12 + 16) worth of data, and we get 48 bytes as the byte count in OnPostSerialization. I'll leave it at that
 
         // attachment data for both sending and receiving
         private VRCPlayerApi attachedPlayer;
