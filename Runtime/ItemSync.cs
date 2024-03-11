@@ -37,7 +37,7 @@ namespace JanSharp
         private Vector3 targetPosition;
         private Quaternion targetRotation;
         private bool isVisible = true;
-        public bool LocalPlayerIsInControl => holdingPlayerId != -1 ? holdingPlayerId == localPlayerId : itemSystem.lockStep.IsMaster;
+        public bool LocalPlayerIsInControl => pickup.IsHeld || (holdingPlayerId == -1 && itemSystem.lockStep.IsMaster);
 
         public int HoldingPlayerId => holdingPlayerId;
 
@@ -333,6 +333,7 @@ namespace JanSharp
 
         public void Despawn()
         {
+            Debug.Log($"[ItemSystem] ItemSync  Despawn  itemId: {this.id}");
             itemSystem.SendDespawnItemIA(this.id);
         }
 
