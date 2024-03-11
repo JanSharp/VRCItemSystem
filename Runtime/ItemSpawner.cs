@@ -12,6 +12,8 @@ namespace JanSharp
         public int prefabIndex;
         public Transform spawnAreaCornerOne;
         public Transform spawnAreaCornerTwo;
+        [Tooltip("When false, the rotation of Corner One will be used.")]
+        public bool randomRotation;
 
         public override void Interact()
         {
@@ -24,7 +26,7 @@ namespace JanSharp
                     Random.Range(Mathf.Min(one.y, two.y), Mathf.Max(one.y, two.y)),
                     Random.Range(Mathf.Min(one.z, two.z), Mathf.Max(one.z, two.z))
                 ),
-                Quaternion.Lerp(spawnAreaCornerOne.rotation, spawnAreaCornerTwo.rotation, Random.Range(0f, 1f))
+                randomRotation ? Random.rotation : spawnAreaCornerOne.rotation
             );
         }
     }
