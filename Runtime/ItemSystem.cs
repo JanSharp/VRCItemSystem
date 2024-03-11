@@ -1,4 +1,4 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
@@ -135,21 +135,21 @@ namespace JanSharp
             itemSync.SetFloatingPosition(position, rotation);
         }
 
-        public void SendSetHoldingPlayerIA(uint itemId, int holdingPlayerId, bool isLeftHand)
+        public void SendPickupIA(uint itemId, int holdingPlayerId, bool isLeftHand)
         {
-            Debug.Log($"[ItemSystem] ItemSystem  SendSetHoldingPlayerIA  itemId: {itemId}, holdingPlayerId: {holdingPlayerId}, isLeftHand: {isLeftHand}");
+            Debug.Log($"[ItemSystem] ItemSystem  SendPickupIA  itemId: {itemId}, holdingPlayerId: {holdingPlayerId}, isLeftHand: {isLeftHand}");
             iaData = new DataList();
             iaData.Add((double)itemId);
             iaData.Add((double)holdingPlayerId);
             iaData.Add((double)(isLeftHand ? 1.0 : 0.0));
-            lockStep.SendInputAction(setHoldingPlayerIAId, iaData);
+            lockStep.SendInputAction(pickupIAId, iaData);
         }
 
-        [SerializeField] [HideInInspector] private uint setHoldingPlayerIAId;
-        [LockStepInputAction(nameof(setHoldingPlayerIAId))]
-        public void OnSetHoldingPlayerIA()
+        [SerializeField] [HideInInspector] private uint pickupIAId;
+        [LockStepInputAction(nameof(pickupIAId))]
+        public void OnPickupIA()
         {
-            Debug.Log($"[ItemSystem] ItemSystem  OnSetHoldingPlayerIA");
+            Debug.Log($"[ItemSystem] ItemSystem  OnPickupIA");
             int i = 0;
             uint itemId = (uint)iaData[i++].Double;
             int holdingPlayerId = (int)iaData[i++].Double;
@@ -158,6 +158,31 @@ namespace JanSharp
             if (!TryGetItem(itemId, out ItemSync itemSync))
                 return;
             itemSync.SetHoldingPlayer(holdingPlayerId, isLeftHand);
+        }
+
+        public void SendDropIA(uint itemId, Vector3 position, Quaternion rotation)
+        {
+            Debug.Log($"[ItemSystem] ItemSystem  SendDropIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
+            iaData = new DataList();
+            iaData.Add((double)itemId);
+            WriteVector3(iaData, position);
+            WriteQuaternion(iaData, rotation);
+            lockStep.SendInputAction(dropIAId, iaData);
+        }
+
+        [SerializeField] [HideInInspector] private uint dropIAId;
+        [LockStepInputAction(nameof(dropIAId))]
+        public void OnDropIA()
+        {
+            Debug.Log($"[ItemSystem] ItemSystem  OnDropIA");
+            int i = 0;
+            uint itemId = (uint)iaData[i++].Double;
+            Vector3 position = ReadVector3(iaData, ref i);
+            Quaternion rotation = ReadQuaternion(iaData, ref i);
+
+            if (!TryGetItem(itemId, out ItemSync itemSync))
+                return;
+            itemSync.UnsetHoldingPlayer(position, rotation);
         }
 
         public void SendSetAttachedIA(uint itemId, Vector3 position, Quaternion rotation)
@@ -217,7 +242,7 @@ namespace JanSharp
             {
                 ItemSync item = activeItems[i];
                 if (item.HoldingPlayerId == lockStepPlayerId)
-                    SendFloatingPositionIA(item.id, item.transform.position, item.transform.rotation);
+                    SendDropIA(item.id, item.transform.position, item.transform.rotation);
             }
         }
 
@@ -235,7 +260,7 @@ namespace JanSharp
                 if (playerId == -1)
                     continue;
                 if (VRCPlayerApi.GetPlayerById(playerId) == null)
-                    SendFloatingPositionIA(item.id, item.transform.position, item.transform.rotation);
+                    SendDropIA(item.id, item.transform.position, item.transform.rotation);
             }
         }
 

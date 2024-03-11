@@ -39,7 +39,7 @@ namespace JanSharp
         [System.NonSerialized] public Vector3 targetPosition; // Part of game state.
         [System.NonSerialized] public Quaternion targetRotation; // Part of game state.
         [System.NonSerialized] public bool isLeftHand; // Part of game state.
-        public bool LocalPlayerIsInControl => isAttached ? holdingPlayerId == localPlayerId : itemSystem.lockStep.IsMaster;
+        public bool LocalPlayerIsInControl => holdingPlayerId != -1 ? holdingPlayerId == localPlayerId : itemSystem.lockStep.IsMaster;
 
         public int HoldingPlayerId => holdingPlayerId;
 
@@ -61,6 +61,12 @@ namespace JanSharp
             isAttached = false; // After an item is picked up, it is not attached yet.
             attachedPlayer = VRCPlayerApi.GetPlayerById(holdingPlayerId);
             LocalState = IdleState;
+        }
+
+        public void UnsetHoldingPlayer(Vector3 droppedPosition, Quaternion droppedRotation)
+        {
+            holdingPlayerId = -1;
+            SetFloatingPosition(droppedPosition, droppedRotation);
         }
 
         #if ItemSyncDebug
@@ -354,7 +360,7 @@ namespace JanSharp
                 ? VRCPlayerApi.TrackingDataType.LeftHand
                 : VRCPlayerApi.TrackingDataType.RightHand;
 
-            itemSystem.SendSetHoldingPlayerIA(id, localPlayerId, currentHand == VRC_Pickup.PickupHand.Left);
+            itemSystem.SendPickupIA(id, localPlayerId, currentHand == VRC_Pickup.PickupHand.Left);
 
             // if (pickup.orientation == VRC_Pickup.PickupOrientation.Gun)
             // {
@@ -413,7 +419,7 @@ namespace JanSharp
             if (IsReceivingState())
                 return;
             LocalState = IdleState;
-            SendFloatingData();
+            itemSystem.SendDropIA(id, transform.position, transform.rotation);
         }
 
         public void UpdateActiveItem()
