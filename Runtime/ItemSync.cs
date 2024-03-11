@@ -6,7 +6,9 @@ using VRC.Udon.Common;
 
 namespace JanSharp
 {
-    // TODO: use rigidbody.position to set position and use rigidbody.MovePosition for interpolation
+    // TODO: maybe rigidbody.MovePosition for interpolation. Also note that setting position my take effect 1
+    // frame delayed, or it is just a jittering issue while the item is actually held (which is why
+    // UpdateSender is not writing to rb.position)
 
     // public enum ItemSyncState
     // {
@@ -69,6 +71,7 @@ namespace JanSharp
         #endif
 
         [System.NonSerialized] public VRC_Pickup pickup;
+        [System.NonSerialized] public Rigidbody rb;
 
 
         private Vector3 parentPos;
@@ -555,7 +558,8 @@ namespace JanSharp
             localPos = offset;
             localRot = rotationOffset;
             LocalToWorld();
-            this.transform.SetPositionAndRotation(worldPos, worldRot);
+            rb.position = worldPos;
+            rb.rotation = worldRot;
         }
 
         private void UpdateReceiver()
@@ -575,15 +579,14 @@ namespace JanSharp
                 {
                     if (percent >= 1f)
                     {
-                        this.transform.SetPositionAndRotation(targetPosition, targetRotation);
+                        rb.position = targetPosition;
+                        rb.rotation = targetRotation;
                         LocalState = IdleState;
                     }
                     else
                     {
-                        this.transform.SetPositionAndRotation(
-                            targetPosition - posInterpolationDiff * (1f - percent),
-                            Quaternion.Lerp(interpolationStartRotation, targetRotation, percent)
-                        );
+                        rb.position = targetPosition - posInterpolationDiff * (1f - percent);
+                        rb.rotation = Quaternion.Lerp(interpolationStartRotation, targetRotation, percent);
                     }
                 }
                 else // ReceivingMovingToBoneState

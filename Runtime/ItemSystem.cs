@@ -67,6 +67,7 @@ namespace JanSharp
             item.localPlayer = Networking.LocalPlayer;
             item.localPlayerId = Networking.LocalPlayer.playerId;
             item.pickup = item.GetComponent<VRC_Pickup>();
+            item.rb = item.GetComponent<Rigidbody>();
             item.id = id;
             allItems.Add(id, item);
             item.prefabIndex = prefabIndex;
