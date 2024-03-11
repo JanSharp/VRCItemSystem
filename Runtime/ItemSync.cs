@@ -414,11 +414,9 @@ namespace JanSharp
         public override void OnDrop()
         {
             Debug.Log($"[ItemSystem] ItemSync  OnDrop  itemId: {this.id}");
-            // if we already switched to receiving state before this player dropped this item don't do anything
-            if (IsReceivingState())
-                return;
-            LocalState = IdleState;
-            itemSystem.SendDropIA(id, transform.position, transform.rotation);
+            if (!IsReceivingState()) // Doing an if check just for better latency state handling.
+                LocalState = IdleState;
+            itemSystem.SendDropIA(id, holdingPlayerId, transform.position, transform.rotation);
         }
 
         public void UpdateActiveItem()

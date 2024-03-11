@@ -182,11 +182,12 @@ namespace JanSharp
                 itemSync.SetHoldingPlayer(holdingPlayerId, isLeftHand);
         }
 
-        public void SendDropIA(uint itemId, Vector3 position, Quaternion rotation)
+        public void SendDropIA(uint itemId, int prevHoldingPlayerId, Vector3 position, Quaternion rotation)
         {
-            Debug.Log($"[ItemSystem] ItemSystem  SendDropIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
+            Debug.Log($"[ItemSystem] ItemSystem  SendDropIA  itemId: {itemId}, prevHoldingPlayerId: {prevHoldingPlayerId}, position: {position}, rotation: {rotation}");
             iaData = new DataList();
             iaData.Add((double)itemId);
+            iaData.Add((double)prevHoldingPlayerId);
             WriteVector3(iaData, position);
             WriteQuaternion(iaData, rotation);
             lockStep.SendInputAction(dropIAId, iaData);
@@ -199,11 +200,14 @@ namespace JanSharp
             Debug.Log($"[ItemSystem] ItemSystem  OnDropIA");
             int i = 0;
             uint itemId = (uint)iaData[i++].Double;
+            int prevHoldingPlayerId = (int)iaData[i++].Double;
             Vector3 position = ReadVector3(iaData, ref i);
             Quaternion rotation = ReadQuaternion(iaData, ref i);
 
             if (!TryGetItemData(itemId, out object[] itemData))
                 return;
+            if (prevHoldingPlayerId != ItemData.GetHoldingPlayerId(itemData))
+                return; // The player that dropped the item isn't the one that's holding it anymore, ignore it.
             ItemData.SetHoldingPlayerId(itemData, -1);
             ItemData.SetPosition(itemData, position);
             ItemData.SetRotation(itemData, rotation);
@@ -273,8 +277,9 @@ namespace JanSharp
             for (int i = 0; i < activeItemsCount; i++)
             {
                 ItemSync item = activeItems[i];
-                if (item.HoldingPlayerId == lockStepPlayerId)
-                    SendDropIA(item.id, item.transform.position, item.transform.rotation);
+                int playerId = item.HoldingPlayerId;
+                if (playerId == lockStepPlayerId)
+                    SendDropIA(item.id, playerId, item.transform.position, item.transform.rotation);
             }
         }
 
@@ -292,7 +297,7 @@ namespace JanSharp
                 if (playerId == -1)
                     continue;
                 if (VRCPlayerApi.GetPlayerById(playerId) == null)
-                    SendDropIA(item.id, item.transform.position, item.transform.rotation);
+                    SendDropIA(item.id, playerId, item.transform.position, item.transform.rotation);
             }
         }
 
