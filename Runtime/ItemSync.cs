@@ -41,27 +41,26 @@ namespace JanSharp
         [System.NonSerialized] public bool isLeftHand; // Part of game state.
         public bool LocalPlayerIsInControl => isAttached ? holdingPlayerId == localPlayerId : itemSystem.lockStep.IsMaster;
 
-        public int HoldingPlayerId // TODO: Convert this into a function taking the player id and the is left hand bool.
-        {
-            get => holdingPlayerId;
-            set
-            {
-                if (value == holdingPlayerId)
-                    return;
-                holdingPlayerId = value;
-                attachedBone = isLeftHand
-                    ? HumanBodyBones.LeftHand
-                    : HumanBodyBones.RightHand;
-                attachedTracking = isLeftHand
-                    ? VRCPlayerApi.TrackingDataType.LeftHand
-                    : VRCPlayerApi.TrackingDataType.RightHand;
+        public int HoldingPlayerId => holdingPlayerId;
 
-                if (holdingPlayerId == localPlayerId) // Confirmed, game state now matches latency state.
-                    return;
-                isAttached = false; // After an item is picked up, it is not attached yet.
-                attachedPlayer = VRCPlayerApi.GetPlayerById(holdingPlayerId);
-                LocalState = IdleState;
-            }
+        public void SetHoldingPlayer(int playerId, bool isLeftHand)
+        {
+            if (playerId == holdingPlayerId)
+                return;
+            holdingPlayerId = playerId;
+            this.isLeftHand = isLeftHand;
+            attachedBone = isLeftHand
+                ? HumanBodyBones.LeftHand
+                : HumanBodyBones.RightHand;
+            attachedTracking = isLeftHand
+                ? VRCPlayerApi.TrackingDataType.LeftHand
+                : VRCPlayerApi.TrackingDataType.RightHand;
+
+            if (holdingPlayerId == localPlayerId) // Confirmed, game state now matches latency state.
+                return;
+            isAttached = false; // After an item is picked up, it is not attached yet.
+            attachedPlayer = VRCPlayerApi.GetPlayerById(holdingPlayerId);
+            LocalState = IdleState;
         }
 
         #if ItemSyncDebug

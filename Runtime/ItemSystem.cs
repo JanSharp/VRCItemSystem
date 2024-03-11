@@ -157,8 +157,7 @@ namespace JanSharp
 
             if (!TryGetItem(itemId, out ItemSync itemSync))
                 return;
-            itemSync.isLeftHand = isLeftHand;
-            itemSync.HoldingPlayerId = holdingPlayerId;
+            itemSync.SetHoldingPlayer(holdingPlayerId, isLeftHand);
         }
 
         public void SendSetAttachedIA(uint itemId, Vector3 position, Quaternion rotation)
