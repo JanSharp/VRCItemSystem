@@ -10,20 +10,6 @@ namespace JanSharp
     // frame delayed, or it is just a jittering issue while the item is actually held (which is why
     // UpdateSender is not writing to rb.position)
 
-    // public enum ItemSyncState
-    // {
-    //     IdleState = 0, // the only state with CustomUpdate deregistered
-    //     VRWaitingForConsistentOffsetState = 1,
-    //     VRAttachedSendingState = 2, // attached to hand
-    //     DesktopWaitingForConsistentOffsetState = 3,
-    //     DesktopAttachedSendingState = 4, // attached to hand
-    //     DesktopAttachedRotatingState = 5, // attached to hand
-    //     ExactAttachedSendingState = 6, // attached to hand
-    //     ReceivingFloatingState = 7,
-    //     ReceivingMovingToBoneState = 8, // attached to hand, but interpolating offset towards the actual attached position
-    //     ReceivingAttachedState = 9, // attached to hand
-    // }
-
     [RequireComponent(typeof(VRC.SDK3.Components.VRCPickup))]
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ItemSync : UdonSharpBehaviour
@@ -632,81 +618,5 @@ namespace JanSharp
         {
             itemSystem.SendAttachIA(id, attachedLocalOffset, attachedRotationOffset);
         }
-
-        // public override void OnPreSerialization()
-        // {
-        //     if (IsReceivingState())
-        //     {
-        //         Debug.LogWarning("// TODO: uh idk what to do, shouldn't this be impossible?", this);
-        //     }
-        //     syncedFlags = 0;
-        //     if (IsAttachedSendingState())
-        //     {
-        //         syncedFlags += 1; // set attached flag
-        //         syncedPosition = attachedLocalOffset;
-        //         syncedRotation = attachedRotationOffset;
-        //         if (attachedBone == HumanBodyBones.LeftHand)
-        //             syncedFlags += 2; // set left hand flag, otherwise it's right hand
-        //     }
-        //     else
-        //     {
-        //         // not attached, don't set the attached flag and just sync current position and rotation
-        //         syncedPosition = ItemPosition;
-        //         syncedRotation = ItemRotation;
-        //     }
-        // }
-
-        // public override void OnPostSerialization(SerializationResult result)
-        // {
-        //     if (!result.success)
-        //     {
-        //         Debug.LogWarning($"Syncing request was dropped for {this.name}, trying again.", this);
-        //         SendChanges(); // TODO: somehow test if this kind of retry even works or if the serialization request got reset right afterwards
-        //     }
-        //     else
-        //     {
-        //         #if ItemSyncDebug
-        //         Debug.Log($"Sending {result.byteCount} bytes");
-        //         #endif
-        //     }
-        // }
-
-        // public override void OnDeserialization()
-        // {
-        //     if (LocalState != IdleState && pickup.IsHeld) // did someone steal the item?
-        //         pickup.Drop(); // drop it
-
-        //     bool isAttached = (syncedFlags & 1) != 0;
-        //     if (pickup.DisallowTheft)
-        //         pickup.pickupable = !isAttached;
-
-        //     if (isAttached)
-        //     {
-        //         attachedPlayer = Networking.GetOwner(this.gameObject); // ensure it is up to date
-        //         attachedBone = (syncedFlags & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
-        //         if (LocalState == ReceivingAttachedState) // interpolate from old to new offset
-        //         {
-        //             posInterpolationDiff = syncedPosition - attachedLocalOffset;
-        //             interpolationStartRotation = attachedRotationOffset;
-        //         }
-        //         else // figure out current local offset and interpolate starting from there
-        //         {
-        //             MoveDummyToBone();
-        //             posInterpolationDiff = syncedPosition - GetLocalPositionToBone(ItemPosition);
-        //             interpolationStartRotation = GetLocalRotationToBone(ItemRotation);
-        //         }
-        //         attachedLocalOffset = syncedPosition;
-        //         attachedRotationOffset = syncedRotation;
-        //         interpolationStartTime = Time.time;
-        //         LocalState = ReceivingMovingToBoneState;
-        //     }
-        //     else // not attached
-        //     {
-        //         posInterpolationDiff = syncedPosition - ItemPosition;
-        //         interpolationStartRotation = ItemRotation;
-        //         interpolationStartTime = Time.time;
-        //         LocalState = ReceivingFloatingState;
-        //     }
-        // }
     }
 }
