@@ -9,6 +9,11 @@ namespace JanSharp
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ItemSystem : LockStepGameState
     {
+        // TODO: Items held by players get spawned near 0, 0 and quickly interpolate to their hand. Not good
+        // TODO: There's some bug where an item can get stuck being attached to a player. Worst part is since
+        // the player ignores attachments to themselves, they don't know about it
+        // TODO: ItemSystemDebug controller, listing all items and their state
+
         public override string GameStateDisplayName => "Item System";
         [HideInInspector] public LockStep lockStep;
         private DataList iaData;
