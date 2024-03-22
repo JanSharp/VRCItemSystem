@@ -16,7 +16,6 @@ namespace JanSharp
 
         public override string GameStateDisplayName => "Item System";
         [HideInInspector] public LockStep lockStep;
-        private DataList iaData;
         private int lockStepPlayerId;
 
         [SerializeField] private GameObject[] itemPrefabs;
@@ -58,11 +57,10 @@ namespace JanSharp
         public void SendSpawnItemIA(int prefabIndex, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendSpawnItemIA  prefabIndex: {prefabIndex}, position: {position}, rotation: {rotation}");
-            iaData = new DataList();
-            iaData.Add((double)prefabIndex);
-            WriteVector3(iaData, position);
-            WriteQuaternion(iaData, rotation);
-            lockStep.SendInputAction(spawnItemIAId, iaData);
+            lockStep.Write(prefabIndex);
+            lockStep.Write(position);
+            lockStep.Write(rotation);
+            lockStep.SendInputAction(spawnItemIAId);
         }
 
         [SerializeField] [HideInInspector] private uint spawnItemIAId;
@@ -70,13 +68,12 @@ namespace JanSharp
         public void OnSpawnItemIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnSpawnItemIA");
-            int i = 0;
             uint id = nextItemId++;
             object[] itemData = ItemData.New(
                 id: id,
-                prefabIndex: (int)iaData[i++].Double,
-                position: ReadVector3(iaData, ref i),
-                rotation: ReadQuaternion(iaData, ref i)
+                prefabIndex: lockStep.ReadInt(),
+                position: lockStep.ReadVector3(),
+                rotation: lockStep.ReadQuaternion()
             );
             allItems.Add(id, new DataToken(itemData));
             ArrList.Add(ref itemsWaitingForSpawn, ref itemsWaitingForSpawnCount, itemData);
@@ -132,9 +129,8 @@ namespace JanSharp
         public void SendDespawnItemIA(uint itemId)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendDespawnItemIA  itemId: {itemId}");
-            iaData = new DataList();
-            iaData.Add((double)itemId);
-            lockStep.SendInputAction(despawnItemIAId, iaData);
+            lockStep.Write(itemId);
+            lockStep.SendInputAction(despawnItemIAId);
         }
 
         [SerializeField] [HideInInspector] private uint despawnItemIAId;
@@ -142,8 +138,7 @@ namespace JanSharp
         public void OnDespawnItemIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnDespawnItemIA");
-            int i = 0;
-            if (!allItems.Remove((uint)iaData[i++].Double, out DataToken itemDataToken))
+            if (!allItems.Remove(lockStep.ReadUInt(), out DataToken itemDataToken))
                 return;
             object[] itemData = (object[])itemDataToken.Reference;
             ItemData.SetIsAttached(itemData, false);
@@ -176,11 +171,10 @@ namespace JanSharp
         public void SendFloatingPositionIA(uint itemId, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendFloatingPositionIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
-            iaData = new DataList();
-            iaData.Add((double)itemId);
-            WriteVector3(iaData, position);
-            WriteQuaternion(iaData, rotation);
-            lockStep.SendInputAction(floatingPositionIAId, iaData);
+            lockStep.Write(itemId);
+            lockStep.Write(position);
+            lockStep.Write(rotation);
+            lockStep.SendInputAction(floatingPositionIAId);
         }
 
         [SerializeField] [HideInInspector] private uint floatingPositionIAId;
@@ -188,10 +182,9 @@ namespace JanSharp
         public void OnFloatingPositionIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnFloatingPositionIA");
-            int i = 0;
-            uint itemId = (uint)iaData[i++].Double;
-            Vector3 position = ReadVector3(iaData, ref i);
-            Quaternion rotation = ReadQuaternion(iaData, ref i);
+            uint itemId = lockStep.ReadUInt();
+            Vector3 position = lockStep.ReadVector3();
+            Quaternion rotation = lockStep.ReadQuaternion();
 
             if (!TryGetItemData(itemId, out object[] itemData))
                 return;
@@ -205,11 +198,10 @@ namespace JanSharp
         public void SendPickupIA(uint itemId, int holdingPlayerId, bool isLeftHand)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendPickupIA  itemId: {itemId}, holdingPlayerId: {holdingPlayerId}, isLeftHand: {isLeftHand}");
-            iaData = new DataList();
-            iaData.Add((double)itemId);
-            iaData.Add((double)holdingPlayerId);
-            iaData.Add(isLeftHand ? 1.0 : 0.0);
-            lockStep.SendInputAction(pickupIAId, iaData);
+            lockStep.Write(itemId);
+            lockStep.Write(holdingPlayerId);
+            lockStep.Write((byte)(isLeftHand ? 1 : 0));
+            lockStep.SendInputAction(pickupIAId);
         }
 
         [SerializeField] [HideInInspector] private uint pickupIAId;
@@ -217,10 +209,9 @@ namespace JanSharp
         public void OnPickupIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnPickupIA");
-            int i = 0;
-            uint itemId = (uint)iaData[i++].Double;
-            int holdingPlayerId = (int)iaData[i++].Double;
-            bool isLeftHand = iaData[i++].Double == 1.0;
+            uint itemId = lockStep.ReadUInt();
+            int holdingPlayerId = lockStep.ReadInt();
+            bool isLeftHand = lockStep.ReadByte() == 1;
 
             if (!TryGetItemData(itemId, out object[] itemData))
                 return;
@@ -235,12 +226,11 @@ namespace JanSharp
         public void SendDropIA(uint itemId, int prevHoldingPlayerId, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendDropIA  itemId: {itemId}, prevHoldingPlayerId: {prevHoldingPlayerId}, position: {position}, rotation: {rotation}");
-            iaData = new DataList();
-            iaData.Add((double)itemId);
-            iaData.Add((double)prevHoldingPlayerId);
-            WriteVector3(iaData, position);
-            WriteQuaternion(iaData, rotation);
-            lockStep.SendInputAction(dropIAId, iaData);
+            lockStep.Write(itemId);
+            lockStep.Write(prevHoldingPlayerId);
+            lockStep.Write(position);
+            lockStep.Write(rotation);
+            lockStep.SendInputAction(dropIAId);
         }
 
         [SerializeField] [HideInInspector] private uint dropIAId;
@@ -248,11 +238,10 @@ namespace JanSharp
         public void OnDropIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnDropIA");
-            int i = 0;
-            uint itemId = (uint)iaData[i++].Double;
-            int prevHoldingPlayerId = (int)iaData[i++].Double;
-            Vector3 position = ReadVector3(iaData, ref i);
-            Quaternion rotation = ReadQuaternion(iaData, ref i);
+            uint itemId = lockStep.ReadUInt();
+            int prevHoldingPlayerId = lockStep.ReadInt();
+            Vector3 position = lockStep.ReadVector3();
+            Quaternion rotation = lockStep.ReadQuaternion();
 
             if (!TryGetItemData(itemId, out object[] itemData))
                 return;
@@ -269,11 +258,10 @@ namespace JanSharp
         public void SendAttachIA(uint itemId, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendAttachIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
-            iaData = new DataList();
-            iaData.Add((double)itemId);
-            WriteVector3(iaData, position);
-            WriteQuaternion(iaData, rotation);
-            lockStep.SendInputAction(attachIAId, iaData);
+            lockStep.Write(itemId);
+            lockStep.Write(position);
+            lockStep.Write(rotation);
+            lockStep.SendInputAction(attachIAId);
         }
 
         [SerializeField] [HideInInspector] private uint attachIAId;
@@ -281,10 +269,9 @@ namespace JanSharp
         public void OnAttachIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnAttachIA");
-            int i = 0;
-            uint itemId = (uint)iaData[i++].Double;
-            Vector3 position = ReadVector3(iaData, ref i);
-            Quaternion rotation = ReadQuaternion(iaData, ref i);
+            uint itemId = lockStep.ReadUInt();
+            Vector3 position = lockStep.ReadVector3();
+            Quaternion rotation = lockStep.ReadQuaternion();
 
             if (!TryGetItemData(itemId, out object[] itemData))
                 return;
@@ -351,55 +338,51 @@ namespace JanSharp
             }
         }
 
-        public override DataList SerializeGameState()
+        public override void SerializeGameState()
         {
             Debug.Log($"[ItemSystem] ItemSystem  SerializeGameState");
-            DataList stream = new DataList();
 
-            stream.Add((double)nextItemId);
+            lockStep.Write(nextItemId);
             DataList items = allItems.GetValues();
             int count = items.Count;
-            stream.Add((double)count);
+            lockStep.Write(count);
             for (int i = 0; i < count; i++)
             {
                 object[] itemData = (object[])items[i].Reference;
-                stream.Add((double)ItemData.GetId(itemData));
-                stream.Add((double)ItemData.GetPrefabIndex(itemData));
-                WriteVector3(stream, ItemData.GetPosition(itemData));
-                WriteQuaternion(stream, ItemData.GetRotation(itemData));
+                lockStep.Write(ItemData.GetId(itemData));
+                lockStep.Write(ItemData.GetPrefabIndex(itemData));
+                lockStep.Write(ItemData.GetPosition(itemData));
+                lockStep.Write(ItemData.GetRotation(itemData));
                 int holdingPlayerId = ItemData.GetHoldingPlayerId(itemData);
-                stream.Add((double)holdingPlayerId);
+                lockStep.Write(holdingPlayerId);
                 if (holdingPlayerId != -1)
                 {
-                    stream.Add((ItemData.GetIsLeftHand(itemData) ? 1.0 : 0.0)
-                        + (ItemData.GetIsAttached(itemData) ? 2.0 : 0.0));
+                    lockStep.Write((byte)((ItemData.GetIsLeftHand(itemData) ? 1 : 0)
+                        | (ItemData.GetIsAttached(itemData) ? 2 : 0)));
                 }
             }
-
-            return stream;
         }
 
-        public override string DeserializeGameState(DataList stream)
+        public override string DeserializeGameState()
         {
             Debug.Log($"[ItemSystem] ItemSystem  DeserializeGameState");
-            int i = 0;
 
-            nextItemId = (uint)stream[i++].Double;
-            int count = (int)stream[i++].Double;
+            nextItemId = lockStep.ReadUInt();
+            int count = lockStep.ReadInt();
             for (int j = 0; j < count; j++)
             {
-                uint id = (uint)stream[i++].Double;
+                uint id = lockStep.ReadUInt();
                 object[] itemData = ItemData.New(
                     id: id,
-                    prefabIndex: (int)stream[i++].Double,
-                    position: ReadVector3(stream, ref i),
-                    rotation: ReadQuaternion(stream, ref i)
+                    prefabIndex: lockStep.ReadInt(),
+                    position: lockStep.ReadVector3(),
+                    rotation: lockStep.ReadQuaternion()
                 );
-                int holdingPlayerId = (int)stream[i++].Double;
+                int holdingPlayerId = lockStep.ReadInt();
                 ItemData.SetHoldingPlayerId(itemData, holdingPlayerId);
                 if (holdingPlayerId != -1)
                 {
-                    int flags = (int)stream[i++].Double;
+                    int flags = lockStep.ReadByte();
                     ItemData.SetIsLeftHand(itemData, (flags & 1) != 0);
                     ItemData.SetIsAttached(itemData, (flags & 2) != 0);
                 }
@@ -408,40 +391,6 @@ namespace JanSharp
             }
 
             return null;
-        }
-
-        private static void WriteVector3(DataList stream, Vector3 vec)
-        {
-            stream.Add((double)vec.x);
-            stream.Add((double)vec.y);
-            stream.Add((double)vec.z);
-        }
-
-        private static void WriteQuaternion(DataList stream, Quaternion quat)
-        {
-            stream.Add((double)quat.x);
-            stream.Add((double)quat.y);
-            stream.Add((double)quat.z);
-            stream.Add((double)quat.w);
-        }
-
-        private static Vector3 ReadVector3(DataList stream, ref int i)
-        {
-            return new Vector3(
-                (float)stream[i++].Double,
-                (float)stream[i++].Double,
-                (float)stream[i++].Double
-            );
-        }
-
-        private static Quaternion ReadQuaternion(DataList stream, ref int i)
-        {
-            return new Quaternion(
-                (float)stream[i++].Double,
-                (float)stream[i++].Double,
-                (float)stream[i++].Double,
-                (float)stream[i++].Double
-            );
         }
     }
 }
