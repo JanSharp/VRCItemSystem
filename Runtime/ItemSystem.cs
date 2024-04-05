@@ -14,6 +14,7 @@ namespace JanSharp
         // the player ignores attachments to themselves, they don't know about it
         // TODO: ItemSystemDebug controller, listing all items and their state
 
+        public override string GameStateInternalName => "jansharp.item-system";
         public override string GameStateDisplayName => "Item System";
         [HideInInspector] public LockStep lockStep;
         private int lockStepPlayerId;
