@@ -16,6 +16,9 @@ namespace JanSharp
 
         public override string GameStateInternalName => "jansharp.item-system";
         public override string GameStateDisplayName => "Item System";
+        public override bool GameStateSupportsImportExport => false;
+        public override uint GameStateDataVersion => 0u;
+        public override uint GameStateLowestSupportedDataVersion => 0u;
         [HideInInspector] public LockStep lockStep;
         private int lockStepPlayerId;
 
@@ -339,7 +342,7 @@ namespace JanSharp
             }
         }
 
-        public override void SerializeGameState()
+        public override void SerializeGameState(bool isExport)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SerializeGameState");
 
@@ -364,7 +367,7 @@ namespace JanSharp
             }
         }
 
-        public override string DeserializeGameState()
+        public override string DeserializeGameState(bool isImport)
         {
             Debug.Log($"[ItemSystem] ItemSystem  DeserializeGameState");
 
