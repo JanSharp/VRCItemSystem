@@ -16,7 +16,7 @@ namespace JanSharp
 
         public override string GameStateInternalName => "jansharp.item-system";
         public override string GameStateDisplayName => "Item System";
-        public override bool GameStateSupportsImportExport => false;
+        public override bool GameStateSupportsImportExport => true;
         public override uint GameStateDataVersion => 0u;
         public override uint GameStateLowestSupportedDataVersion => 0u;
         [HideInInspector] public LockStep lockStep;
@@ -58,6 +58,19 @@ namespace JanSharp
                 activeItems[i].UpdateActiveItem();
         }
 
+        private void CompleteReset()
+        {
+            DataList values = allItems.GetValues();
+            int count = values.Count;
+            for (int i = 0; i < count; i++)
+            {
+                object[] itemData = (object[])values[i].Reference;
+                DespawnItem(itemData);
+            }
+            allItems.Clear();
+            nextItemId = 1u;
+        }
+
         public void SendSpawnItemIA(int prefabIndex, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendSpawnItemIA  prefabIndex: {prefabIndex}, position: {position}, rotation: {rotation}");
@@ -87,6 +100,7 @@ namespace JanSharp
         {
             ItemSync itemSync;
             int prefabIndex = ItemData.GetPrefabIndex(itemData);
+            Debug.Log($"[ItemSystemDebug] GetItemInst  (inner) - {prefabIndex}");
             int unusedCount = unusedItemInstsCounts[prefabIndex];
             if (unusedCount > 0)
             {
@@ -145,6 +159,11 @@ namespace JanSharp
             if (!allItems.Remove(lockStep.ReadSmallUInt(), out DataToken itemDataToken))
                 return;
             object[] itemData = (object[])itemDataToken.Reference;
+            DespawnItem(itemData);
+        }
+
+        private void DespawnItem(object[] itemData)
+        {
             ItemData.SetIsAttached(itemData, false);
             ItemData.SetHoldingPlayerId(itemData, -1);
             ItemSync itemSync = ItemData.GetInst(itemData);
@@ -344,51 +363,77 @@ namespace JanSharp
 
         public override void SerializeGameState(bool isExport)
         {
-            Debug.Log($"[ItemSystem] ItemSystem  SerializeGameState");
+            Debug.Log($"[ItemSystem] ItemSystem  SerializeGameState  isExport: {isExport}");
 
-            lockStep.WriteSmall(nextItemId);
+            if (!isExport)
+                lockStep.WriteSmall(nextItemId);
             DataList items = allItems.GetValues();
             int count = items.Count;
             lockStep.WriteSmall((uint)count);
             for (int i = 0; i < count; i++)
             {
                 object[] itemData = (object[])items[i].Reference;
-                lockStep.WriteSmall(ItemData.GetId(itemData));
+                if (!isExport)
+                    lockStep.WriteSmall(ItemData.GetId(itemData));
                 lockStep.WriteSmall((uint)ItemData.GetPrefabIndex(itemData));
-                lockStep.Write(ItemData.GetPosition(itemData));
-                lockStep.Write(ItemData.GetRotation(itemData));
                 int holdingPlayerId = ItemData.GetHoldingPlayerId(itemData);
-                lockStep.WriteSmall(holdingPlayerId);
-                if (holdingPlayerId != -1)
+                if (isExport)
                 {
-                    lockStep.Write((byte)((ItemData.GetIsLeftHand(itemData) ? 1 : 0)
-                        | (ItemData.GetIsAttached(itemData) ? 2 : 0)));
+                    if (holdingPlayerId == -1)
+                    {
+                        lockStep.Write(ItemData.GetPosition(itemData));
+                        lockStep.Write(ItemData.GetRotation(itemData));
+                    }
+                    else
+                    {
+                        Transform itemTransform = ItemData.GetInst(itemData).transform;
+                        lockStep.Write(itemTransform.position);
+                        lockStep.Write(itemTransform.rotation);
+                    }
+                }
+                else
+                {
+                    lockStep.Write(ItemData.GetPosition(itemData));
+                    lockStep.Write(ItemData.GetRotation(itemData));
+                    lockStep.WriteSmall(holdingPlayerId);
+                    if (holdingPlayerId != -1)
+                    {
+                        lockStep.Write((byte)((ItemData.GetIsLeftHand(itemData) ? 1 : 0)
+                            | (ItemData.GetIsAttached(itemData) ? 2 : 0)));
+                    }
                 }
             }
         }
 
         public override string DeserializeGameState(bool isImport)
         {
-            Debug.Log($"[ItemSystem] ItemSystem  DeserializeGameState");
+            Debug.Log($"[ItemSystem] ItemSystem  DeserializeGameState  isImport: {isImport}");
 
-            nextItemId = lockStep.ReadSmallUInt();
+            if (isImport)
+                CompleteReset();
+
+            if (!isImport)
+                nextItemId = lockStep.ReadSmallUInt();
             int count = (int)lockStep.ReadSmallUInt();
             for (int j = 0; j < count; j++)
             {
-                uint id = lockStep.ReadSmallUInt();
+                uint id = isImport ? nextItemId++ : lockStep.ReadSmallUInt();
                 object[] itemData = ItemData.New(
                     id: id,
                     prefabIndex: (int)lockStep.ReadSmallUInt(),
                     position: lockStep.ReadVector3(),
                     rotation: lockStep.ReadQuaternion()
                 );
-                int holdingPlayerId = lockStep.ReadSmallInt();
-                ItemData.SetHoldingPlayerId(itemData, holdingPlayerId);
-                if (holdingPlayerId != -1)
+                if (!isImport)
                 {
-                    int flags = lockStep.ReadByte();
-                    ItemData.SetIsLeftHand(itemData, (flags & 1) != 0);
-                    ItemData.SetIsAttached(itemData, (flags & 2) != 0);
+                    int holdingPlayerId = lockStep.ReadSmallInt();
+                    ItemData.SetHoldingPlayerId(itemData, holdingPlayerId);
+                    if (holdingPlayerId != -1)
+                    {
+                        int flags = lockStep.ReadByte();
+                        ItemData.SetIsLeftHand(itemData, (flags & 1) != 0);
+                        ItemData.SetIsAttached(itemData, (flags & 2) != 0);
+                    }
                 }
                 allItems.Add(id, new DataToken(itemData));
                 ArrList.Add(ref itemsWaitingForSpawn, ref itemsWaitingForSpawnCount, itemData);
