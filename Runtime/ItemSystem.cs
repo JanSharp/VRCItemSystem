@@ -20,7 +20,7 @@ namespace JanSharp
         public override uint GameStateDataVersion => 0u;
         public override uint GameStateLowestSupportedDataVersion => 0u;
         [HideInInspector] public LockStep lockStep;
-        private int lockStepPlayerId;
+        private uint lockStepPlayerId;
 
         [SerializeField] private GameObject[] itemPrefabs;
         ///<summary>unusedItemInsts[prefabIndex][itemSync.instIndex]</summary>
@@ -319,7 +319,7 @@ namespace JanSharp
             {
                 ItemSync item = activeItems[i];
                 int playerId = item.HoldingPlayerId;
-                if (playerId == lockStepPlayerId)
+                if (playerId == (int)lockStepPlayerId)
                     SendDropIA(item.id, playerId, item.transform.position, item.transform.rotation);
             }
         }
