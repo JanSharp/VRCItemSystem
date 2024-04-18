@@ -24,7 +24,8 @@ namespace JanSharp
         private Vector3 targetPosition;
         private Quaternion targetRotation;
         private bool isVisible = true;
-        public bool LocalPlayerIsInControl => pickup.IsHeld || (holdingPlayerId == -1 && itemSystem.lockStep.IsMaster);
+        // TODO: pickup.IsHeld null ref exception
+        public bool LocalPlayerIsInControl => pickup.IsHeld || (holdingPlayerId == -1 && itemSystem.lockstep.IsMaster);
 
         public int HoldingPlayerId => holdingPlayerId;
 

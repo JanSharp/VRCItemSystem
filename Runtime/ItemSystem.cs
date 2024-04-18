@@ -7,7 +7,7 @@ using VRC.Udon;
 namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class ItemSystem : LockStepGameState
+    public class ItemSystem : LockstepGameState
     {
         // TODO: Items held by players get spawned near 0, 0 and quickly interpolate to their hand. Not good
         // TODO: There's some bug where an item can get stuck being attached to a player. Worst part is since
@@ -19,8 +19,8 @@ namespace JanSharp
         public override bool GameStateSupportsImportExport => true;
         public override uint GameStateDataVersion => 0u;
         public override uint GameStateLowestSupportedDataVersion => 0u;
-        [HideInInspector] public LockStep lockStep;
-        private uint lockStepPlayerId;
+        [HideInInspector] public Lockstep lockstep;
+        private uint lockstepPlayerId;
 
         [SerializeField] private GameObject[] itemPrefabs;
         ///<summary>unusedItemInsts[prefabIndex][itemSync.instIndex]</summary>
@@ -74,23 +74,23 @@ namespace JanSharp
         public void SendSpawnItemIA(int prefabIndex, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendSpawnItemIA  prefabIndex: {prefabIndex}, position: {position}, rotation: {rotation}");
-            lockStep.WriteSmall((uint)prefabIndex);
-            lockStep.Write(position);
-            lockStep.Write(rotation);
-            lockStep.SendInputAction(spawnItemIAId);
+            lockstep.WriteSmall((uint)prefabIndex);
+            lockstep.Write(position);
+            lockstep.Write(rotation);
+            lockstep.SendInputAction(spawnItemIAId);
         }
 
         [SerializeField] [HideInInspector] private uint spawnItemIAId;
-        [LockStepInputAction(nameof(spawnItemIAId))]
+        [LockstepInputAction(nameof(spawnItemIAId))]
         public void OnSpawnItemIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnSpawnItemIA");
             uint id = nextItemId++;
             object[] itemData = ItemData.New(
                 id: id,
-                prefabIndex: (int)lockStep.ReadSmallUInt(),
-                position: lockStep.ReadVector3(),
-                rotation: lockStep.ReadQuaternion()
+                prefabIndex: (int)lockstep.ReadSmallUInt(),
+                position: lockstep.ReadVector3(),
+                rotation: lockstep.ReadQuaternion()
             );
             allItems.Add(id, new DataToken(itemData));
             ArrList.Add(ref itemsWaitingForSpawn, ref itemsWaitingForSpawnCount, itemData);
@@ -147,16 +147,16 @@ namespace JanSharp
         public void SendDespawnItemIA(uint itemId)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendDespawnItemIA  itemId: {itemId}");
-            lockStep.WriteSmall(itemId);
-            lockStep.SendInputAction(despawnItemIAId);
+            lockstep.WriteSmall(itemId);
+            lockstep.SendInputAction(despawnItemIAId);
         }
 
         [SerializeField] [HideInInspector] private uint despawnItemIAId;
-        [LockStepInputAction(nameof(despawnItemIAId))]
+        [LockstepInputAction(nameof(despawnItemIAId))]
         public void OnDespawnItemIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnDespawnItemIA");
-            if (!allItems.Remove(lockStep.ReadSmallUInt(), out DataToken itemDataToken))
+            if (!allItems.Remove(lockstep.ReadSmallUInt(), out DataToken itemDataToken))
                 return;
             object[] itemData = (object[])itemDataToken.Reference;
             DespawnItem(itemData);
@@ -194,20 +194,20 @@ namespace JanSharp
         public void SendFloatingPositionIA(uint itemId, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendFloatingPositionIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
-            lockStep.WriteSmall(itemId);
-            lockStep.Write(position);
-            lockStep.Write(rotation);
-            lockStep.SendInputAction(floatingPositionIAId);
+            lockstep.WriteSmall(itemId);
+            lockstep.Write(position);
+            lockstep.Write(rotation);
+            lockstep.SendInputAction(floatingPositionIAId);
         }
 
         [SerializeField] [HideInInspector] private uint floatingPositionIAId;
-        [LockStepInputAction(nameof(floatingPositionIAId))]
+        [LockstepInputAction(nameof(floatingPositionIAId))]
         public void OnFloatingPositionIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnFloatingPositionIA");
-            uint itemId = lockStep.ReadSmallUInt();
-            Vector3 position = lockStep.ReadVector3();
-            Quaternion rotation = lockStep.ReadQuaternion();
+            uint itemId = lockstep.ReadSmallUInt();
+            Vector3 position = lockstep.ReadVector3();
+            Quaternion rotation = lockstep.ReadQuaternion();
 
             if (!TryGetItemData(itemId, out object[] itemData))
                 return;
@@ -221,20 +221,20 @@ namespace JanSharp
         public void SendPickupIA(uint itemId, int holdingPlayerId, bool isLeftHand)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendPickupIA  itemId: {itemId}, holdingPlayerId: {holdingPlayerId}, isLeftHand: {isLeftHand}");
-            lockStep.WriteSmall(itemId);
-            lockStep.WriteSmall(holdingPlayerId);
-            lockStep.Write((byte)(isLeftHand ? 1 : 0));
-            lockStep.SendInputAction(pickupIAId);
+            lockstep.WriteSmall(itemId);
+            lockstep.WriteSmall(holdingPlayerId);
+            lockstep.Write((byte)(isLeftHand ? 1 : 0));
+            lockstep.SendInputAction(pickupIAId);
         }
 
         [SerializeField] [HideInInspector] private uint pickupIAId;
-        [LockStepInputAction(nameof(pickupIAId))]
+        [LockstepInputAction(nameof(pickupIAId))]
         public void OnPickupIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnPickupIA");
-            uint itemId = lockStep.ReadSmallUInt();
-            int holdingPlayerId = lockStep.ReadSmallInt();
-            bool isLeftHand = lockStep.ReadByte() == 1;
+            uint itemId = lockstep.ReadSmallUInt();
+            int holdingPlayerId = lockstep.ReadSmallInt();
+            bool isLeftHand = lockstep.ReadByte() == 1;
 
             if (!TryGetItemData(itemId, out object[] itemData))
                 return;
@@ -249,22 +249,22 @@ namespace JanSharp
         public void SendDropIA(uint itemId, int prevHoldingPlayerId, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendDropIA  itemId: {itemId}, prevHoldingPlayerId: {prevHoldingPlayerId}, position: {position}, rotation: {rotation}");
-            lockStep.WriteSmall(itemId);
-            lockStep.WriteSmall(prevHoldingPlayerId);
-            lockStep.Write(position);
-            lockStep.Write(rotation);
-            lockStep.SendInputAction(dropIAId);
+            lockstep.WriteSmall(itemId);
+            lockstep.WriteSmall(prevHoldingPlayerId);
+            lockstep.Write(position);
+            lockstep.Write(rotation);
+            lockstep.SendInputAction(dropIAId);
         }
 
         [SerializeField] [HideInInspector] private uint dropIAId;
-        [LockStepInputAction(nameof(dropIAId))]
+        [LockstepInputAction(nameof(dropIAId))]
         public void OnDropIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnDropIA");
-            uint itemId = lockStep.ReadSmallUInt();
-            int prevHoldingPlayerId = lockStep.ReadSmallInt();
-            Vector3 position = lockStep.ReadVector3();
-            Quaternion rotation = lockStep.ReadQuaternion();
+            uint itemId = lockstep.ReadSmallUInt();
+            int prevHoldingPlayerId = lockstep.ReadSmallInt();
+            Vector3 position = lockstep.ReadVector3();
+            Quaternion rotation = lockstep.ReadQuaternion();
 
             if (!TryGetItemData(itemId, out object[] itemData))
                 return;
@@ -281,20 +281,20 @@ namespace JanSharp
         public void SendAttachIA(uint itemId, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendAttachIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
-            lockStep.WriteSmall(itemId);
-            lockStep.Write(position);
-            lockStep.Write(rotation);
-            lockStep.SendInputAction(attachIAId);
+            lockstep.WriteSmall(itemId);
+            lockstep.Write(position);
+            lockstep.Write(rotation);
+            lockstep.SendInputAction(attachIAId);
         }
 
         [SerializeField] [HideInInspector] private uint attachIAId;
-        [LockStepInputAction(nameof(attachIAId))]
+        [LockstepInputAction(nameof(attachIAId))]
         public void OnAttachIA()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnAttachIA");
-            uint itemId = lockStep.ReadSmallUInt();
-            Vector3 position = lockStep.ReadVector3();
-            Quaternion rotation = lockStep.ReadQuaternion();
+            uint itemId = lockstep.ReadSmallUInt();
+            Vector3 position = lockstep.ReadVector3();
+            Quaternion rotation = lockstep.ReadQuaternion();
 
             if (!TryGetItemData(itemId, out object[] itemData))
                 return;
@@ -327,27 +327,27 @@ namespace JanSharp
             item.activeIndex = -1;
         }
 
-        [LockStepEvent(LockStepEventType.OnClientLeft)]
+        [LockstepEvent(LockstepEventType.OnClientLeft)]
         public void OnClientLeft()
         {
-            Debug.Log($"[ItemSystem] ItemSystem  OnClientLeft  playerId: {lockStepPlayerId}");
-            if (!lockStep.IsMaster)
+            Debug.Log($"[ItemSystem] ItemSystem  OnClientLeft  playerId: {lockstepPlayerId}");
+            if (!lockstep.IsMaster)
                 return;
             // Drop items held by the left player.
             for (int i = 0; i < activeItemsCount; i++)
             {
                 ItemSync item = activeItems[i];
                 int playerId = item.HoldingPlayerId;
-                if (playerId == (int)lockStepPlayerId)
+                if (playerId == (int)lockstepPlayerId)
                     SendDropIA(item.id, playerId, item.transform.position, item.transform.rotation);
             }
         }
 
-        [LockStepEvent(LockStepEventType.OnMasterChanged)]
+        [LockstepEvent(LockstepEventType.OnMasterChanged)]
         public void OnMasterChanged()
         {
             Debug.Log($"[ItemSystem] ItemSystem  OnMasterChanged");
-            if (!lockStep.IsMaster)
+            if (!lockstep.IsMaster)
                 return;
             // Check if any items are held by players that no longer exist.
             for (int i = 0; i < activeItemsCount; i++)
@@ -366,39 +366,39 @@ namespace JanSharp
             Debug.Log($"[ItemSystem] ItemSystem  SerializeGameState  isExport: {isExport}");
 
             if (!isExport)
-                lockStep.WriteSmall(nextItemId);
+                lockstep.WriteSmall(nextItemId);
             DataList items = allItems.GetValues();
             int count = items.Count;
-            lockStep.WriteSmall((uint)count);
+            lockstep.WriteSmall((uint)count);
             for (int i = 0; i < count; i++)
             {
                 object[] itemData = (object[])items[i].Reference;
                 if (!isExport)
-                    lockStep.WriteSmall(ItemData.GetId(itemData));
-                lockStep.WriteSmall((uint)ItemData.GetPrefabIndex(itemData));
+                    lockstep.WriteSmall(ItemData.GetId(itemData));
+                lockstep.WriteSmall((uint)ItemData.GetPrefabIndex(itemData));
                 int holdingPlayerId = ItemData.GetHoldingPlayerId(itemData);
                 if (isExport)
                 {
                     if (holdingPlayerId == -1)
                     {
-                        lockStep.Write(ItemData.GetPosition(itemData));
-                        lockStep.Write(ItemData.GetRotation(itemData));
+                        lockstep.Write(ItemData.GetPosition(itemData));
+                        lockstep.Write(ItemData.GetRotation(itemData));
                     }
                     else
                     {
                         Transform itemTransform = ItemData.GetInst(itemData).transform;
-                        lockStep.Write(itemTransform.position);
-                        lockStep.Write(itemTransform.rotation);
+                        lockstep.Write(itemTransform.position);
+                        lockstep.Write(itemTransform.rotation);
                     }
                 }
                 else
                 {
-                    lockStep.Write(ItemData.GetPosition(itemData));
-                    lockStep.Write(ItemData.GetRotation(itemData));
-                    lockStep.WriteSmall(holdingPlayerId);
+                    lockstep.Write(ItemData.GetPosition(itemData));
+                    lockstep.Write(ItemData.GetRotation(itemData));
+                    lockstep.WriteSmall(holdingPlayerId);
                     if (holdingPlayerId != -1)
                     {
-                        lockStep.Write((byte)((ItemData.GetIsLeftHand(itemData) ? 1 : 0)
+                        lockstep.Write((byte)((ItemData.GetIsLeftHand(itemData) ? 1 : 0)
                             | (ItemData.GetIsAttached(itemData) ? 2 : 0)));
                     }
                 }
@@ -413,24 +413,24 @@ namespace JanSharp
                 CompleteReset();
 
             if (!isImport)
-                nextItemId = lockStep.ReadSmallUInt();
-            int count = (int)lockStep.ReadSmallUInt();
+                nextItemId = lockstep.ReadSmallUInt();
+            int count = (int)lockstep.ReadSmallUInt();
             for (int j = 0; j < count; j++)
             {
-                uint id = isImport ? nextItemId++ : lockStep.ReadSmallUInt();
+                uint id = isImport ? nextItemId++ : lockstep.ReadSmallUInt();
                 object[] itemData = ItemData.New(
                     id: id,
-                    prefabIndex: (int)lockStep.ReadSmallUInt(),
-                    position: lockStep.ReadVector3(),
-                    rotation: lockStep.ReadQuaternion()
+                    prefabIndex: (int)lockstep.ReadSmallUInt(),
+                    position: lockstep.ReadVector3(),
+                    rotation: lockstep.ReadQuaternion()
                 );
                 if (!isImport)
                 {
-                    int holdingPlayerId = lockStep.ReadSmallInt();
+                    int holdingPlayerId = lockstep.ReadSmallInt();
                     ItemData.SetHoldingPlayerId(itemData, holdingPlayerId);
                     if (holdingPlayerId != -1)
                     {
-                        int flags = lockStep.ReadByte();
+                        int flags = lockstep.ReadByte();
                         ItemData.SetIsLeftHand(itemData, (flags & 1) != 0);
                         ItemData.SetIsAttached(itemData, (flags & 2) != 0);
                     }

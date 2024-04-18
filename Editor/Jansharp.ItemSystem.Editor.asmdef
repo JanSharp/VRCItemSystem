@@ -4,7 +4,7 @@
         "JanSharp.ItemSystem",
         "JanSharp.Common",
         "JanSharp.Common.Editor",
-        "JanSharp.LockStep",
+        "JanSharp.Lockstep",
         "UdonSharp.Runtime",
         "UdonSharp.Editor",
         "Unity.TextMeshPro",

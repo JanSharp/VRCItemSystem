@@ -1,7 +1,7 @@
 {
   "name": "com.jansharp.item-system",
   "version": "0.1.0",
-  "description": "Item system with custom item syncing and synced instantiation, using LockStep.",
+  "description": "Item system with custom item syncing and synced instantiation, using Lockstep.",
   "displayName": "Item System",
   "unity": "2019.4",
   "author": {
@@ -16,7 +16,7 @@
   "vpmDependencies": {
     "com.vrchat.worlds": "^3.4.x",
     "com.jansharp.common": ">=0.3.1",
-    "com.jansharp.lock-step": ">=0.1.0"
+    "com.jansharp.lockstep": ">=0.1.0"
   },
   "url": "https://github.com/JanSharp/VRCItemSystem/releases/download/v0.1.0/com.jansharp.item-system.zip",
   "changelogUrl": "https://github.com/JanSharp/VRCItemSystem/blob/v0.1.0/CHANGELOG.md"

@@ -2,7 +2,7 @@
     "name": "JanSharp.ItemSystem",
     "references": [
         "JanSharp.Common",
-        "JanSharp.LockStep",
+        "JanSharp.Lockstep",
         "UdonSharp.Runtime",
         "Unity.TextMeshPro",
         "VRC.SDK3",

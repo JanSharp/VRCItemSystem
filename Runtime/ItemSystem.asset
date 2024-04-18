@@ -50,19 +50,19 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: lockStep
+      Data: lockstep
     - Name: $v
       Entry: 7
       Data: 2|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: lockStep
+      Data: lockstep
     - Name: <UserType>k__BackingField
       Entry: 7
       Data: 3|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: JanSharp.LockStep, JanSharp.LockStep
+      Data: JanSharp.Lockstep, JanSharp.Lockstep
     - Name: 
       Entry: 8
       Data: 
@@ -116,13 +116,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: lockStepPlayerId
+      Data: lockstepPlayerId
     - Name: $v
       Entry: 7
       Data: 7|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: lockStepPlayerId
+      Data: lockstepPlayerId
     - Name: <UserType>k__BackingField
       Entry: 7
       Data: 8|System.RuntimeType, mscorlib
