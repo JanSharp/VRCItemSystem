@@ -62,7 +62,7 @@ MonoBehaviour:
       Data: 3|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: JanSharp.Lockstep, JanSharp.Lockstep
+      Data: JanSharp.LockstepAPI, JanSharp.Lockstep
     - Name: 
       Entry: 8
       Data: 

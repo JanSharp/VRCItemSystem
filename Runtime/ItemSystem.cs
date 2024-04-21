@@ -19,7 +19,7 @@ namespace JanSharp
         public override bool GameStateSupportsImportExport => true;
         public override uint GameStateDataVersion => 0u;
         public override uint GameStateLowestSupportedDataVersion => 0u;
-        [HideInInspector] public Lockstep lockstep;
+        [HideInInspector] public LockstepAPI lockstep;
         private uint lockstepPlayerId;
 
         [SerializeField] private GameObject[] itemPrefabs;
