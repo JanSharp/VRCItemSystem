@@ -404,9 +404,9 @@ namespace JanSharp
             }
         }
 
-        public override string DeserializeGameState(bool isImport)
+        public override string DeserializeGameState(bool isImport, uint importedDataVersion)
         {
-            Debug.Log($"[ItemSystem] ItemSystem  DeserializeGameState  isImport: {isImport}");
+            Debug.Log($"[ItemSystem] ItemSystem  DeserializeGameState - isImport: {isImport}, importedDataVersion: {importedDataVersion}");
 
             if (isImport)
                 CompleteReset();
