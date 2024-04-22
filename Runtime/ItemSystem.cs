@@ -20,7 +20,6 @@ namespace JanSharp
         public override uint GameStateDataVersion => 0u;
         public override uint GameStateLowestSupportedDataVersion => 0u;
         [HideInInspector] public LockstepAPI lockstep;
-        private uint lockstepPlayerId;
 
         [SerializeField] private GameObject[] itemPrefabs;
         ///<summary>unusedItemInsts[prefabIndex][itemSync.instIndex]</summary>
@@ -330,7 +329,7 @@ namespace JanSharp
         [LockstepEvent(LockstepEventType.OnClientLeft)]
         public void OnClientLeft()
         {
-            Debug.Log($"[ItemSystem] ItemSystem  OnClientLeft  playerId: {lockstepPlayerId}");
+            Debug.Log($"[ItemSystem] ItemSystem  OnClientLeft  playerId: {lockstep.LeftPlayerId}");
             if (!lockstep.IsMaster)
                 return;
             // Drop items held by the left player.
@@ -338,7 +337,7 @@ namespace JanSharp
             {
                 ItemSync item = activeItems[i];
                 int playerId = item.HoldingPlayerId;
-                if (playerId == (int)lockstepPlayerId)
+                if (playerId == (int)lockstep.LeftPlayerId)
                     SendDropIA(item.id, playerId, item.transform.position, item.transform.rotation);
             }
         }
