@@ -73,9 +73,9 @@ namespace JanSharp
         public void SendSpawnItemIA(int prefabIndex, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendSpawnItemIA  prefabIndex: {prefabIndex}, position: {position}, rotation: {rotation}");
-            lockstep.WriteSmall((uint)prefabIndex);
-            lockstep.Write(position);
-            lockstep.Write(rotation);
+            lockstep.WriteSmallUInt((uint)prefabIndex);
+            lockstep.WriteVector3(position);
+            lockstep.WriteQuaternion(rotation);
             lockstep.SendInputAction(spawnItemIAId);
         }
 
@@ -146,7 +146,7 @@ namespace JanSharp
         public void SendDespawnItemIA(uint itemId)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendDespawnItemIA  itemId: {itemId}");
-            lockstep.WriteSmall(itemId);
+            lockstep.WriteSmallUInt(itemId);
             lockstep.SendInputAction(despawnItemIAId);
         }
 
@@ -193,9 +193,9 @@ namespace JanSharp
         public void SendFloatingPositionIA(uint itemId, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendFloatingPositionIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
-            lockstep.WriteSmall(itemId);
-            lockstep.Write(position);
-            lockstep.Write(rotation);
+            lockstep.WriteSmallUInt(itemId);
+            lockstep.WriteVector3(position);
+            lockstep.WriteQuaternion(rotation);
             lockstep.SendInputAction(floatingPositionIAId);
         }
 
@@ -220,9 +220,9 @@ namespace JanSharp
         public void SendPickupIA(uint itemId, int holdingPlayerId, bool isLeftHand)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendPickupIA  itemId: {itemId}, holdingPlayerId: {holdingPlayerId}, isLeftHand: {isLeftHand}");
-            lockstep.WriteSmall(itemId);
-            lockstep.WriteSmall(holdingPlayerId);
-            lockstep.Write((byte)(isLeftHand ? 1 : 0));
+            lockstep.WriteSmallUInt(itemId);
+            lockstep.WriteSmallInt(holdingPlayerId);
+            lockstep.WriteByte((byte)(isLeftHand ? 1 : 0));
             lockstep.SendInputAction(pickupIAId);
         }
 
@@ -248,10 +248,10 @@ namespace JanSharp
         public void SendDropIA(uint itemId, int prevHoldingPlayerId, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendDropIA  itemId: {itemId}, prevHoldingPlayerId: {prevHoldingPlayerId}, position: {position}, rotation: {rotation}");
-            lockstep.WriteSmall(itemId);
-            lockstep.WriteSmall(prevHoldingPlayerId);
-            lockstep.Write(position);
-            lockstep.Write(rotation);
+            lockstep.WriteSmallUInt(itemId);
+            lockstep.WriteSmallInt(prevHoldingPlayerId);
+            lockstep.WriteVector3(position);
+            lockstep.WriteQuaternion(rotation);
             lockstep.SendInputAction(dropIAId);
         }
 
@@ -280,9 +280,9 @@ namespace JanSharp
         public void SendAttachIA(uint itemId, Vector3 position, Quaternion rotation)
         {
             Debug.Log($"[ItemSystem] ItemSystem  SendAttachIA  itemId: {itemId}, position: {position}, rotation: {rotation}");
-            lockstep.WriteSmall(itemId);
-            lockstep.Write(position);
-            lockstep.Write(rotation);
+            lockstep.WriteSmallUInt(itemId);
+            lockstep.WriteVector3(position);
+            lockstep.WriteQuaternion(rotation);
             lockstep.SendInputAction(attachIAId);
         }
 
@@ -365,39 +365,39 @@ namespace JanSharp
             Debug.Log($"[ItemSystem] ItemSystem  SerializeGameState  isExport: {isExport}");
 
             if (!isExport)
-                lockstep.WriteSmall(nextItemId);
+                lockstep.WriteSmallUInt(nextItemId);
             DataList items = allItems.GetValues();
             int count = items.Count;
-            lockstep.WriteSmall((uint)count);
+            lockstep.WriteSmallUInt((uint)count);
             for (int i = 0; i < count; i++)
             {
                 object[] itemData = (object[])items[i].Reference;
                 if (!isExport)
-                    lockstep.WriteSmall(ItemData.GetId(itemData));
-                lockstep.WriteSmall((uint)ItemData.GetPrefabIndex(itemData));
+                    lockstep.WriteSmallUInt(ItemData.GetId(itemData));
+                lockstep.WriteSmallUInt((uint)ItemData.GetPrefabIndex(itemData));
                 int holdingPlayerId = ItemData.GetHoldingPlayerId(itemData);
                 if (isExport)
                 {
                     if (holdingPlayerId == -1)
                     {
-                        lockstep.Write(ItemData.GetPosition(itemData));
-                        lockstep.Write(ItemData.GetRotation(itemData));
+                        lockstep.WriteVector3(ItemData.GetPosition(itemData));
+                        lockstep.WriteQuaternion(ItemData.GetRotation(itemData));
                     }
                     else
                     {
                         Transform itemTransform = ItemData.GetInst(itemData).transform;
-                        lockstep.Write(itemTransform.position);
-                        lockstep.Write(itemTransform.rotation);
+                        lockstep.WriteVector3(itemTransform.position);
+                        lockstep.WriteQuaternion(itemTransform.rotation);
                     }
                 }
                 else
                 {
-                    lockstep.Write(ItemData.GetPosition(itemData));
-                    lockstep.Write(ItemData.GetRotation(itemData));
-                    lockstep.WriteSmall(holdingPlayerId);
+                    lockstep.WriteVector3(ItemData.GetPosition(itemData));
+                    lockstep.WriteQuaternion(ItemData.GetRotation(itemData));
+                    lockstep.WriteSmallInt(holdingPlayerId);
                     if (holdingPlayerId != -1)
                     {
-                        lockstep.Write((byte)((ItemData.GetIsLeftHand(itemData) ? 1 : 0)
+                        lockstep.WriteByte((byte)((ItemData.GetIsLeftHand(itemData) ? 1 : 0)
                             | (ItemData.GetIsAttached(itemData) ? 2 : 0)));
                     }
                 }
