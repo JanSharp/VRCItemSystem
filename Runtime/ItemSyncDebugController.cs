@@ -73,17 +73,7 @@ namespace JanSharp
             for (int i = 0; i < itemCount; i++)
             {
                 var item = items[i];
-                item.SmallMagnitudeDiff = smallMagnitudeDiff;
-                item.SmallAngleDiff = smallAngleDiff;
-                item.ConsistentOffsetDuration = consistentOffsetDuration;
-                item.ConsistentOffsetFrameCount = consistentOffsetFrameCount;
                 item.InterpolationDuration = interpolationDuration;
-                item.DesktopRotationCheckInterval = desktopRotationCheckInterval;
-                item.DesktopRotationCheckFastInterval = desktopRotationCheckFastInterval;
-                item.DesktopRotationTolerance = desktopRotationTolerance;
-                item.DesktopRotationFastFalloff = desktopRotationFastFalloff;
-                item.VRLocalAttachment = vRLocalAttachment;
-                item.DesktopLocalAttachment = desktopLocalAttachment;
             }
         }
         #else

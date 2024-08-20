@@ -10,7 +10,6 @@ namespace JanSharp
     // frame delayed, or it is just a jittering issue while the item is actually held (which is why
     // UpdateSender is not writing to rb.position)
 
-    [RequireComponent(typeof(VRC.SDK3.Components.VRCPickup))]
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ItemSync : UdonSharpBehaviour
     {
@@ -20,27 +19,21 @@ namespace JanSharp
 
         [System.NonSerialized] public uint id;
         private int holdingPlayerId = -1;
-        private bool isLeftHand;
+        private VRCPlayerApi.TrackingDataType attachedTrackingGS;
         private Vector3 targetPosition;
         private Quaternion targetRotation;
         private bool isVisible = true;
         // TODO: pickup.IsHeld null ref exception
-        public bool LocalPlayerIsInControl => pickup.IsHeld || (holdingPlayerId == -1 && itemSystem.lockstep.IsMaster);
+        public bool LocalPlayerIsInControl => pickup.isHeld || (holdingPlayerId == -1 && itemSystem.lockstep.IsMaster);
 
         public int HoldingPlayerId => holdingPlayerId;
 
-        public void SetHoldingPlayer(int playerId, bool isLeftHand)
+        public void SetHoldingPlayer(int playerId, VRCPlayerApi.TrackingDataType attachedTrackingGS)
         {
-            if (playerId == holdingPlayerId && isLeftHand == this.isLeftHand)
+            if (playerId == holdingPlayerId && attachedTrackingGS == this.attachedTrackingGS)
                 return;
             holdingPlayerId = playerId;
-            this.isLeftHand = isLeftHand;
-            attachedBone = isLeftHand
-                ? HumanBodyBones.LeftHand
-                : HumanBodyBones.RightHand;
-            attachedTracking = isLeftHand
-                ? VRCPlayerApi.TrackingDataType.LeftHand
-                : VRCPlayerApi.TrackingDataType.RightHand;
+            this.attachedTrackingGS = attachedTrackingGS;
 
             if (holdingPlayerId == localPlayerId) // Confirmed, game state now matches latency state.
                 return;
@@ -75,7 +68,7 @@ namespace JanSharp
         [SerializeField] [HideInInspector] private ItemSyncDebugController debugController;
         #endif
 
-        [System.NonSerialized] public VRC_Pickup pickup;
+        [System.NonSerialized] public CustomPickup pickup;
         [System.NonSerialized] public Rigidbody rb;
 
 
@@ -102,17 +95,9 @@ namespace JanSharp
         ///<summary>Does nothing when returning false, otherwise sets parentPos and parentRot.</summary>
         private bool TryLoadHandPos()
         {
-            if (!isAttachedPlayerValid)
+            if (!IsAttachedPlayerValid)
                 return false;
-            VRCPlayerApi player = attachedPlayer;
-            HumanBodyBones bone = attachedBone;
-            parentPos = player.GetBonePosition(bone);
-            if (parentPos != Vector3.zero)
-            {
-                parentRot = player.GetBoneRotation(bone);
-                return true;
-            }
-            var trackingData = player.GetTrackingData(attachedTracking);
+            var trackingData = attachedPlayer.GetTrackingData(attachedTracking);
             parentPos = trackingData.position;
             parentRot = trackingData.rotation;
             return true;
@@ -120,15 +105,11 @@ namespace JanSharp
 
 
         private const byte IdleState = 0; // the only state with CustomUpdate deregistered
-        private const byte VRWaitingForConsistentOffsetState = 1;
-        private const byte VRAttachedSendingState = 2; // attached to hand
-        private const byte DesktopWaitingForConsistentOffsetState = 3;
-        private const byte DesktopAttachedSendingState = 4; // attached to hand
-        private const byte DesktopAttachedRotatingState = 5; // attached to hand
-        private const byte ExactAttachedSendingState = 6; // attached to hand
-        private const byte ReceivingFloatingState = 7;
-        private const byte ReceivingMovingToBoneState = 8; // attached to hand, but interpolating offset towards the actual attached position
-        private const byte ReceivingAttachedState = 9; // attached to hand
+        private const byte AttachedSendingState = 1; // attached to hand
+        // private const byte DesktopAttachedRotatingState = 2; // attached to hand
+        private const byte ReceivingFloatingState = 3;
+        private const byte ReceivingMovingToBoneState = 4; // attached to hand, but interpolating offset towards the actual attached position
+        private const byte ReceivingAttachedState = 5; // attached to hand
         private byte localState = IdleState;
         #if ItemSyncDebug
         public
@@ -175,18 +156,10 @@ namespace JanSharp
             {
                 case IdleState:
                     return "IdleState";
-                case VRWaitingForConsistentOffsetState:
-                    return "VRWaitingForConsistentOffsetState";
-                case VRAttachedSendingState:
-                    return "VRAttachedSendingState";
-                case DesktopWaitingForConsistentOffsetState:
-                    return "DesktopWaitingForConsistentOffsetState";
-                case DesktopAttachedSendingState:
-                    return "DesktopAttachedSendingState";
-                case DesktopAttachedRotatingState:
-                    return "DesktopAttachedRotatingState";
-                case ExactAttachedSendingState:
-                    return "ExactAttachedSendingState";
+                case AttachedSendingState:
+                    return "AttachedSendingState";
+                // case DesktopAttachedRotatingState:
+                //     return "DesktopAttachedRotatingState";
                 case ReceivingFloatingState:
                     return "ReceivingFloatingState";
                 case ReceivingMovingToBoneState:
@@ -238,63 +211,10 @@ namespace JanSharp
 
         // attachment data for both sending and receiving
         private VRCPlayerApi attachedPlayer;
-        private bool isAttachedPlayerValid => attachedPlayer != null && attachedPlayer.IsValid();
-        private HumanBodyBones attachedBone;
+        private bool IsAttachedPlayerValid => attachedPlayer != null && attachedPlayer.IsValid();
         private VRCPlayerApi.TrackingDataType attachedTracking;
         private Vector3 attachedLocalOffset;
         private Quaternion attachedRotationOffset;
-
-        // local attachment means that the item will also be attached to the hand for the player holding the item
-        // once the local position and rotation offset has been determined.
-        // this ultimately solves the issue that the offset determination will never be perfect, but
-        // by locally attaching it will still look the same for everyone including the person holding the item
-        #if ItemSyncDebug
-        [HideInInspector] public bool VRLocalAttachment = true; // asdf
-        [HideInInspector] public bool DesktopLocalAttachment = true; // asdf
-        #else
-        private const bool VRLocalAttachment = true;
-        private const bool DesktopLocalAttachment = true;
-        #endif
-
-        // VRWaitingForConsistentOffsetState and DesktopWaitingForConsistentOffsetState
-        #if ItemSyncDebug
-        [HideInInspector] public float SmallMagnitudeDiff = 0.01f; // asdf
-        [HideInInspector] public float SmallAngleDiff = 7f; // asdf
-        [HideInInspector] public float ConsistentOffsetDuration = 0.2f; // asdf
-        [HideInInspector] public int ConsistentOffsetFrameCount = 4; // asdf
-        #else
-        private const float SmallMagnitudeDiff = 0.01f;
-        private const float SmallAngleDiff = 7f;
-        private const float ConsistentOffsetDuration = 0.2f;
-        private const int ConsistentOffsetFrameCount = 4;
-        #endif
-        private Vector3 prevPositionOffset;
-        private Quaternion prevRotationOffset;
-        private float consistentOffsetStopTime;
-        private int stillFrameCount; // to prevent super low framerate from causing false positives
-
-        // DesktopAttachedSendingState and DesktopAttachedRotatingState
-        #if ItemSyncDebug
-        [HideInInspector] public float DesktopRotationCheckInterval = 1f; // asdf
-        [HideInInspector] public float DesktopRotationCheckFastInterval = 0.15f; // asdf
-        [HideInInspector] public float DesktopRotationTolerance = 3f; // asdf
-        /// <summary>
-        /// Amount of fast checks where the rotation didn't change before going back to the slower interval
-        /// </summary>
-        [HideInInspector] public int DesktopRotationFastFalloff = 10; // asdf
-        #else
-        private const float DesktopRotationCheckInterval = 1f;
-        private const float DesktopRotationCheckFastInterval = 0.15f;
-        private const float DesktopRotationTolerance = 3f;
-        private const int DesktopRotationFastFalloff = 10;
-        #endif
-        private float nextRotationCheckTime;
-        private float slowDownTime;
-
-        // ExactAttachedSendingState
-        // NOTE: these really should be static fields, but UdonSharp 0.20.3 does not support them
-        private Quaternion gripRotationOffset = Quaternion.Euler(0, 35, 0);
-        private Quaternion gunRotationOffset = Quaternion.Euler(0, 305, 0);
 
         // ReceivingFloatingState and AttachedInterpolationState
         #if ItemSyncDebug
@@ -326,90 +246,26 @@ namespace JanSharp
             itemSystem.SendDespawnItemIA(this.id);
         }
 
-        private Vector3 GetLocalPositionToTransform(Transform transform, Vector3 worldPosition)
-            => transform.InverseTransformDirection(worldPosition - transform.position);
-        private Quaternion GetLocalRotationToTransform(Transform transform, Quaternion worldRotation)
-            => Quaternion.Inverse(transform.rotation) * worldRotation;
         private bool IsReceivingState() => LocalState >= ReceivingFloatingState;
-        private bool IsAttachedSendingState()
-            => LocalState == VRAttachedSendingState
-            || LocalState == DesktopAttachedSendingState
-            || LocalState == DesktopAttachedRotatingState
-            || LocalState == ExactAttachedSendingState;
 
         public override void OnPickup()
         {
             Debug.Log($"[ItemSystem] ItemSync  OnPickup  itemId: {this.id}");
-            if (!pickup.IsHeld)
-            {
-                Debug.LogError("[ItemSystem] Picked up but not held?!", this);
-                return;
-            }
-            if (pickup.currentHand == VRC_Pickup.PickupHand.None)
-            {
-                Debug.LogError("[ItemSystem] Held but not in either hand?!", this);
-                return;
-            }
 
             attachedPlayer = localPlayer;
-            var currentHand = pickup.currentHand;
-            attachedBone = currentHand == VRC_Pickup.PickupHand.Left
-                ? HumanBodyBones.LeftHand
-                : HumanBodyBones.RightHand;
-            attachedTracking = currentHand == VRC_Pickup.PickupHand.Left
-                ? VRCPlayerApi.TrackingDataType.LeftHand
-                : VRCPlayerApi.TrackingDataType.RightHand;
+            attachedTracking = pickup.heldTrackingData;
 
-            itemSystem.SendPickupIA(id, localPlayerId, currentHand == VRC_Pickup.PickupHand.Left);
-
-            // if (pickup.orientation == VRC_Pickup.PickupOrientation.Gun)
-            // {
-            //     if (HandleExactOffset(pickup.ExactGun, gunRotationOffset))
-            //         return;
-            // }
-            // else if (pickup.orientation == VRC_Pickup.PickupOrientation.Grip)
-            // {
-            //     if (HandleExactOffset(pickup.ExactGrip, gripRotationOffset))
-            //         return;
-            // }
+            itemSystem.SendPickupIA(id, localPlayerId, attachedTracking);
 
             if (!TryLoadHandPos())
                 return;
-            worldPos = ItemPosition;
-            worldRot = ItemRotation;
-            WorldToLocal();
-            if (attachedPlayer.IsUserInVR())
-            {
-                prevPositionOffset = localPos;
-                prevRotationOffset = localRot;
-                stillFrameCount = 0;
-                LocalState = VRWaitingForConsistentOffsetState;
-                consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
-            }
-            else
-            {
-                prevPositionOffset = localPos;
-                prevRotationOffset = localRot;
-                stillFrameCount = 0;
-                LocalState = DesktopWaitingForConsistentOffsetState;
-                consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
-            }
-        }
-
-        private bool HandleExactOffset(Transform exact, Quaternion rotationOffset)
-        {
-            if (exact == null)
-                return false;
-            // figure out offset from exact transform to center of object
-            // this is pretty much copied from CyanEmu, except it doesn't work
-            // either I'm stupid and too tired to see it or - what I actually believe - I have to do it differently
-            // what's great is that there is basically zero documentation about manipulation of quaternions. Yay!
-            // TODO: fix exact offsets
-            attachedRotationOffset = rotationOffset * Quaternion.Inverse(GetLocalRotationToTransform(exact, ItemRotation));
-            attachedLocalOffset = attachedRotationOffset * GetLocalPositionToTransform(exact, ItemPosition);
-            SendFloatingData();
-            LocalState = ExactAttachedSendingState;
-            return true;
+            // worldPos = ItemPosition;
+            // worldRot = ItemRotation;
+            // WorldToLocal();
+            attachedLocalOffset = pickup.heldOffsetVector;
+            attachedRotationOffset = pickup.heldOffsetRotation;
+            LocalState = AttachedSendingState;
+            SendAttachedData();
         }
 
         public override void OnDrop()
@@ -426,123 +282,11 @@ namespace JanSharp
         {
             if (LocalState == IdleState)
             {
-                Debug.LogError($"[ItemSystem] It should truly be impossible for CustomUpdate to run when an item is in IdleState. Item name: ${this.name}.", this);
+                Debug.LogError($"[ItemSystem] It should truly be impossible for an item to get updated white it is in IdleState. Item name: ${this.name}.", this);
                 return;
             }
             if (IsReceivingState())
                 UpdateReceiver();
-            else
-                UpdateSender();
-        }
-
-        private bool ItemOffsetWasConsistent()
-        {
-            worldPos = ItemPosition;
-            worldRot = ItemRotation;
-            WorldToLocal();
-            #if ItemSyncDebug
-            Debug.Log($"[ItemSystemDebug] WaitingForConsistentOffsetState: offset diff: {localPos - prevPositionOffset}, "
-                + $"offset diff magnitude {(localPos - prevPositionOffset).magnitude}, "
-                + $"angle diff: {Quaternion.Angle(localRot, prevRotationOffset)}.");
-            #endif
-            if ((localPos - prevPositionOffset).magnitude <= SmallMagnitudeDiff
-                && Quaternion.Angle(localRot, prevRotationOffset) <= SmallAngleDiff)
-            {
-                stillFrameCount++;
-                #if ItemSyncDebug
-                Debug.Log($"[ItemSystemDebug] stillFrameCount: {stillFrameCount}, Time.time: {Time.time}, stop time: {consistentOffsetStopTime}.");
-                #endif
-                if (stillFrameCount >= ConsistentOffsetFrameCount && Time.time >= consistentOffsetStopTime)
-                {
-                    #if ItemSyncDebug
-                    Debug.Log("[ItemSystemDebug] Setting attached offset.");
-                    #endif
-                    attachedLocalOffset = localPos;
-                    attachedRotationOffset = localRot;
-                    return true;
-                }
-            }
-            else
-            {
-                #if ItemSyncDebug
-                Debug.Log("[ItemSystemDebug] Moved too much, resetting timer.");
-                #endif
-                stillFrameCount = 0;
-                consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
-            }
-
-            prevPositionOffset = localPos;
-            prevRotationOffset = localRot;
-            return false;
-        }
-
-        private void UpdateSender()
-        {
-            if (LocalState == VRAttachedSendingState)
-            {
-                if (VRLocalAttachment)
-                    MoveItemToBoneWithOffset(attachedLocalOffset, attachedRotationOffset);
-                return;
-            }
-            if (LocalState == DesktopAttachedSendingState || LocalState == DesktopAttachedRotatingState)
-            {
-                if (!TryLoadHandPos())
-                    return;
-                if (DesktopLocalAttachment)
-                {
-                    // only set position, because you can rotate items on desktop
-                    localPos = attachedLocalOffset;
-                    LocalToWorld();
-                    this.transform.position = worldPos;
-                }
-                // sync item rotation
-                float time = Time.time;
-                if (time >= nextRotationCheckTime)
-                {
-                    worldRot = ItemRotation;
-                    WorldToLocal();
-                    if (Quaternion.Angle(attachedRotationOffset, localRot) > DesktopRotationTolerance)
-                    {
-                        LocalState = DesktopAttachedRotatingState;
-                        slowDownTime = nextRotationCheckTime + DesktopRotationCheckFastInterval * DesktopRotationFastFalloff;
-                        attachedRotationOffset = localRot;
-                        SendAttachedData();
-                    }
-                    else if (time >= slowDownTime)
-                    {
-                        LocalState = DesktopAttachedSendingState;
-                        // SendAttachedData(); // TODO: Should this be here? Or just not at all? I don't think it should.
-                    }
-                    nextRotationCheckTime += LocalState == DesktopAttachedRotatingState ? DesktopRotationCheckFastInterval : DesktopRotationCheckInterval;
-                }
-                return;
-            }
-            if (LocalState == ExactAttachedSendingState)
-                return;
-
-            bool success = TryLoadHandPos();
-
-            if (LocalState == VRWaitingForConsistentOffsetState && success)
-            {
-                if (ItemOffsetWasConsistent())
-                {
-                    LocalState = VRAttachedSendingState;
-                    SendAttachedData();
-                    return;
-                }
-            }
-            else if (success)
-            {
-                if (ItemOffsetWasConsistent())
-                {
-                    LocalState = DesktopAttachedSendingState;
-                    nextRotationCheckTime = Time.time + DesktopRotationCheckInterval;
-                    SendAttachedData();
-                    return;
-                }
-            }
-
-            SendFloatingData(rateLimited: true); // otherwise it's still floating
         }
 
         private void MoveItemToBoneWithOffset(Vector3 offset, Quaternion rotationOffset)
@@ -561,7 +305,7 @@ namespace JanSharp
             // prevent this object from being moved by this logic if the local player is holding it
             // we might not have gotten the OnPickup event before the (this) Update event yet
             // not sure if that's even possible, but just in case
-            if (pickup.IsHeld)
+            if (pickup.isHeld)
                 return;
 
             if (LocalState == ReceivingAttachedState)

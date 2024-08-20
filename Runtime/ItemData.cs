@@ -22,8 +22,8 @@ namespace JanSharp
         public const int IsAttached = 4;
         ///<summary>int</summary>
         public const int HoldingPlayerId = 5;
-        ///<summary>bool</summary>
-        public const int IsLeftHand = 6;
+        ///<summary>VRCPlayerApi.TrackingDataType</summary>
+        public const int AttachedTracking = 6;
         ///<summary>ItemSync</summary>
         public const int Inst = 7;
         public const int ObjectSize = 8;
@@ -35,7 +35,7 @@ namespace JanSharp
             Quaternion rotation = default,
             bool isAttached = default,
             int holdingPlayerId = -1,
-            bool isLeftHand = default,
+            VRCPlayerApi.TrackingDataType attachedTracking = default,
             ItemSync inst = default)
         {
             object[] itemData = new object[ObjectSize];
@@ -45,7 +45,7 @@ namespace JanSharp
             itemData[Rotation] = rotation;
             itemData[IsAttached] = isAttached;
             itemData[HoldingPlayerId] = holdingPlayerId;
-            itemData[IsLeftHand] = isLeftHand;
+            itemData[AttachedTracking] = attachedTracking;
             itemData[Inst] = inst;
             return itemData;
         }
@@ -74,10 +74,10 @@ namespace JanSharp
             => (int)itemData[HoldingPlayerId];
         public static void SetHoldingPlayerId(object[] itemData, int holdingPlayerId)
             => itemData[HoldingPlayerId] = holdingPlayerId;
-        public static bool GetIsLeftHand(object[] itemData)
-            => (bool)itemData[IsLeftHand];
-        public static void SetIsLeftHand(object[] itemData, bool isLeftHand)
-            => itemData[IsLeftHand] = isLeftHand;
+        public static VRCPlayerApi.TrackingDataType GetAttachedTracking(object[] itemData)
+            => (VRCPlayerApi.TrackingDataType)itemData[AttachedTracking];
+        public static void SetAttachedTracking(object[] itemData, VRCPlayerApi.TrackingDataType attachedTracking)
+            => itemData[AttachedTracking] = attachedTracking;
         public static ItemSync GetInst(object[] itemData)
             => (ItemSync)itemData[Inst];
         public static void SetInst(object[] itemData, ItemSync inst)

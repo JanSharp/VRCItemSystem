@@ -99,7 +99,9 @@ namespace JanSharp
         {
             ItemSync itemSync;
             int prefabIndex = ItemData.GetPrefabIndex(itemData);
+            #if ItemSyncDebug
             Debug.Log($"[ItemSystemDebug] GetItemInst  (inner) - {prefabIndex}");
+            #endif
             int unusedCount = unusedItemInstsCounts[prefabIndex];
             if (unusedCount > 0)
             {
@@ -125,7 +127,7 @@ namespace JanSharp
             itemSync.itemSystem = this;
             itemSync.localPlayer = Networking.LocalPlayer;
             itemSync.localPlayerId = Networking.LocalPlayer.playerId;
-            itemSync.pickup = itemSync.GetComponent<VRC_Pickup>();
+            itemSync.pickup = itemSync.GetComponent<CustomPickup>();
             itemSync.rb = itemSync.GetComponent<Rigidbody>();
             return itemSync;
         }
@@ -138,7 +140,7 @@ namespace JanSharp
             itemSync.id = ItemData.GetId(itemData);
             int holdingPlayerId = ItemData.GetHoldingPlayerId(itemData);
             if (holdingPlayerId != -1)
-                itemSync.SetHoldingPlayer(holdingPlayerId, ItemData.GetIsLeftHand(itemData));
+                itemSync.SetHoldingPlayer(holdingPlayerId, ItemData.GetAttachedTracking(itemData));
             if (ItemData.GetIsAttached(itemData))
                 itemSync.SetAttached(ItemData.GetPosition(itemData), ItemData.GetRotation(itemData));
         }
@@ -217,12 +219,51 @@ namespace JanSharp
                 itemSync.SetFloatingPosition(position, rotation);
         }
 
-        public void SendPickupIA(uint itemId, int holdingPlayerId, bool isLeftHand)
+        private byte TrackingTypeToByte(VRCPlayerApi.TrackingDataType trackingType)
         {
-            Debug.Log($"[ItemSystem] ItemSystem  SendPickupIA  itemId: {itemId}, holdingPlayerId: {holdingPlayerId}, isLeftHand: {isLeftHand}");
+            switch (trackingType)
+            {
+                case VRCPlayerApi.TrackingDataType.Head:
+                    return 0;
+                case VRCPlayerApi.TrackingDataType.LeftHand:
+                    return 1;
+                case VRCPlayerApi.TrackingDataType.RightHand:
+                    return 2;
+                case VRCPlayerApi.TrackingDataType.AvatarRoot:
+                    return 3;
+                case VRCPlayerApi.TrackingDataType.Origin:
+                    return 4;
+                default:
+                    return 0;
+            }
+        }
+
+        private VRCPlayerApi.TrackingDataType ByteToTrackingType(byte trackingValue)
+        {
+            switch (trackingValue)
+            {
+                case 0:
+                    return VRCPlayerApi.TrackingDataType.Head;
+                case 1:
+                    return VRCPlayerApi.TrackingDataType.LeftHand;
+                case 2:
+                    return VRCPlayerApi.TrackingDataType.RightHand;
+                case 3:
+                    return VRCPlayerApi.TrackingDataType.AvatarRoot;
+                case 4:
+                    return VRCPlayerApi.TrackingDataType.Origin;
+                default:
+                    return VRCPlayerApi.TrackingDataType.Head;
+            }
+        }
+
+        public void SendPickupIA(uint itemId, int holdingPlayerId, VRCPlayerApi.TrackingDataType attachedTracking)
+        {
+            byte attachedTrackingValue = TrackingTypeToByte(attachedTracking);
+            Debug.Log($"[ItemSystem] ItemSystem  SendPickupIA  itemId: {itemId}, holdingPlayerId: {holdingPlayerId}, attachedTracking: {attachedTrackingValue}");
             lockstep.WriteSmallUInt(itemId);
             lockstep.WriteSmallInt(holdingPlayerId);
-            lockstep.WriteByte((byte)(isLeftHand ? 1 : 0));
+            lockstep.WriteByte(attachedTrackingValue);
             lockstep.SendInputAction(pickupIAId);
         }
 
@@ -233,16 +274,16 @@ namespace JanSharp
             Debug.Log($"[ItemSystem] ItemSystem  OnPickupIA");
             uint itemId = lockstep.ReadSmallUInt();
             int holdingPlayerId = lockstep.ReadSmallInt();
-            bool isLeftHand = lockstep.ReadByte() == 1;
+            VRCPlayerApi.TrackingDataType attachedTracking = ByteToTrackingType(lockstep.ReadByte());
 
             if (!TryGetItemData(itemId, out object[] itemData))
                 return;
             ItemData.SetIsAttached(itemData, false); // After an item is picked up, it is not attached yet.
             ItemData.SetHoldingPlayerId(itemData, holdingPlayerId);
-            ItemData.SetIsLeftHand(itemData, isLeftHand);
+            ItemData.SetAttachedTracking(itemData, attachedTracking);
             ItemSync itemSync = ItemData.GetInst(itemData);
             if (itemSync != null)
-                itemSync.SetHoldingPlayer(holdingPlayerId, isLeftHand);
+                itemSync.SetHoldingPlayer(holdingPlayerId, attachedTracking);
         }
 
         public void SendDropIA(uint itemId, int prevHoldingPlayerId, Vector3 position, Quaternion rotation)
@@ -397,8 +438,8 @@ namespace JanSharp
                     lockstep.WriteSmallInt(holdingPlayerId);
                     if (holdingPlayerId != -1)
                     {
-                        lockstep.WriteByte((byte)((ItemData.GetIsLeftHand(itemData) ? 1 : 0)
-                            | (ItemData.GetIsAttached(itemData) ? 2 : 0)));
+                        lockstep.WriteByte((byte)((TrackingTypeToByte(ItemData.GetAttachedTracking(itemData)) << 1)
+                            | (ItemData.GetIsAttached(itemData) ? 1 : 0)));
                     }
                 }
             }
@@ -430,8 +471,8 @@ namespace JanSharp
                     if (holdingPlayerId != -1)
                     {
                         int flags = lockstep.ReadByte();
-                        ItemData.SetIsLeftHand(itemData, (flags & 1) != 0);
-                        ItemData.SetIsAttached(itemData, (flags & 2) != 0);
+                        ItemData.SetAttachedTracking(itemData, ByteToTrackingType((byte)(flags >> 1)));
+                        ItemData.SetIsAttached(itemData, (flags & 1) != 0);
                     }
                 }
                 allItems.Add(id, new DataToken(itemData));

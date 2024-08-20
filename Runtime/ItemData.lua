@@ -18,7 +18,7 @@ return {
     -- {type = "float", name = "scale", default = "1f"},
     {type = "bool", name = "isAttached"},
     {type = "int", name = "holdingPlayerId", default = "-1"},
-    {type = "bool", name = "isLeftHand"},
+    {type = "VRCPlayerApi.TrackingDataType", name = "attachedTracking"},
     {type = "ItemSync", name = "inst"}, -- Not part of game state.
   },
 }

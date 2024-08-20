@@ -3,6 +3,7 @@
     "references": [
         "JanSharp.Common",
         "JanSharp.Lockstep",
+        "JanSharp.CustomInteractsAndPickups",
         "UdonSharp.Runtime",
         "Unity.TextMeshPro",
         "VRC.SDK3",

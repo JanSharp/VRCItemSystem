@@ -5,6 +5,7 @@
         "JanSharp.Common",
         "JanSharp.Common.Editor",
         "JanSharp.Lockstep",
+        "JanSharp.CustomInteractsAndPickups",
         "UdonSharp.Runtime",
         "UdonSharp.Editor",
         "Unity.TextMeshPro",
