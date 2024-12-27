@@ -1,4 +1,4 @@
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
@@ -342,10 +342,10 @@ namespace JanSharp
             }
         }
 
-        [LockstepEvent(LockstepEventType.OnMasterChanged)]
-        public void OnMasterChanged()
+        [LockstepEvent(LockstepEventType.OnMasterClientChanged)]
+        public void OnMasterClientChanged()
         {
-            Debug.Log($"[ItemSystem] ItemSystem  OnMasterChanged");
+            Debug.Log($"[ItemSystem] ItemSystem  OnMasterClientChanged");
             if (!lockstep.IsMaster)
                 return;
             // Check if any items are held by players that no longer exist.
