@@ -1,4 +1,4 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
 using VRC.SDKBase;
@@ -19,7 +19,7 @@ namespace JanSharp
         public override bool GameStateSupportsImportExport => true;
         public override uint GameStateDataVersion => 0u;
         public override uint GameStateLowestSupportedDataVersion => 0u;
-        [HideInInspector] public LockstepAPI lockstep;
+        [HideInInspector] [SingletonReference] public LockstepAPI lockstep;
 
         [SerializeField] private GameObject[] itemPrefabs;
         ///<summary>unusedItemInsts[prefabIndex][itemSync.instIndex]</summary>
