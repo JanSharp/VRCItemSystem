@@ -1,10 +1,14 @@
 {
     "name": "Jansharp.ItemSystem.Editor",
+    "rootNamespace": "",
     "references": [
         "JanSharp.ItemSystem",
         "JanSharp.Common",
         "JanSharp.Common.Editor",
         "JanSharp.Lockstep",
+        "JanSharp.EntitySystem",
+        "JanSharp.CustomInteractsAndPickups",
+        "JanSharp.PlayerData",
         "UdonSharp.Runtime",
         "UdonSharp.Editor",
         "Unity.TextMeshPro",

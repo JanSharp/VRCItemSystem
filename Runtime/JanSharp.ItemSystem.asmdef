@@ -1,8 +1,12 @@
 {
     "name": "JanSharp.ItemSystem",
+    "rootNamespace": "",
     "references": [
         "JanSharp.Common",
         "JanSharp.Lockstep",
+        "JanSharp.EntitySystem",
+        "JanSharp.CustomInteractsAndPickups",
+        "JanSharp.PlayerData",
         "UdonSharp.Runtime",
         "Unity.TextMeshPro",
         "VRC.SDK3",
