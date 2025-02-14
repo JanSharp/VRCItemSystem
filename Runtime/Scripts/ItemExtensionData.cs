@@ -9,6 +9,7 @@ namespace JanSharp
     public class ItemExtensionData : EntityExtensionData
     {
         [HideInInspector] [SingletonReference] public BoneAttachmentManager boneAttachment;
+        [HideInInspector] [SingletonReference] public ItemSystem itemSystem;
 
         public override bool SupportsImportExport => true;
         public override uint DataVersion => 0u;
@@ -16,10 +17,14 @@ namespace JanSharp
 
         public ItemExtension Extension => (ItemExtension)extension;
 
-        [System.NonSerialized] public uint holdingPlayerId;
-        [System.NonSerialized] public bool heldInRightHand;
-        [System.NonSerialized] public Vector3 heldOffsetVector;
-        [System.NonSerialized] public Quaternion heldOffsetRotation;
+        [System.NonSerialized] public uint attachedToPlayerId;
+        /// <summary>
+        /// <para>Explicit default of <see cref="HumanBodyBones.Head"/>, since we do not control
+        /// <see cref="HumanBodyBones"/> values.</para>
+        /// </summary>
+        [System.NonSerialized] public HumanBodyBones attachedToBone = HumanBodyBones.Head;
+        [System.NonSerialized] public Vector3 attachedOffsetVector;
+        [System.NonSerialized] public Quaternion attachedOffsetRotation;
 
         public override void InitFromExtension()
         {
@@ -35,12 +40,12 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Serialize");
             #endif
-            lockstep.WriteSmallUInt(holdingPlayerId);
-            if (holdingPlayerId == 0u)
+            lockstep.WriteSmallUInt(attachedToPlayerId);
+            if (attachedToPlayerId == 0u)
                 return;
-            lockstep.WriteFlags(heldInRightHand);
-            lockstep.WriteVector3(heldOffsetVector);
-            lockstep.WriteQuaternion(heldOffsetRotation);
+            lockstep.WriteSmallInt((int)attachedToBone);
+            lockstep.WriteVector3(attachedOffsetVector);
+            lockstep.WriteQuaternion(attachedOffsetRotation);
         }
 
         public override void Deserialize(bool isImport, uint importedDataVersion)
@@ -48,12 +53,12 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Deserialize");
             #endif
-            holdingPlayerId = lockstep.ReadSmallUInt();
-            if (holdingPlayerId == 0u)
+            attachedToPlayerId = lockstep.ReadSmallUInt();
+            if (attachedToPlayerId == 0u)
                 return;
-            lockstep.ReadFlags(out heldInRightHand);
-            heldOffsetVector = lockstep.ReadVector3();
-            heldOffsetRotation = lockstep.ReadQuaternion();
+            attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
+            attachedOffsetVector = lockstep.ReadVector3();
+            attachedOffsetRotation = lockstep.ReadQuaternion();
         }
     }
 }

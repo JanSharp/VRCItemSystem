@@ -1,0 +1,273 @@
+﻿using UdonSharp;
+using UnityEngine;
+using VRC.SDKBase;
+using VRC.Udon;
+
+namespace JanSharp
+{
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [SingletonScript("8ed95ab9b64568256959aa53ac3bbfe0")]
+    public class ItemSystem : UdonSharpBehaviour
+    {
+        [HideInInspector] [SerializeField] [SingletonReference] private LockstepAPI lockstep;
+        [HideInInspector] [SerializeField] [SingletonReference] private EntitySystem entitySystem;
+        [HideInInspector] [SerializeField] [SingletonReference] private CustomInteractablesManagerAPI interactables;
+
+        private VRCPlayerApi localPlayer;
+        private uint localPlayerId;
+        private bool isInVR;
+
+        private void Start()
+        {
+            localPlayer = Networking.LocalPlayer;
+            localPlayerId = (uint)localPlayer.playerId;
+            isInVR = localPlayer.IsUserInVR();
+        }
+
+        private void UpdateHeldItemDueToAvatarChange(CustomPickup pickup)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  UpdateHeldItemDueToAvatarChange");
+            #endif
+            if (pickup == null)
+                return;
+            ItemExtension item = pickup.GetComponent<ItemExtension>();
+            if (item == null)
+                return;
+            SendChangeOffsetIA(item.Data);
+        }
+
+        public void OnLocalPlayerAvatarChangedDelayed()
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  OnLocalPlayerAvatarChangedDelayed");
+            #endif
+            if (!isInVR)
+                UpdateHeldItemDueToAvatarChange(interactables.HeldOnDesktop);
+            else
+            {
+                UpdateHeldItemDueToAvatarChange(interactables.HeldInLeftHand);
+                UpdateHeldItemDueToAvatarChange(interactables.HeldInRightHand);
+            }
+        }
+
+        public override void OnAvatarChanged(VRCPlayerApi player)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  OnAvatarChanged");
+            #endif
+            if (!player.isLocal)
+                return;
+            // The OnAvatarChanged appears to get raised once the avatar has finished loading. However doing
+            // the below instantly results in garbage. 0.25 seconds seems reliable enough that the player
+            // hopefully has not pressed calibrate after loading the avatar yet, because that'd move the bone
+            // away from the tracking data such that it would once again result in garbage.
+            SendCustomEventDelayedSeconds(nameof(OnLocalPlayerAvatarChangedDelayed), 0.1f);
+        }
+
+        public void TrackingDataOffsetsToBoneOffsets(
+            VRCPlayerApi.TrackingDataType trackingType,
+            HumanBodyBones bone,
+            Vector3 offsetVector,
+            Quaternion offsetRotation,
+            out Vector3 resultVector,
+            out Quaternion resultRotation)
+        {
+            VRCPlayerApi.TrackingData trackingData = localPlayer.GetTrackingData(trackingType);
+            Vector3 worldPosition = trackingData.position + trackingData.rotation * offsetVector;
+            Quaternion worldRotation = trackingData.rotation * offsetRotation;
+            Vector3 bonePosition = localPlayer.GetBonePosition(bone);
+            Quaternion inverseBoneRotation = Quaternion.Inverse(localPlayer.GetBoneRotation(bone));
+            resultVector = inverseBoneRotation * (worldPosition - bonePosition);
+            resultRotation = inverseBoneRotation * worldRotation;
+        }
+
+        public void BoneOffsetsToTrackingDataOffsets(
+            VRCPlayerApi.TrackingDataType trackingType,
+            HumanBodyBones bone,
+            Vector3 offsetVector,
+            Quaternion offsetRotation,
+            out Vector3 resultVector,
+            out Quaternion resultRotation)
+        {
+            Vector3 bonePosition = localPlayer.GetBonePosition(bone);
+            Quaternion boneRotation = localPlayer.GetBoneRotation(bone);
+            Vector3 worldPosition = bonePosition + boneRotation * offsetVector;
+            Quaternion worldRotation = boneRotation * offsetRotation;
+            VRCPlayerApi.TrackingData trackingData = localPlayer.GetTrackingData(trackingType);
+            Quaternion inverseTrackingDataRotation = Quaternion.Inverse(trackingData.rotation);
+            resultVector = inverseTrackingDataRotation * (worldPosition - trackingData.position);
+            resultRotation = inverseTrackingDataRotation * worldRotation;
+        }
+
+        private HumanBodyBones TrackingTypeToBone(VRCPlayerApi.TrackingDataType trackingType)
+        {
+            return trackingType == VRCPlayerApi.TrackingDataType.LeftHand ? HumanBodyBones.LeftHand
+                : trackingType == VRCPlayerApi.TrackingDataType.RightHand ? HumanBodyBones.RightHand
+                : HumanBodyBones.Head;
+        }
+
+        private VRCPlayerApi.TrackingDataType BoneToTrackingType(HumanBodyBones bone)
+        {
+            return bone == HumanBodyBones.LeftHand ? VRCPlayerApi.TrackingDataType.LeftHand
+                : bone == HumanBodyBones.RightHand ? VRCPlayerApi.TrackingDataType.RightHand
+                : VRCPlayerApi.TrackingDataType.Head;
+        }
+
+        public void AttachToLocalPlayer(ItemExtensionData itemData)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  AttachToLocalPlayer");
+            #endif
+            // NOTE: Unfortunately this will only result in proper offsets if the player is in the same avatar,
+            // or one with the same bone rotations, which let's be honest is unlikely.
+            VRCPlayerApi.TrackingDataType trackingType = BoneToTrackingType(itemData.attachedToBone);
+            BoneOffsetsToTrackingDataOffsets(
+                trackingType, itemData.attachedToBone,
+                itemData.attachedOffsetVector, itemData.attachedOffsetRotation,
+                out Vector3 offsetVector, out Quaternion offsetRotation);
+            itemData.Extension.pickup.ForceBeingPickedUp(trackingType, offsetVector, offsetRotation);
+        }
+
+        public void AttachToRemotePlayer(ItemExtensionData itemData)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  AttachToRemotePlayer");
+            #endif
+            VRCPlayerApi holdingPlayer = VRCPlayerApi.GetPlayerById((int)itemData.attachedToPlayerId);
+            if (holdingPlayer == null)
+                return;
+            Transform entityTransform = itemData.entityData.entity.transform;
+            itemData.boneAttachment.AttachToBone(holdingPlayer, itemData.attachedToBone, entityTransform);
+            entityTransform.localPosition = itemData.attachedOffsetVector;
+            entityTransform.localRotation = itemData.attachedOffsetRotation;
+        }
+
+        private void WriteOffsets(CustomPickup pickup)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  WriteOffsetsRelativeToBone");
+            #endif
+            HumanBodyBones bone = TrackingTypeToBone(pickup.heldTrackingType);
+            TrackingDataOffsetsToBoneOffsets(
+                pickup.heldTrackingType, bone,
+                pickup.heldOffsetVector, pickup.heldOffsetRotation,
+                out Vector3 offsetVector, out Quaternion offsetRotation);
+            lockstep.WriteVector3(offsetVector);
+            lockstep.WriteQuaternion(offsetRotation);
+        }
+
+        private void ReadOffsets(ItemExtensionData itemData)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  ReadOffsets");
+            #endif
+            itemData.attachedOffsetVector = lockstep.ReadVector3();
+            itemData.attachedOffsetRotation = lockstep.ReadQuaternion();
+        }
+
+        public void SendPickupIA(ItemExtensionData itemData)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  SendPickupIA");
+            #endif
+            // TODO: handle non existent bones somewhere
+            CustomPickup pickup = itemData.Extension.pickup;
+            entitySystem.WriteEntityExtensionReference(itemData.Extension);
+            lockstep.WriteSmallInt((int)TrackingTypeToBone(pickup.heldTrackingType));
+            WriteOffsets(pickup);
+            lockstep.SendInputAction(onPickupIAId);
+        }
+
+        [HideInInspector] [SerializeField] private uint onPickupIAId;
+        [LockstepInputAction(nameof(onPickupIAId))]
+        public void OnPickupIA()
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  OnPickupIA");
+            #endif
+            // TODO: add a way to get an extension of a specific type from the list of extension on an entity.
+            // Using that here would remove the need to sync the extension index, we'd just need the entity id.
+            ItemExtension item = entitySystem.ReadEntityExtensionReference<ItemExtension>();
+            if (item == null)
+                return;
+            ItemExtensionData itemData = item.Data;
+            itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
+            ReadOffsets(itemData);
+            itemData.attachedToPlayerId = lockstep.SendingPlayerId;
+            // TODO: the entity system internally should periodically fetch a snapshot of the world position of these entities
+            itemData.entityData.transformState = EntityTransformState.Desynced;
+            if (itemData.attachedToPlayerId != localPlayerId)
+                AttachToRemotePlayer(itemData);
+        }
+
+        private void SendChangeOffsetIA(ItemExtensionData itemData)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  SendChangeOffsetIA");
+            #endif
+            entitySystem.WriteEntityExtensionReference(itemData.Extension);
+            WriteOffsets(itemData.Extension.pickup);
+            lockstep.SendInputAction(changeOffsetIAId);
+        }
+
+        [HideInInspector] [SerializeField] private uint changeOffsetIAId;
+        [LockstepInputAction(nameof(changeOffsetIAId))]
+        public void OnChangeOffsetIA()
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  OnChangeOffsetIA");
+            #endif
+            ItemExtension item = entitySystem.ReadEntityExtensionReference<ItemExtension>();
+            if (item == null)
+                return;
+            ItemExtensionData itemData = item.Data;
+            ReadOffsets(itemData);
+            Transform entityTransform = item.entity.transform;
+            entityTransform.localPosition = itemData.attachedOffsetVector;
+            entityTransform.localRotation = itemData.attachedOffsetRotation;
+        }
+
+        public void SendDropIA(ItemExtensionData itemData)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  SendDropIA");
+            #endif
+            Transform entityTransform = itemData.entityData.entity.transform;
+            entitySystem.WriteEntityExtensionReference(itemData.Extension);
+            lockstep.WriteVector3(entityTransform.position);
+            lockstep.WriteQuaternion(entityTransform.rotation);
+            lockstep.SendInputAction(onDropIAId);
+        }
+
+        [HideInInspector] [SerializeField] private uint onDropIAId;
+        [LockstepInputAction(nameof(onDropIAId))]
+        public void OnDropIA()
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  OnDropIA");
+            #endif
+            ItemExtension item = entitySystem.ReadEntityExtensionReference<ItemExtension>();
+            if (item == null)
+                return;
+            ItemExtensionData itemData = item.Data;
+            Vector3 position = lockstep.ReadVector3();
+            Quaternion rotation = lockstep.ReadQuaternion();
+            var entityData = itemData.entityData;
+            entityData.position = position;
+            entityData.rotation = rotation;
+            entityData.entity.transform.SetPositionAndRotation(position, rotation);
+            if (itemData.attachedToPlayerId == 0u) // Already detached.
+                return;
+            entityData.transformState = EntityTransformState.Synced;
+            itemData.boneAttachment.DetachFromBone(
+                (int)itemData.attachedToPlayerId,
+                itemData.attachedToBone,
+                entityData.entity.transform);
+            itemData.attachedToPlayerId = 0u;
+            itemData.attachedToBone = HumanBodyBones.Head;
+            itemData.attachedOffsetVector = Vector3.zero;
+            itemData.attachedOffsetRotation = Quaternion.identity;
+        }
+    }
+}

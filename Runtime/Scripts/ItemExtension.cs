@@ -12,8 +12,9 @@ namespace JanSharp
     {
         public ItemExtensionData Data => (ItemExtensionData)extensionData;
 
-        private CustomPickup pickup;
+        [System.NonSerialized] public CustomPickup pickup;
 
+        private VRCPlayerApi localPlayer;
         private uint localPlayerId;
 
         private void Start()
@@ -22,7 +23,8 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtension  Start");
             #endif
             pickup = GetComponent<CustomPickup>();
-            localPlayerId = (uint)Networking.LocalPlayer.playerId;
+            localPlayer = Networking.LocalPlayer;
+            localPlayerId = (uint)localPlayer.playerId;
         }
 
         public override void ApplyExtensionData()
@@ -30,12 +32,12 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  ApplyExtensionData");
             #endif
-            if (Data.holdingPlayerId == 0u)
+            if (Data.attachedToPlayerId == 0u)
                 return;
-            if (Data.holdingPlayerId == localPlayerId)
-                AttachToLocalPlayer();
+            if (Data.attachedToPlayerId == localPlayerId)
+                Data.itemSystem.AttachToLocalPlayer(Data);
             else
-                AttachToRemotePlayer();
+                Data.itemSystem.AttachToRemotePlayer(Data);
         }
 
         public override void OnPickup()
@@ -43,7 +45,7 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickup");
             #endif
-            SendPickupIA();
+            Data.itemSystem.SendPickupIA(Data);
             // StartMovementLoop();
         }
 
@@ -52,7 +54,7 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnDrop");
             #endif
-            SendDropIA();
+            Data.itemSystem.SendDropIA(Data);
             // entity.FlagForMovement();
         }
 
@@ -68,103 +70,6 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickupUseUp");
             #endif
-        }
-
-        private void SendPickupIA()
-        {
-            #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  SendPickupIA");
-            #endif
-            lockstep.WriteFlags(pickup.heldTrackingType == VRCPlayerApi.TrackingDataType.RightHand);
-            lockstep.WriteVector3(pickup.heldOffsetVector);
-            lockstep.WriteQuaternion(pickup.heldOffsetRotation);
-            SendExtensionInputAction(nameof(OnPickupIA));
-        }
-
-        [EntityExtensionInputAction]
-        public void OnPickupIA()
-        {
-            #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickupIA");
-            #endif
-            // TODO: handle non existent bones somewhere
-            lockstep.ReadFlags(out Data.heldInRightHand);
-            Data.heldOffsetVector = lockstep.ReadVector3();
-            Data.heldOffsetRotation = lockstep.ReadQuaternion();
-            Data.holdingPlayerId = lockstep.SendingPlayerId;
-            // TODO: the entity system internally should periodically fetch a snapshot of the world position of these entities
-            entity.entityData.transformState = EntityTransformState.Desynced;
-            if (Data.holdingPlayerId != localPlayerId)
-                AttachToRemotePlayer();
-        }
-
-        private void AttachToLocalPlayer()
-        {
-            #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  AttachToLocalPlayer");
-            #endif
-            pickup.ForceBeingPickedUp(
-                Data.heldInRightHand
-                    ? VRCPlayerApi.TrackingDataType.RightHand
-                    : VRCPlayerApi.TrackingDataType.LeftHand,
-                Data.heldOffsetVector,
-                Data.heldOffsetRotation);
-        }
-
-        private void AttachToRemotePlayer()
-        {
-            #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  AttachToRemotePlayer");
-            #endif
-            VRCPlayerApi holdingPlayer = VRCPlayerApi.GetPlayerById((int)Data.holdingPlayerId);
-            if (holdingPlayer == null)
-                return;
-            Transform entityTransform = entity.transform;
-            Data.boneAttachment.AttachToBone(
-                holdingPlayer,
-                Data.heldInRightHand
-                    ? HumanBodyBones.RightHand
-                    : HumanBodyBones.LeftHand,
-                entityTransform);
-            entityTransform.localPosition = Data.heldOffsetVector;
-            entityTransform.localRotation = Data.heldOffsetRotation;
-        }
-
-        private void SendDropIA()
-        {
-            #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  SendDropIA");
-            #endif
-            Transform entityTransform = entity.transform;
-            lockstep.WriteVector3(entityTransform.position);
-            lockstep.WriteQuaternion(entityTransform.rotation);
-            SendExtensionInputAction(nameof(OnDropIA));
-        }
-
-        [EntityExtensionInputAction]
-        public void OnDropIA()
-        {
-            #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  OnDropIA");
-            #endif
-            Vector3 position = lockstep.ReadVector3();
-            Quaternion rotation = lockstep.ReadQuaternion();
-            entity.entityData.position = position;
-            entity.entityData.rotation = rotation;
-            entity.transform.SetPositionAndRotation(position, rotation);
-            if (Data.holdingPlayerId == 0u) // Already dropped.
-                return;
-            entity.entityData.transformState = EntityTransformState.Synced;
-            Data.boneAttachment.DetachFromBone(
-                (int)Data.holdingPlayerId,
-                Data.heldInRightHand
-                    ? HumanBodyBones.RightHand
-                    : HumanBodyBones.LeftHand,
-                entity.transform);
-            Data.holdingPlayerId = 0u;
-            Data.heldInRightHand = false;
-            Data.heldOffsetVector = Vector3.zero;
-            Data.heldOffsetRotation = Quaternion.identity;
         }
 
         private bool movementLoopIsRunning = false;
