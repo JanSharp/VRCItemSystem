@@ -88,7 +88,7 @@ namespace JanSharp
                 movementLoopIsRunning = false;
                 return;
             }
-            entity.FlagForMovement();
+            entity.FlagForPositionAndRotationChange();
             SendCustomEventDelayedSeconds(nameof(MovementLoop), 0.1f);
         }
     }
