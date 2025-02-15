@@ -65,6 +65,8 @@ namespace JanSharp
             SendCustomEventDelayedSeconds(nameof(OnLocalPlayerAvatarChangedDelayed), 0.1f);
         }
 
+        private bool LocalPlayerHasBone(HumanBodyBones bone) => localPlayer.GetBonePosition(bone) != Vector3.zero;
+
         public void TrackingDataOffsetsToBoneOffsets(
             VRCPlayerApi.TrackingDataType trackingType,
             HumanBodyBones bone,
@@ -195,8 +197,7 @@ namespace JanSharp
             itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
             ReadOffsets(itemData);
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
-            // TODO: the entity system internally should periodically fetch a snapshot of the world position of these entities
-            itemData.entityData.transformState = EntityTransformState.Desynced;
+            itemData.entityData.NoTransformSync = true;
             if (itemData.attachedToPlayerId != localPlayerId)
                 AttachToRemotePlayer(itemData);
         }
@@ -259,7 +260,7 @@ namespace JanSharp
             entityData.entity.transform.SetPositionAndRotation(position, rotation);
             if (itemData.attachedToPlayerId == 0u) // Already detached.
                 return;
-            entityData.transformState = EntityTransformState.Synced;
+            entityData.NoTransformSync = false;
             itemData.boneAttachment.DetachFromBone(
                 (int)itemData.attachedToPlayerId,
                 itemData.attachedToBone,
