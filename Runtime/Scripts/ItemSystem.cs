@@ -208,12 +208,24 @@ namespace JanSharp
             if (item == null)
                 return;
             ItemExtensionData itemData = item.Data;
+            if (itemData.attachedToPlayerId != 0u)
+            {
+                if (lockstep.SendingPlayerId == itemData.attachedToPlayerId)
+                    Debug.LogError($"[ItemSystem] Impossible, got 2 PickupIAs from the same player on the same "
+                        + $"entity without a DropIA in between.");
+                // If the above is false, then 2 different players attempted to pick up the same item at the
+                // same time, ignore the second one - so this current IA.
+                return;
+            }
             itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
             ReadOffsets(itemData);
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
             itemData.entityData.NoTransformSync = true;
             if (itemData.attachedToPlayerId != localPlayerId)
+            {
+                itemData.Extension.pickup.Drop();
                 AttachToRemotePlayer(itemData);
+            }
         }
 
         private void SendChangeOffsetIA(ItemExtensionData itemData)
@@ -237,6 +249,8 @@ namespace JanSharp
             if (item == null)
                 return;
             ItemExtensionData itemData = item.Data;
+            if (lockstep.SendingPlayerId != itemData.attachedToPlayerId)
+                return; // If attached id is 0u this'll also return, which works out nicely.
             ReadOffsets(itemData);
             Transform entityTransform = item.entity.transform;
             entityTransform.localPosition = itemData.attachedOffsetVector;
@@ -266,14 +280,14 @@ namespace JanSharp
             if (item == null)
                 return;
             ItemExtensionData itemData = item.Data;
+            if (lockstep.SendingPlayerId != itemData.attachedToPlayerId)
+                return; // If attached id is 0u this'll also return, which works out nicely.
             Vector3 position = lockstep.ReadVector3();
             Quaternion rotation = lockstep.ReadQuaternion();
-            var entityData = itemData.entityData;
+            EntityData entityData = itemData.entityData;
             entityData.position = position;
             entityData.rotation = rotation;
             entityData.entity.transform.SetPositionAndRotation(position, rotation);
-            if (itemData.attachedToPlayerId == 0u) // Already detached.
-                return;
             entityData.NoTransformSync = false;
             if (itemData.attachedToPlayerId != localPlayerId)
                 DetachFromRemotePlayer(itemData);

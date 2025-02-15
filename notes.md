@@ -5,4 +5,4 @@
 - [x] add RequiredComponent(typeof(Entity))... right? I mean why not.
 - [ ] look at the values of pickups and see which ones of those should be synced through items, if any
 - [ ] make disallow theft an option
-- [ ] if 2 people try to pick up the same item, make the second one drop it locally
+- [x] if 2 people try to pick up the same item, make the second one drop it locally
