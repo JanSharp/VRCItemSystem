@@ -147,6 +147,18 @@ namespace JanSharp
             entityTransform.localRotation = itemData.attachedOffsetRotation;
         }
 
+        private void DetachFromRemotePlayer(ItemExtensionData itemData)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  DetachFromRemotePlayer");
+            #endif
+            itemData.Extension.pickup.DecrementPreventInteraction();
+            boneAttachment.DetachFromBone(
+                (int)itemData.attachedToPlayerId,
+                itemData.attachedToBone,
+                itemData.entityData.entity.transform);
+        }
+
         private void WriteOffsets(CustomPickup pickup)
         {
             #if ItemSystemDebug
@@ -263,11 +275,8 @@ namespace JanSharp
             if (itemData.attachedToPlayerId == 0u) // Already detached.
                 return;
             entityData.NoTransformSync = false;
-            itemData.Extension.pickup.DecrementPreventInteraction();
-            boneAttachment.DetachFromBone(
-                (int)itemData.attachedToPlayerId,
-                itemData.attachedToBone,
-                entityData.entity.transform);
+            if (itemData.attachedToPlayerId != localPlayerId)
+                DetachFromRemotePlayer(itemData);
             itemData.attachedToPlayerId = 0u;
             itemData.attachedToBone = HumanBodyBones.Head;
             itemData.attachedOffsetVector = Vector3.zero;
