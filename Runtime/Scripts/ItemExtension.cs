@@ -8,6 +8,8 @@ namespace JanSharp
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     [AssociatedEntityExtensionData(typeof(ItemExtensionData))]
     [RequireComponent(typeof(CustomPickup))]
+    [RequireComponent(typeof(Entity))]
+    [DisallowMultipleComponent]
     public class ItemExtension : EntityExtension
     {
         public ItemExtensionData Data => (ItemExtensionData)extensionData;
