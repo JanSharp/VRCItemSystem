@@ -220,7 +220,8 @@ namespace JanSharp
             itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
             ReadOffsets(itemData);
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
-            itemData.entityData.NoTransformSync = true;
+            itemData.entityData.NoPositionSync = true;
+            itemData.entityData.NoRotationSync = true;
             if (itemData.attachedToPlayerId != localPlayerId)
             {
                 itemData.Extension.pickup.Drop();
@@ -288,7 +289,8 @@ namespace JanSharp
             entityData.position = position;
             entityData.rotation = rotation;
             entityData.entity.transform.SetPositionAndRotation(position, rotation);
-            entityData.NoTransformSync = false;
+            entityData.NoPositionSync = false;
+            entityData.NoRotationSync = false;
             if (itemData.attachedToPlayerId != localPlayerId)
                 DetachFromRemotePlayer(itemData);
             itemData.attachedToPlayerId = 0u;
