@@ -9,3 +9,6 @@
 - [ ] ItemExtensionData supports import export but it's using a VRChat player id even for exports, that doesn't work
 - [ ] bone attachment broke at some point throughout seemingly regular usage, requires testing and probably more debug messages
 - [x] prevent interacting with pickups until lockstep and the entity system have initialized
+- [ ] throw script, if velocity before dropping, enable physics
+  - [ ] if it falls through the world it has to revert to some location
+- [ ] drop held items when a client leaves

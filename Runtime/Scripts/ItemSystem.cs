@@ -66,7 +66,7 @@ namespace JanSharp
             SendCustomEventDelayedSeconds(nameof(OnLocalPlayerAvatarChangedDelayed), 0.1f);
         }
 
-        private bool LocalPlayerHasBone(HumanBodyBones bone) => localPlayer.GetBonePosition(bone) != Vector3.zero;
+        public bool LocalPlayerHasBone(HumanBodyBones bone) => localPlayer.GetBonePosition(bone) != Vector3.zero;
 
         public void TrackingDataOffsetsToBoneOffsets(
             VRCPlayerApi.TrackingDataType trackingType,
@@ -141,7 +141,6 @@ namespace JanSharp
             if (holdingPlayer == null)
                 return;
             Transform entityTransform = itemData.entityData.entity.transform;
-            itemData.Extension.pickup.IncrementPreventInteraction();
             boneAttachment.AttachToBone(holdingPlayer, itemData.attachedToBone, entityTransform);
             entityTransform.localPosition = itemData.attachedOffsetVector;
             entityTransform.localRotation = itemData.attachedOffsetRotation;
@@ -152,7 +151,6 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemSystem  DetachFromRemotePlayer");
             #endif
-            itemData.Extension.pickup.DecrementPreventInteraction();
             boneAttachment.DetachFromBone(
                 (int)itemData.attachedToPlayerId,
                 itemData.attachedToBone,
@@ -182,16 +180,29 @@ namespace JanSharp
             itemData.attachedOffsetRotation = lockstep.ReadQuaternion();
         }
 
-        public void SendPickupIA(ItemExtensionData itemData)
+        public void OnLocalPlayerPickup(ItemExtensionData itemData)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  OnLocalPlayerPickup");
+            #endif
+            CustomPickup pickup = itemData.Extension.pickup;
+            HumanBodyBones bone = TrackingTypeToBone(pickup.heldTrackingType);
+            bool boneExists = LocalPlayerHasBone(bone);
+            SendPickupIA(itemData, pickup, bone, boneExists);
+            if (!boneExists)
+                itemData.Extension.ContinuouslyFlagForMovement = true;
+        }
+
+        private void SendPickupIA(ItemExtensionData itemData, CustomPickup pickup, HumanBodyBones bone, bool boneExists)
         {
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendPickupIA");
             #endif
-            // TODO: handle non existent bones somewhere
-            CustomPickup pickup = itemData.Extension.pickup;
             entitySystem.WriteEntityExtensionReference(itemData.Extension);
-            lockstep.WriteSmallInt((int)TrackingTypeToBone(pickup.heldTrackingType));
-            WriteOffsets(pickup);
+            lockstep.WriteFlags(boneExists);
+            lockstep.WriteSmallInt((int)bone);
+            if (boneExists)
+                WriteOffsets(pickup);
             lockstep.SendInputAction(onPickupIAId);
         }
 
@@ -217,16 +228,22 @@ namespace JanSharp
                 // same time, ignore the second one - so this current IA.
                 return;
             }
-            itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
-            ReadOffsets(itemData);
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
+            if (itemData.attachedToPlayerId != localPlayerId)
+            {
+                CustomPickup pickup = itemData.Extension.pickup;
+                pickup.IncrementPreventInteraction();
+                pickup.Drop(); // TODO: when dropped through this it shouldn't even bother sending a drop IA
+            }
+            lockstep.ReadFlags(out itemData.attachedBoneExists);
+            itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
+            if (!itemData.attachedBoneExists)
+                return;
+            ReadOffsets(itemData);
             itemData.entityData.NoPositionSync = true;
             itemData.entityData.NoRotationSync = true;
             if (itemData.attachedToPlayerId != localPlayerId)
-            {
-                itemData.Extension.pickup.Drop();
                 AttachToRemotePlayer(itemData);
-            }
         }
 
         private void SendChangeOffsetIA(ItemExtensionData itemData)
@@ -235,8 +252,15 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendChangeOffsetIA");
             #endif
             entitySystem.WriteEntityExtensionReference(itemData.Extension);
-            WriteOffsets(itemData.Extension.pickup);
+            CustomPickup pickup = itemData.Extension.pickup;
+            HumanBodyBones bone = TrackingTypeToBone(pickup.heldTrackingType);
+            bool boneExists = LocalPlayerHasBone(bone);
+            lockstep.WriteFlags(boneExists);
+            if (boneExists)
+                WriteOffsets(pickup);
             lockstep.SendInputAction(changeOffsetIAId);
+            if (!boneExists)
+                itemData.Extension.ContinuouslyFlagForMovement = true;
         }
 
         [HideInInspector] [SerializeField] private uint changeOffsetIAId;
@@ -252,7 +276,33 @@ namespace JanSharp
             ItemExtensionData itemData = item.Data;
             if (lockstep.SendingPlayerId != itemData.attachedToPlayerId)
                 return; // If attached id is 0u this'll also return, which works out nicely.
+
+            lockstep.ReadFlags(out bool boneExists);
+            itemData.entityData.NoPositionSync = boneExists;
+            itemData.entityData.NoRotationSync = boneExists;
+
+            if (!boneExists) // Bone does not exist.
+            {
+                if (itemData.attachedBoneExists && itemData.attachedToPlayerId != localPlayerId)
+                    DetachFromRemotePlayer(itemData); // Bone did exist, but does no longer.
+                itemData.attachedBoneExists = false;
+                itemData.attachedToBone = HumanBodyBones.Head;
+                itemData.attachedOffsetVector = Vector3.zero;
+                itemData.attachedOffsetRotation = Quaternion.identity;
+                return;
+            }
+
             ReadOffsets(itemData);
+
+            // Bone didn't exist, but now it does.
+            if (!itemData.attachedBoneExists && itemData.attachedToPlayerId != localPlayerId)
+            {
+                itemData.attachedBoneExists = true;
+                AttachToRemotePlayer(itemData);
+                return;
+            }
+
+            // Bone did exist, still exists, update offsets.
             Transform entityTransform = item.entity.transform;
             entityTransform.localPosition = itemData.attachedOffsetVector;
             entityTransform.localRotation = itemData.attachedOffsetRotation;
@@ -292,8 +342,13 @@ namespace JanSharp
             entityData.NoPositionSync = false;
             entityData.NoRotationSync = false;
             if (itemData.attachedToPlayerId != localPlayerId)
-                DetachFromRemotePlayer(itemData);
+            {
+                itemData.Extension.pickup.DecrementPreventInteraction();
+                if (itemData.attachedBoneExists)
+                    DetachFromRemotePlayer(itemData);
+            }
             itemData.attachedToPlayerId = 0u;
+            itemData.attachedBoneExists = false;
             itemData.attachedToBone = HumanBodyBones.Head;
             itemData.attachedOffsetVector = Vector3.zero;
             itemData.attachedOffsetRotation = Quaternion.identity;

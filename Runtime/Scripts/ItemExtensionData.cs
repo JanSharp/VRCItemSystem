@@ -17,6 +17,7 @@ namespace JanSharp
         public ItemExtension Extension => (ItemExtension)extension;
 
         [System.NonSerialized] public uint attachedToPlayerId;
+        [System.NonSerialized] public bool attachedBoneExists;
         /// <summary>
         /// <para>Explicit default of <see cref="HumanBodyBones.Head"/>, since we do not control
         /// <see cref="HumanBodyBones"/> values.</para>
@@ -44,10 +45,14 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Serialize");
             #endif
-            lockstep.WriteSmallUInt(attachedToPlayerId);
-            if (attachedToPlayerId == 0u)
+            bool isAttached = attachedToPlayerId != 0u;
+            lockstep.WriteFlags(isAttached, attachedBoneExists);
+            if (!isAttached)
                 return;
+            lockstep.WriteSmallUInt(attachedToPlayerId);
             lockstep.WriteSmallInt((int)attachedToBone);
+            if (!attachedBoneExists)
+                return;
             lockstep.WriteVector3(attachedOffsetVector);
             lockstep.WriteQuaternion(attachedOffsetRotation);
         }
@@ -57,12 +62,19 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Deserialize");
             #endif
-            attachedToPlayerId = lockstep.ReadSmallUInt();
-            if (attachedToPlayerId == 0u)
-                return;
-            attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
-            attachedOffsetVector = lockstep.ReadVector3();
-            attachedOffsetRotation = lockstep.ReadQuaternion();
+            lockstep.ReadFlags(out bool isAttached, out attachedBoneExists);
+            attachedToPlayerId = isAttached ? lockstep.ReadSmallUInt() : 0u;
+            attachedToBone = isAttached ? (HumanBodyBones)lockstep.ReadSmallInt() : HumanBodyBones.Head;
+            if (isAttached && attachedBoneExists)
+            {
+                attachedOffsetVector = lockstep.ReadVector3();
+                attachedOffsetRotation = lockstep.ReadQuaternion();
+            }
+            else
+            {
+                attachedOffsetVector = Vector3.zero;
+                attachedOffsetRotation = Quaternion.identity;
+            }
         }
     }
 }

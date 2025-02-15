@@ -65,10 +65,15 @@ namespace JanSharp
             #endif
             if (Data.attachedToPlayerId == 0u)
                 return;
+            // TODO: but what if it is already attached? In the case of imports.
             if (Data.attachedToPlayerId == localPlayerId)
                 Data.itemSystem.AttachToLocalPlayer(Data);
             else
-                Data.itemSystem.AttachToRemotePlayer(Data);
+            {
+                pickup.IncrementPreventInteraction();
+                if (Data.attachedBoneExists)
+                    Data.itemSystem.AttachToRemotePlayer(Data);
+            }
         }
 
         public override void OnPickup()
@@ -76,8 +81,7 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickup");
             #endif
-            Data.itemSystem.SendPickupIA(Data);
-            // StartMovementLoop();
+            Data.itemSystem.OnLocalPlayerPickup(Data);
         }
 
         public override void OnDrop()
@@ -86,7 +90,7 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnDrop");
             #endif
             Data.itemSystem.SendDropIA(Data);
-            // entity.FlagForMovement();
+            ContinuouslyFlagForMovement = false;
         }
 
         public override void OnPickupUseDown()
@@ -103,6 +107,18 @@ namespace JanSharp
             #endif
         }
 
+        private bool continuouslyFlagForMovement;
+        public bool ContinuouslyFlagForMovement
+        {
+            get => continuouslyFlagForMovement;
+            set
+            {
+                continuouslyFlagForMovement = value;
+                if (value)
+                    StartMovementLoop();
+            }
+        }
+
         private bool movementLoopIsRunning = false;
         private void StartMovementLoop()
         {
@@ -114,12 +130,14 @@ namespace JanSharp
 
         public void MovementLoop()
         {
-            if (!pickup.isHeld)
+            // TODO: flag position and rotation separately and only if it actually changed.
+            entity.FlagForPositionAndRotationChange();
+            if (!pickup.isHeld || !continuouslyFlagForMovement)
             {
                 movementLoopIsRunning = false;
+                continuouslyFlagForMovement = false;
                 return;
             }
-            entity.FlagForPositionAndRotationChange();
             SendCustomEventDelayedSeconds(nameof(MovementLoop), 0.1f);
         }
     }
