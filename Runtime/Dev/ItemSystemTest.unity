@@ -3814,7 +3814,6 @@ MonoBehaviour:
   wannaBeClasses: {fileID: 476336292}
   lockstep: {fileID: 1424185750}
   entitySystem: {fileID: 1621898358}
-  boneAttachment: {fileID: 1971554874}
   itemSystem: {fileID: 2977595700103981096}
 --- !u!4 &420881914
 Transform:
@@ -7821,32 +7820,32 @@ PrefabInstance:
         type: 3}
       propertyPath: DynamicMaterials.Array.data[0]
       value: 
-      objectReference: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+      objectReference: {fileID: 2100000, guid: b85159ff156c9d64bbc37de5d27c92a1, type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[1]
       value: 
-      objectReference: {fileID: 2100000, guid: 0501364bf5f6c5f71ae595b70606e653, type: 2}
+      objectReference: {fileID: 2100000, guid: 09fc8a874bd63b145a0cfc1ff06f82d9, type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[2]
       value: 
-      objectReference: {fileID: 2100000, guid: 086cea167da52a13ea1d06db6e2b06a0, type: 2}
+      objectReference: {fileID: 2100000, guid: 0501364bf5f6c5f71ae595b70606e653, type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[3]
       value: 
-      objectReference: {fileID: 2100000, guid: 5353b4a7571b03f7e83e9d34c9451f32, type: 2}
+      objectReference: {fileID: 2100000, guid: 086cea167da52a13ea1d06db6e2b06a0, type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[4]
       value: 
-      objectReference: {fileID: 2100000, guid: b85159ff156c9d64bbc37de5d27c92a1, type: 2}
+      objectReference: {fileID: 2100000, guid: 5353b4a7571b03f7e83e9d34c9451f32, type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[5]
       value: 
-      objectReference: {fileID: 2100000, guid: 09fc8a874bd63b145a0cfc1ff06f82d9, type: 2}
+      objectReference: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[6]
@@ -13420,7 +13419,7 @@ PrefabInstance:
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
       propertyPath: inputActionHandlerEventNames.Array.data[19]
-      value: OnMoveEntityIA
+      value: OnTransformChangeIA
       objectReference: {fileID: 0}
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
@@ -15053,6 +15052,11 @@ PrefabInstance:
         type: 3}
       propertyPath: setEntityScaleIAId
       value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3323032307758558537, guid: d627f7fa95da90f1f87280f822155c9d,
+        type: 3}
+      propertyPath: transformChangeIAId
+      value: 19
       objectReference: {fileID: 0}
     - target: {fileID: 3323032307758558537, guid: d627f7fa95da90f1f87280f822155c9d,
         type: 3}
@@ -19248,6 +19252,11 @@ PrefabInstance:
       propertyPath: interactables
       value: 
       objectReference: {fileID: 341204761}
+    - target: {fileID: 1946170806113999126, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
+        type: 3}
+      propertyPath: boneAttachment
+      value: 
+      objectReference: {fileID: 1971554874}
     - target: {fileID: 1946170806113999126, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
         type: 3}
       propertyPath: changeOffsetIAId

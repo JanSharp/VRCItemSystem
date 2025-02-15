@@ -141,6 +141,7 @@ namespace JanSharp
             if (holdingPlayer == null)
                 return;
             Transform entityTransform = itemData.entityData.entity.transform;
+            itemData.Extension.pickup.IncrementPreventInteraction();
             boneAttachment.AttachToBone(holdingPlayer, itemData.attachedToBone, entityTransform);
             entityTransform.localPosition = itemData.attachedOffsetVector;
             entityTransform.localRotation = itemData.attachedOffsetRotation;
@@ -262,6 +263,7 @@ namespace JanSharp
             if (itemData.attachedToPlayerId == 0u) // Already detached.
                 return;
             entityData.NoTransformSync = false;
+            itemData.Extension.pickup.DecrementPreventInteraction();
             boneAttachment.DetachFromBone(
                 (int)itemData.attachedToPlayerId,
                 itemData.attachedToBone,
