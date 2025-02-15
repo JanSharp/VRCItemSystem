@@ -30,8 +30,13 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  InitFromExtension");
             #endif
-            // Cannot be held at this point, at least as of right now, so just do nothing.
-            // Otherwise it would have to read data from the CustomPickup and initialize using that.
+            // The only way for the pickup to be held by the player at this point is through another system
+            // forcing it into their hand.
+            // The item system should handle this case, however for now it does not. It should use the current
+            // pickup data and initialize from that, though I'd have to think about what that implies for
+            // syncing.
+            Extension.ActualStart();
+            Extension.pickup.DecrementPreventInteraction();
         }
 
         public override void Serialize(bool isExport)

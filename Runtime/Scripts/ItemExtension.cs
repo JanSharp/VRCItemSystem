@@ -16,6 +16,7 @@ namespace JanSharp
 
         [System.NonSerialized] public CustomPickup pickup;
 
+        private bool actuallyStarted = false;
         private VRCPlayerApi localPlayer;
         private uint localPlayerId;
 
@@ -24,9 +25,37 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  Start");
             #endif
+            ActualStart();
+        }
+
+        /// <summary>
+        /// <para>Code following an <see cref="Object.Instantiate(Object)"/> call runs before
+        /// <see cref="Start"/> runs on the instantiated objects... so we must manually call "start" after
+        /// instantiation. So in particular when <see cref="InitFromExtensionData"/> or
+        /// <see cref="ItemExtensionData.InitFromExtension"/> run.</para>
+        /// </summary>
+        public void ActualStart()
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  ActualStart");
+            #endif
+            if (actuallyStarted)
+                return;
+            actuallyStarted = true;
             pickup = GetComponent<CustomPickup>();
+            pickup.IncrementPreventInteraction();
             localPlayer = Networking.LocalPlayer;
             localPlayerId = (uint)localPlayer.playerId;
+        }
+
+        public override void InitFromExtensionData()
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  InitFromExtensionData");
+            #endif
+            ActualStart();
+            pickup.DecrementPreventInteraction();
+            ApplyExtensionData();
         }
 
         public override void ApplyExtensionData()
