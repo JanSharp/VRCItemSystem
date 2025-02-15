@@ -25,17 +25,18 @@ namespace JanSharp
             isInVR = localPlayer.IsUserInVR();
         }
 
-        private void UpdateHeldItemDueToAvatarChange(CustomPickup pickup)
+        public override void OnAvatarChanged(VRCPlayerApi player)
         {
             #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemSystem  UpdateHeldItemDueToAvatarChange");
+            Debug.Log($"[ItemSystemDebug] ItemSystem  OnAvatarChanged");
             #endif
-            if (pickup == null)
+            if (!player.isLocal)
                 return;
-            ItemExtension item = pickup.GetComponent<ItemExtension>();
-            if (item == null)
-                return;
-            SendChangeOffsetIA(item.Data);
+            // The OnAvatarChanged appears to get raised once the avatar has finished loading. However doing
+            // the below instantly results in garbage. 0.25 seconds seems reliable enough that the player
+            // hopefully has not pressed calibrate after loading the avatar yet, because that'd move the bone
+            // away from the tracking data such that it would once again result in garbage.
+            SendCustomEventDelayedSeconds(nameof(OnLocalPlayerAvatarChangedDelayed), 0.1f);
         }
 
         public void OnLocalPlayerAvatarChangedDelayed()
@@ -52,23 +53,22 @@ namespace JanSharp
             }
         }
 
-        public override void OnAvatarChanged(VRCPlayerApi player)
+        private void UpdateHeldItemDueToAvatarChange(CustomPickup pickup)
         {
             #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemSystem  OnAvatarChanged");
+            Debug.Log($"[ItemSystemDebug] ItemSystem  UpdateHeldItemDueToAvatarChange");
             #endif
-            if (!player.isLocal)
+            if (pickup == null)
                 return;
-            // The OnAvatarChanged appears to get raised once the avatar has finished loading. However doing
-            // the below instantly results in garbage. 0.25 seconds seems reliable enough that the player
-            // hopefully has not pressed calibrate after loading the avatar yet, because that'd move the bone
-            // away from the tracking data such that it would once again result in garbage.
-            SendCustomEventDelayedSeconds(nameof(OnLocalPlayerAvatarChangedDelayed), 0.1f);
+            ItemExtension item = pickup.GetComponent<ItemExtension>();
+            if (item == null)
+                return;
+            SendChangeOffsetIA(item.Data);
         }
 
-        public bool LocalPlayerHasBone(HumanBodyBones bone) => localPlayer.GetBonePosition(bone) != Vector3.zero;
+        private bool LocalPlayerHasBone(HumanBodyBones bone) => localPlayer.GetBonePosition(bone) != Vector3.zero;
 
-        public void TrackingDataOffsetsToBoneOffsets(
+        private void TrackingDataOffsetsToBoneOffsets(
             VRCPlayerApi.TrackingDataType trackingType,
             HumanBodyBones bone,
             Vector3 offsetVector,
@@ -85,7 +85,7 @@ namespace JanSharp
             resultRotation = inverseBoneRotation * worldRotation;
         }
 
-        public void BoneOffsetsToTrackingDataOffsets(
+        private void BoneOffsetsToTrackingDataOffsets(
             VRCPlayerApi.TrackingDataType trackingType,
             HumanBodyBones bone,
             Vector3 offsetVector,
