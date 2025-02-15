@@ -12,6 +12,7 @@ namespace JanSharp
         [HideInInspector] [SerializeField] [SingletonReference] private LockstepAPI lockstep;
         [HideInInspector] [SerializeField] [SingletonReference] private EntitySystem entitySystem;
         [HideInInspector] [SerializeField] [SingletonReference] private CustomInteractablesManagerAPI interactables;
+        [HideInInspector] [SerializeField] [SingletonReference] private BoneAttachmentManager boneAttachment;
 
         private VRCPlayerApi localPlayer;
         private uint localPlayerId;
@@ -140,7 +141,7 @@ namespace JanSharp
             if (holdingPlayer == null)
                 return;
             Transform entityTransform = itemData.entityData.entity.transform;
-            itemData.boneAttachment.AttachToBone(holdingPlayer, itemData.attachedToBone, entityTransform);
+            boneAttachment.AttachToBone(holdingPlayer, itemData.attachedToBone, entityTransform);
             entityTransform.localPosition = itemData.attachedOffsetVector;
             entityTransform.localRotation = itemData.attachedOffsetRotation;
         }
@@ -261,7 +262,7 @@ namespace JanSharp
             if (itemData.attachedToPlayerId == 0u) // Already detached.
                 return;
             entityData.NoTransformSync = false;
-            itemData.boneAttachment.DetachFromBone(
+            boneAttachment.DetachFromBone(
                 (int)itemData.attachedToPlayerId,
                 itemData.attachedToBone,
                 entityData.entity.transform);

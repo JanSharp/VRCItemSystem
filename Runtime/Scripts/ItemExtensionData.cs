@@ -8,7 +8,6 @@ namespace JanSharp
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ItemExtensionData : EntityExtensionData
     {
-        [HideInInspector] [SingletonReference] public BoneAttachmentManager boneAttachment;
         [HideInInspector] [SingletonReference] public ItemSystem itemSystem;
 
         public override bool SupportsImportExport => true;
