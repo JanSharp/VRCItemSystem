@@ -30,7 +30,7 @@ namespace JanSharp
             #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  InitFromExtension");
             #endif
-            // Cannot be held at point, at least as of right now, so just do nothing.
+            // Cannot be held at this point, at least as of right now, so just do nothing.
             // Otherwise it would have to read data from the CustomPickup and initialize using that.
         }
 
