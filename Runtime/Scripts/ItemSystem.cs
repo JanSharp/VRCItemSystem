@@ -259,8 +259,7 @@ namespace JanSharp
             if (boneExists)
                 WriteOffsets(pickup);
             lockstep.SendInputAction(changeOffsetIAId);
-            if (!boneExists)
-                itemData.Extension.ContinuouslyFlagForMovement = true;
+            itemData.Extension.ContinuouslyFlagForMovement = !boneExists;
         }
 
         [HideInInspector] [SerializeField] private uint changeOffsetIAId;
