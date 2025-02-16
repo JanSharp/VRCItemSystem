@@ -295,10 +295,11 @@ namespace JanSharp
             ReadOffsets(itemData);
 
             // Bone didn't exist, but now it does.
-            if (!itemData.attachedBoneExists && itemData.attachedToPlayerId != localPlayerId)
+            if (!itemData.attachedBoneExists)
             {
                 itemData.attachedBoneExists = true;
-                AttachToRemotePlayer(itemData);
+                if (itemData.attachedToPlayerId != localPlayerId)
+                    AttachToRemotePlayer(itemData);
                 return;
             }
 
