@@ -164,7 +164,9 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 3957473601761328374}
-  proximity: 0.5
+  proximityReach: 0.05
+  pointerReach: 0.3
+  desktopReach: 2.5
   interactText: 
   useText: 
   autoHold: 0
@@ -313,7 +315,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2353391174667973370
 Transform:
   m_ObjectHideFlags: 0
@@ -418,7 +420,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &5311657252774043502
 Transform:
   m_ObjectHideFlags: 0
@@ -523,7 +525,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &8394473052067655145
 Transform:
   m_ObjectHideFlags: 0

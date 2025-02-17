@@ -3674,7 +3674,9 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 401084067}
-  proximity: 0.5
+  proximityReach: 0.05
+  pointerReach: 0.2
+  desktopReach: 2.5
   interactText: Spawn Cube
   listeners:
   - {fileID: 1513164569}
@@ -7240,7 +7242,7 @@ PrefabInstance:
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.size
-      value: 7
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -7991,22 +7993,22 @@ PrefabInstance:
         type: 3}
       propertyPath: DynamicMaterials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 0501364bf5f6c5f71ae595b70606e653, type: 2}
+      objectReference: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[1]
       value: 
-      objectReference: {fileID: 2100000, guid: 086cea167da52a13ea1d06db6e2b06a0, type: 2}
+      objectReference: {fileID: 2100000, guid: b85159ff156c9d64bbc37de5d27c92a1, type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[2]
       value: 
-      objectReference: {fileID: 2100000, guid: 5353b4a7571b03f7e83e9d34c9451f32, type: 2}
+      objectReference: {fileID: 2100000, guid: 09fc8a874bd63b145a0cfc1ff06f82d9, type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[3]
       value: 
-      objectReference: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+      objectReference: {fileID: 2100000, guid: 5425c562a89c5454396eb5ef70377396, type: 2}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[4]
@@ -11267,7 +11269,9 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1007220219}
-  proximity: 0.5
+  proximityReach: 0.05
+  pointerReach: 0.2
+  desktopReach: 2.5
   interactText: Spawn Cube
   listeners:
   - {fileID: 915050222}
