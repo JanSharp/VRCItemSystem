@@ -1,5 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Data;
 using VRC.SDKBase;
 using VRC.Udon;
 
@@ -7,12 +8,23 @@ namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     [SingletonScript("8ed95ab9b64568256959aa53ac3bbfe0")]
-    public class ItemSystem : UdonSharpBehaviour
+    [LockstepGameStateDependency(typeof(EntitySystem))]
+    public class ItemSystem : LockstepGameState
     {
-        [HideInInspector] [SerializeField] [SingletonReference] private LockstepAPI lockstep;
+        public override string GameStateInternalName => "jansharp.item-system";
+        public override string GameStateDisplayName => "Item System";
+        public override bool GameStateSupportsImportExport => true;
+        public override uint GameStateDataVersion => 0u;
+        public override uint GameStateLowestSupportedDataVersion => 0u;
+        public override LockstepGameStateOptionsUI ExportUI => null;
+        public override LockstepGameStateOptionsUI ImportUI => null;
+
         [HideInInspector] [SerializeField] [SingletonReference] private EntitySystem entitySystem;
         [HideInInspector] [SerializeField] [SingletonReference] private CustomInteractablesManagerAPI interactables;
         [HideInInspector] [SerializeField] [SingletonReference] private BoneAttachmentManager boneAttachment;
+
+        private ItemExtensionData[] heldItems = new ItemExtensionData[ArrList.MinCapacity];
+        private int heldItemsCount = 0;
 
         private VRCPlayerApi localPlayer;
         private uint localPlayerId;
@@ -20,9 +32,28 @@ namespace JanSharp
 
         private void Start()
         {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  Start");
+            #endif
             localPlayer = Networking.LocalPlayer;
             localPlayerId = (uint)localPlayer.playerId;
             isInVR = localPlayer.IsUserInVR();
+        }
+
+        [LockstepEvent(LockstepEventType.OnClientLeft)]
+        public void OnClientLeft()
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  OnClientLeft");
+            #endif
+            uint leftPlayerId = lockstep.LeftPlayerId;
+            for (int i = heldItemsCount - 1; i >= 0 ; i--)
+            {
+                ItemExtensionData itemData = heldItems[i];
+                if (itemData.attachedToPlayerId != leftPlayerId)
+                    continue;
+                SendForceDropSingletonIA(itemData);
+            }
         }
 
         public override void OnAvatarChanged(VRCPlayerApi player)
@@ -228,6 +259,8 @@ namespace JanSharp
                 // same time, ignore the second one - so this current IA.
                 return;
             }
+            itemData.heldItemIndex = heldItemsCount;
+            ArrList.Add(ref heldItems, ref heldItemsCount, itemData);
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
             if (itemData.attachedToPlayerId != localPlayerId)
             {
@@ -333,6 +366,42 @@ namespace JanSharp
             ItemExtensionData itemData = item.Data;
             if (lockstep.SendingPlayerId != itemData.attachedToPlayerId)
                 return; // If attached id is 0u this'll also return, which works out nicely.
+            Drop(itemData);
+        }
+
+        private void SendForceDropSingletonIA(ItemExtensionData itemData)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  SendForceDropSingletonIA");
+            #endif
+            Transform entityTransform = itemData.entityData.entity.transform;
+            entitySystem.WriteEntityExtensionReference(itemData.Extension);
+            lockstep.WriteVector3(entityTransform.position);
+            lockstep.WriteQuaternion(entityTransform.rotation);
+            lockstep.SendSingletonInputAction(onForceDropIAId);
+        }
+
+        [HideInInspector] [SerializeField] private uint onForceDropIAId;
+        [LockstepInputAction(nameof(onForceDropIAId))]
+        public void OnForceDrop()
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  OnForceDrop");
+            #endif
+            ItemExtension item = entitySystem.ReadEntityExtensionReference<ItemExtension>();
+            if (item == null)
+                return;
+            ItemExtensionData itemData = item.Data;
+            if (itemData.attachedToPlayerId == 0u) // Already detached.
+                return;
+            Drop(itemData);
+        }
+
+        private void Drop(ItemExtensionData itemData)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  Drop");
+            #endif
             Vector3 position = lockstep.ReadVector3();
             Quaternion rotation = lockstep.ReadQuaternion();
             EntityData entityData = itemData.entityData;
@@ -341,6 +410,7 @@ namespace JanSharp
             entityData.entity.transform.SetPositionAndRotation(position, rotation);
             entityData.NoPositionSync = false;
             entityData.NoRotationSync = false;
+            RemoveFromHeldItems(itemData);
             if (itemData.attachedToPlayerId != localPlayerId)
             {
                 itemData.Extension.pickup.DecrementPreventInteraction();
@@ -352,6 +422,53 @@ namespace JanSharp
             itemData.attachedToBone = HumanBodyBones.Head;
             itemData.attachedOffsetVector = Vector3.zero;
             itemData.attachedOffsetRotation = Quaternion.identity;
+        }
+
+        private void RemoveFromHeldItems(ItemExtensionData itemData)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  RemoveFromHeldItems");
+            #endif
+            heldItemsCount--;
+            int index = itemData.heldItemIndex;
+            itemData.heldItemIndex = 0;
+            if (index != heldItemsCount)
+            {
+                ItemExtensionData other = heldItems[heldItemsCount];
+                heldItems[index] = other;
+                other.heldItemIndex = index;
+            }
+            heldItems[heldItemsCount] = null; // Make GC happy.
+        }
+
+        public override void SerializeGameState(bool isExport, LockstepGameStateOptionsData exportOptions)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  SerializeGameState");
+            #endif
+            lockstep.WriteSmallUInt((uint)heldItemsCount);
+            for (int i = 0; i < heldItemsCount; i++)
+                lockstep.WriteSmallUInt(heldItems[i].entityData.id);
+        }
+
+        public override string DeserializeGameState(bool isImport, uint importedDataVersion, LockstepGameStateOptionsData importOptions)
+        {
+            #if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  DeserializeGameState");
+            #endif
+            heldItemsCount = (int)lockstep.ReadSmallUInt();
+            ArrList.EnsureCapacity(ref heldItems, heldItemsCount);
+            for (int i = 0; i < heldItemsCount; i++)
+            {
+                uint id = lockstep.ReadSmallUInt();
+                // TODO: have a better way to get specific extension data from entities and or entity data.
+                Entity entity = entitySystem.GetEntityInstance(id);
+                int extensionIndex = System.Array.IndexOf(entity.prototype.ExtensionDataClassNames, nameof(ItemExtensionData));
+                ItemExtensionData itemData = (ItemExtensionData)entity.entityData.allExtensionData[extensionIndex];
+                heldItems[i] = itemData;
+                itemData.heldItemIndex = i;
+            }
+            return null;
         }
     }
 }

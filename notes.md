@@ -12,4 +12,4 @@
 - [x] prevent interacting with pickups until lockstep and the entity system have initialized
 - [ ] throw script, if velocity before dropping, enable physics
   - [ ] if it falls through the world it has to revert to some location
-- [ ] drop held items when a client leaves
+- [x] drop held items when a client leaves

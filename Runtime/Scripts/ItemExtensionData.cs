@@ -17,6 +17,10 @@ namespace JanSharp
         public ItemExtension Extension => (ItemExtension)extension;
 
         [System.NonSerialized] public uint attachedToPlayerId;
+        /// <summary>
+        /// <para>Part of game state, but synced through <see cref="ItemSystem"/>.</para>
+        /// </summary>
+        [System.NonSerialized] public int heldItemIndex;
         [System.NonSerialized] public bool attachedBoneExists;
         /// <summary>
         /// <para>Explicit default of <see cref="HumanBodyBones.Head"/>, since we do not control
