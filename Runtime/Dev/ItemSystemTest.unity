@@ -17029,7 +17029,7 @@ PrefabInstance:
     - target: {fileID: 4106339738034699163, guid: 0c974bef0ebc228e7ae9a3818dcca853,
         type: 3}
       propertyPath: m_Name
-      value: GenericValueEditorManager
+      value: WidgetManager
       objectReference: {fileID: 0}
     - target: {fileID: 6673090980643692548, guid: 0c974bef0ebc228e7ae9a3818dcca853,
         type: 3}
