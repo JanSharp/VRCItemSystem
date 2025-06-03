@@ -8,7 +8,7 @@ namespace JanSharp
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ItemExtensionData : EntityExtensionData
     {
-        [HideInInspector] [SingletonReference] public ItemSystem itemSystem;
+        [HideInInspector][SingletonReference] public ItemSystem itemSystem;
 
         public override bool SupportsImportExport => true;
         public override uint DataVersion => 0u;
@@ -30,25 +30,37 @@ namespace JanSharp
         [System.NonSerialized] public Vector3 attachedOffsetVector;
         [System.NonSerialized] public Quaternion attachedOffsetRotation;
 
-        public override void InitFromExtension()
+        public override void InitFromDefault(EntityExtension entityExtension)
         {
-            #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtensionData  InitFromExtension");
-            #endif
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  InitFromDefault");
+#endif
+        }
+
+        public override void InitFromPreInstantiated(EntityExtension entityExtension)
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  InitFromPreInstantiated");
+#endif
+        }
+
+        public override void OnAssociatedWithExtension()
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  OnAssociatedWithExtension");
+#endif
             // The only way for the pickup to be held by the player at this point is through another system
             // forcing it into their hand.
             // The item system should handle this case, however for now it does not. It should use the current
             // pickup data and initialize from that, though I'd have to think about what that implies for
             // syncing.
-            Extension.ActualStart();
-            Extension.pickup.DecrementPreventInteraction();
         }
 
         public override void Serialize(bool isExport)
         {
-            #if ItemSystemDebug
+#if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Serialize");
-            #endif
+#endif
             bool isAttached = attachedToPlayerId != 0u;
             lockstep.WriteFlags(isAttached, attachedBoneExists);
             if (!isAttached)
@@ -63,9 +75,9 @@ namespace JanSharp
 
         public override void Deserialize(bool isImport, uint importedDataVersion)
         {
-            #if ItemSystemDebug
+#if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Deserialize");
-            #endif
+#endif
             lockstep.ReadFlags(out bool isAttached, out attachedBoneExists);
             attachedToPlayerId = isAttached ? lockstep.ReadSmallUInt() : 0u;
             attachedToBone = isAttached ? (HumanBodyBones)lockstep.ReadSmallInt() : HumanBodyBones.Head;

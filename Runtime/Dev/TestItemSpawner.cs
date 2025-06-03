@@ -8,7 +8,7 @@ namespace JanSharp
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class TestItemSpawner : UdonSharpBehaviour
     {
-        [HideInInspector] [SerializeField] [SingletonReference] EntitySystem entitySystem;
+        [HideInInspector][SerializeField][SingletonReference] EntitySystem entitySystem;
         public EntityPrototype prototype;
         public Transform spawnLocation;
 

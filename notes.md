@@ -13,3 +13,4 @@
 - [ ] throw script, if velocity before dropping, enable physics
   - [ ] if it falls through the world it has to revert to some location
 - [x] drop held items when a client leaves
+- [ ] test instantiate performance of prefab asset vs existing game object instance

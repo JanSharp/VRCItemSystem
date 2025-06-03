@@ -16,53 +16,42 @@ namespace JanSharp
 
         [System.NonSerialized] public CustomPickup pickup;
 
-        private bool actuallyStarted = false;
         private VRCPlayerApi localPlayer;
         private uint localPlayerId;
 
-        private void Start()
+        public override void OnInstantiate()
         {
-            #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  Start");
-            #endif
-            ActualStart();
-        }
-
-        /// <summary>
-        /// <para>Code following an <see cref="Object.Instantiate(Object)"/> call runs before
-        /// <see cref="Start"/> runs on the instantiated objects... so we must manually call "start" after
-        /// instantiation. So in particular when <see cref="InitFromExtensionData"/> or
-        /// <see cref="ItemExtensionData.InitFromExtension"/> run.</para>
-        /// </summary>
-        public void ActualStart()
-        {
-            #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  ActualStart");
-            #endif
-            if (actuallyStarted)
-                return;
-            actuallyStarted = true;
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  OnInstantiate");
+#endif
             pickup = GetComponent<CustomPickup>();
             pickup.IncrementPreventInteraction();
             localPlayer = Networking.LocalPlayer;
             localPlayerId = (uint)localPlayer.playerId;
         }
 
-        public override void InitFromExtensionData()
+        public override void AssociateWithExtensionData()
         {
-            #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  InitFromExtensionData");
-            #endif
-            ActualStart();
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  AssociateWithExtensionData");
+#endif
             pickup.DecrementPreventInteraction();
             ApplyExtensionData();
         }
 
+        public override void DisassociateFromExtensionDataAndReset(EntityExtension defaultExtension)
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  DisassociateFromExtensionDataAndReset");
+#endif
+            pickup.IncrementPreventInteraction();
+        }
+
         public override void ApplyExtensionData()
         {
-            #if ItemSystemDebug
+#if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  ApplyExtensionData");
-            #endif
+#endif
             if (Data.attachedToPlayerId == 0u)
                 return;
             // TODO: but what if it is already attached? In the case of imports.
@@ -78,33 +67,33 @@ namespace JanSharp
 
         public override void OnPickup()
         {
-            #if ItemSystemDebug
+#if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickup");
-            #endif
+#endif
             Data.itemSystem.OnLocalPlayerPickup(Data);
         }
 
         public override void OnDrop()
         {
-            #if ItemSystemDebug
+#if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnDrop");
-            #endif
+#endif
             Data.itemSystem.SendDropIA(Data);
             ContinuouslyFlagForMovement = false;
         }
 
         public override void OnPickupUseDown()
         {
-            #if ItemSystemDebug
+#if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickupUseDown");
-            #endif
+#endif
         }
 
         public override void OnPickupUseUp()
         {
-            #if ItemSystemDebug
+#if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickupUseUp");
-            #endif
+#endif
         }
 
         private bool continuouslyFlagForMovement;
