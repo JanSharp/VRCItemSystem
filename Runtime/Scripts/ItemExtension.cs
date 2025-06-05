@@ -9,6 +9,7 @@ namespace JanSharp
     [AssociatedEntityExtensionData(typeof(ItemExtensionData))]
     [RequireComponent(typeof(CustomPickup))]
     [RequireComponent(typeof(Entity))]
+    [SingletonDependency(typeof(ItemSystem))]
     [DisallowMultipleComponent]
     public class ItemExtension : EntityExtension
     {
