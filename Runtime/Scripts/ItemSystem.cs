@@ -22,6 +22,7 @@ namespace JanSharp
         [HideInInspector][SerializeField][SingletonReference] private EntitySystem entitySystem;
         [HideInInspector][SerializeField][SingletonReference] private CustomInteractablesManagerAPI interactables;
         [HideInInspector][SerializeField][SingletonReference] private BoneAttachmentManager boneAttachment;
+        [HideInInspector][SerializeField][SingletonReference] private InterpolationManager interpolation;
 
         private ItemExtensionData[] heldItems = new ItemExtensionData[ArrList.MinCapacity];
         private int heldItemsCount = 0;
@@ -173,8 +174,8 @@ namespace JanSharp
                 return;
             Transform entityTransform = itemData.entityData.entity.transform;
             boneAttachment.AttachToBone(holdingPlayer, itemData.attachedToBone, entityTransform);
-            entityTransform.localPosition = itemData.attachedOffsetVector;
-            entityTransform.localRotation = itemData.attachedOffsetRotation;
+            interpolation.InterpolateLocalPosition(entityTransform, itemData.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
+            interpolation.InterpolateLocalRotation(entityTransform, itemData.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
         }
 
         private void DetachFromRemotePlayer(ItemExtensionData itemData)
@@ -347,8 +348,8 @@ namespace JanSharp
                 return;
             // Bone did exist, still exists, update offsets.
             Transform entityTransform = itemData.entityData.entity.transform;
-            entityTransform.localPosition = itemData.attachedOffsetVector;
-            entityTransform.localRotation = itemData.attachedOffsetRotation;
+            interpolation.InterpolateLocalPosition(entityTransform, itemData.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
+            interpolation.InterpolateLocalRotation(entityTransform, itemData.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
         }
 
         public void SendDropIA(ItemExtensionData itemData)
@@ -425,7 +426,11 @@ namespace JanSharp
             entityData.position = position;
             entityData.rotation = rotation;
             if (item != null)
-                entityData.entity.transform.SetPositionAndRotation(position, rotation);
+            {
+                Transform entityTransform = entityData.entity.transform;
+                interpolation.InterpolateWorldPosition(entityTransform, position, Entity.TransformChangeInterpolationDuration);
+                interpolation.InterpolateWorldRotation(entityTransform, rotation, Entity.TransformChangeInterpolationDuration);
+            }
             entityData.NoPositionSync = false;
             entityData.NoRotationSync = false;
             RemoveFromHeldItems(itemData);
