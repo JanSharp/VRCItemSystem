@@ -56,6 +56,38 @@ namespace JanSharp
             // syncing.
         }
 
+        public void OnPositionSyncControlLost()
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  OnPositionSyncControlLost");
+#endif
+            // TODO: cry
+        }
+
+        public void OnRotationSyncControlLost()
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  OnRotationSyncControlLost");
+#endif
+            // TODO: cry
+        }
+
+        public void OnLatencyPositionSyncControlLost()
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  OnLatencyPositionSyncControlLost");
+#endif
+            Extension.pickup.Drop(); // TODO: only if this is still held by the same player and hand
+        }
+
+        public void OnLatencyRotationSyncControlLost()
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  OnLatencyRotationSyncControlLost");
+#endif
+            Extension.pickup.Drop(); // TODO: only if this is still held by the same player and hand
+        }
+
         public override void Serialize(bool isExport)
         {
 #if ItemSystemDebug

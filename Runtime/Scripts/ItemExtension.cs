@@ -20,6 +20,8 @@ namespace JanSharp
         private VRCPlayerApi localPlayer;
         private uint localPlayerId;
 
+        [System.NonSerialized] public bool ignoreNextDropEvent;
+
         public override void OnInstantiate()
         {
 #if ItemSystemDebug
@@ -77,10 +79,14 @@ namespace JanSharp
         public override void OnDrop()
         {
 #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  OnDrop");
+            Debug.Log($"[ItemSystemDebug] ItemExtension  OnDrop - ignoreNextDropEvent: {ignoreNextDropEvent}");
 #endif
+            if (ignoreNextDropEvent)
+            {
+                ignoreNextDropEvent = false;
+                return;
+            }
             Data.itemSystem.SendDropIA(Data);
-            ContinuouslyFlagForMovement = false;
         }
 
         public override void OnPickupUseDown()
@@ -103,6 +109,9 @@ namespace JanSharp
             get => continuouslyFlagForMovement;
             set
             {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  ContinuouslyFlagForMovement.set");
+#endif
                 continuouslyFlagForMovement = value;
                 if (value)
                     StartMovementLoop();
@@ -112,6 +121,9 @@ namespace JanSharp
         private bool movementLoopIsRunning = false;
         private void StartMovementLoop()
         {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  StartMovementLoop");
+#endif
             if (movementLoopIsRunning)
                 return;
             movementLoopIsRunning = true;
