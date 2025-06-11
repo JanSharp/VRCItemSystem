@@ -398,6 +398,14 @@ namespace JanSharp
             extension.ContinuouslyFlagForMovement = false;
             entity.GiveBackControlOfPositionSync(itemData, entityTransform.position, Entity.TransformChangeInterpolationDuration);
             entity.GiveBackControlOfRotationSync(itemData, entityTransform.rotation, Entity.TransformChangeInterpolationDuration);
+
+            // FIXME: This does not actually work, nor is the "throw script" logic implemented fully.
+            int extensionIndex = System.Array.IndexOf(itemData.entityData.entityPrototype.ExtensionDataClassNames, nameof(PhysicsEntityExtensionData));
+            if (extensionIndex < 0)
+                return;
+            PhysicsEntityExtension physicsEntity = (PhysicsEntityExtension)entity.extensions[extensionIndex];
+            physicsEntity.WakeUp();
+            physicsEntity.rb.velocity = Vector3.up * 4f;
         }
 
         [HideInInspector][SerializeField] private uint onDropIAId;
@@ -473,6 +481,16 @@ namespace JanSharp
             itemData.attachedToBone = HumanBodyBones.Head;
             itemData.attachedOffsetVector = Vector3.zero;
             itemData.attachedOffsetRotation = Quaternion.identity;
+
+            // FIXME: This does not actually work, nor is the "throw script" logic implemented fully.
+            int extensionIndex = System.Array.IndexOf(entityData.entityPrototype.ExtensionDataClassNames, nameof(PhysicsEntityExtensionData));
+            if (extensionIndex < 0)
+                return;
+            PhysicsEntityExtensionData physicsData = (PhysicsEntityExtensionData)entityData.allExtensionData[extensionIndex];
+            physicsData.position = position;
+            physicsData.rotation = rotation;
+            physicsData.velocity = Vector3.up * 4f;
+            physicsData.WakeUp();
         }
 
         private void RemoveFromHeldItems(ItemExtensionData itemData)
