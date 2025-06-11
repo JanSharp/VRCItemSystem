@@ -172,7 +172,7 @@ namespace JanSharp
             VRCPlayerApi holdingPlayer = VRCPlayerApi.GetPlayerById((int)itemData.attachedToPlayerId);
             if (holdingPlayer == null || itemData.extension == null)
                 return;
-            Transform entityTransform = itemData.entityData.entity.transform;
+            Transform entityTransform = itemData.entity.transform;
             boneAttachment.AttachToBone(holdingPlayer, itemData.attachedToBone, entityTransform);
             interpolation.InterpolateLocalPosition(entityTransform, itemData.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
             interpolation.InterpolateLocalRotation(entityTransform, itemData.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
@@ -188,7 +188,7 @@ namespace JanSharp
             boneAttachment.DetachFromBone(
                 (int)itemData.attachedToPlayerId,
                 itemData.attachedToBone,
-                itemData.entityData.entity.transform);
+                itemData.entity.transform);
         }
 
         private void WriteOffsets(CustomPickup pickup)
@@ -227,7 +227,7 @@ namespace JanSharp
                 itemData.Extension.ContinuouslyFlagForMovement = true;
             else
             {
-                Entity entity = itemData.entityData.entity;
+                Entity entity = itemData.entity;
                 entity.TakeControlOfPositionSync(itemData);
                 entity.TakeControlOfRotationSync(itemData);
             }
@@ -377,7 +377,7 @@ namespace JanSharp
             if (itemData.extension == null)
                 return;
             // Bone did exist, still exists, update offsets.
-            Transform entityTransform = itemData.entityData.entity.transform;
+            Transform entityTransform = itemData.entity.transform;
             interpolation.InterpolateLocalPosition(entityTransform, itemData.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
             interpolation.InterpolateLocalRotation(entityTransform, itemData.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
         }
@@ -387,7 +387,8 @@ namespace JanSharp
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendDropIA");
 #endif
-            Transform entityTransform = itemData.entityData.entity.transform;
+            Entity entity = itemData.entity;
+            Transform entityTransform = entity.transform;
             entitySystem.WriteEntityExtensionDataRef(itemData);
             lockstep.WriteVector3(entityTransform.position);
             lockstep.WriteQuaternion(entityTransform.rotation);
@@ -395,8 +396,8 @@ namespace JanSharp
             // Latency hiding.
             ItemExtension extension = itemData.Extension;
             extension.ContinuouslyFlagForMovement = false;
-            extension.entity.GiveBackControlOfPositionSync(itemData, entityTransform.position, Entity.TransformChangeInterpolationDuration);
-            extension.entity.GiveBackControlOfRotationSync(itemData, entityTransform.rotation, Entity.TransformChangeInterpolationDuration);
+            entity.GiveBackControlOfPositionSync(itemData, entityTransform.position, Entity.TransformChangeInterpolationDuration);
+            entity.GiveBackControlOfRotationSync(itemData, entityTransform.rotation, Entity.TransformChangeInterpolationDuration);
         }
 
         [HideInInspector][SerializeField] private uint onDropIAId;
@@ -418,7 +419,7 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendForceDropSingletonIA");
 #endif
             entitySystem.WriteEntityExtensionDataRef(itemData);
-            Entity entity = itemData.entityData.entity;
+            Entity entity = itemData.entity;
             if (entity != null)
             {
                 Transform entityTransform = entity.transform;
