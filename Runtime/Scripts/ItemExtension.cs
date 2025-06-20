@@ -1,7 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
-using VRC.Udon;
 
 namespace JanSharp
 {
@@ -13,14 +12,56 @@ namespace JanSharp
     [DisallowMultipleComponent]
     public class ItemExtension : EntityExtension
     {
-        public ItemExtensionData Data => (ItemExtensionData)extensionData;
+        [System.NonSerialized] public ItemExtensionData data;
+        [System.NonSerialized] public ItemSystem itemSystem;
 
         [System.NonSerialized] public CustomPickup pickup;
+        private bool preventPickupInteraction;
 
         private VRCPlayerApi localPlayer;
         private uint localPlayerId;
 
-        [System.NonSerialized] public bool ignoreNextDropEvent;
+        [System.NonSerialized] public bool ignoreNextPickupEvent = false;
+        [System.NonSerialized] public bool ignoreNextDropEvent = false;
+        private bool comingFromOnPickup = false;
+
+        private bool shouldHaveControlOfTransformSync = false;
+        private bool movementLoopShouldBeRunning = false;
+        private bool movementLoopIsRunning = false;
+        public const float MovementLoopInterval = 0.1f;
+
+        [System.NonSerialized] public uint attachedToPlayerId;
+        /// <summary>
+        /// <para>Explicit default of <see cref="HumanBodyBones.Head"/>, since we do not control
+        /// <see cref="HumanBodyBones"/> values.</para>
+        /// </summary>
+        [System.NonSerialized] public HumanBodyBones attachedToBone = HumanBodyBones.Head;
+        [System.NonSerialized] public bool attachedBoneExists;
+        [System.NonSerialized] public Vector3 attachedOffsetVector;
+        [System.NonSerialized] public Quaternion attachedOffsetRotation;
+
+        private void SetPreventPickupInteraction(bool value)
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  SetPreventPickupInteraction");
+#endif
+            if (preventPickupInteraction == value)
+                return;
+            preventPickupInteraction = value;
+            if (preventPickupInteraction)
+                pickup.IncrementPreventInteraction();
+            else
+                pickup.DecrementPreventInteraction();
+        }
+
+        private void UpdatePickupInteractionPrevention()
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  UpdatePickupInteractionPrevention");
+#endif
+            SetPreventPickupInteraction(data == null
+                || (attachedToPlayerId != 0u && attachedToPlayerId != localPlayerId));
+        }
 
         public override void OnInstantiate()
         {
@@ -28,18 +69,9 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnInstantiate");
 #endif
             pickup = GetComponent<CustomPickup>();
-            pickup.IncrementPreventInteraction();
             localPlayer = Networking.LocalPlayer;
             localPlayerId = (uint)localPlayer.playerId;
-        }
-
-        public override void AssociateWithExtensionData()
-        {
-#if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  AssociateWithExtensionData");
-#endif
-            pickup.DecrementPreventInteraction();
-            ApplyExtensionData();
+            UpdatePickupInteractionPrevention();
         }
 
         public override void DisassociateFromExtensionDataAndReset(EntityExtension defaultExtension)
@@ -47,7 +79,24 @@ namespace JanSharp
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  DisassociateFromExtensionDataAndReset");
 #endif
-            pickup.IncrementPreventInteraction();
+            DetachFromPlayer();
+            SetAttachedBoneExists(false, Vector3.zero, Quaternion.identity);
+            itemSystem = null;
+            data.ext = null;
+            data = null;
+            UpdatePickupInteractionPrevention();
+        }
+
+        public override void AssociateWithExtensionData()
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  AssociateWithExtensionData");
+#endif
+            data = (ItemExtensionData)extensionData;
+            data.ext = this;
+            itemSystem = data.itemSystem;
+            ApplyExtensionData();
+            UpdatePickupInteractionPrevention();
         }
 
         public override void ApplyExtensionData()
@@ -55,25 +104,96 @@ namespace JanSharp
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtension  ApplyExtensionData");
 #endif
-            if (Data.attachedToPlayerId == 0u)
-                return;
-            // TODO: but what if it is already attached? In the case of imports.
-            if (Data.attachedToPlayerId == localPlayerId)
-                Data.itemSystem.AttachToLocalPlayer(Data);
+            if (data.attachedToPlayerId != 0)
+                AttachToPlayerUsingItemData();
             else
-            {
-                pickup.IncrementPreventInteraction();
-                if (Data.attachedBoneExists)
-                    Data.itemSystem.AttachToRemotePlayer(Data);
-            }
+                DetachFromPlayer(interpolateToGameState: true);
+        }
+
+        public void AttachToPlayerUsingItemData()
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  AttachToPlayerUsingItemData");
+#endif
+            AttachToPlayer(
+                data.attachedToPlayerId,
+                data.attachedToBone,
+                data.attachedBoneExists,
+                data.attachedOffsetVector,
+                data.attachedOffsetRotation);
+        }
+
+        public void AttachToPlayer(uint playerId, HumanBodyBones bone, bool boneExists, Vector3 offsetVector, Quaternion offsetRotation)
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  AttachToPlayer");
+#endif
+            if (attachedToPlayerId != 0u) // Cannot omit interpolateToGameState, U# generates improper code when doing so.
+                DetachFromPlayer(interpolateToGameState: false, comingFromAttach: true);
+
+            attachedToPlayerId = playerId;
+            attachedToBone = bone;
+            attachedBoneExists = boneExists;
+            attachedOffsetVector = offsetVector;
+            attachedOffsetRotation = offsetRotation;
+
+            StartStopMovementLoop();
+            UpdatePickupInteractionPrevention();
+
+            if (comingFromOnPickup)
+                return;
+
+            if (playerId == localPlayerId)
+                itemSystem.AttachToLocalPlayer(this);
+            else if (boneExists)
+                itemSystem.AttachToRemotePlayer(this);
+        }
+
+        public void DetachFromPlayer(bool interpolateToGameState = false, bool comingFromAttach = false)
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  DetachFromPlayer");
+#endif
+            if (attachedToPlayerId == 0u)
+                return;
+
+            if (attachedToPlayerId == localPlayerId)
+                itemSystem.DetachFromLocalPlayer(this);
+            else
+                itemSystem.DetachFromRemotePlayer(this);
+
+            if (comingFromAttach)
+                return;
+
+            attachedToPlayerId = 0u;
+            attachedToBone = HumanBodyBones.Head;
+            attachedBoneExists = false;
+            attachedOffsetVector = Vector3.zero;
+            attachedOffsetRotation = Quaternion.identity;
+
+            StartStopMovementLoop(interpolateToGameState);
+            UpdatePickupInteractionPrevention();
         }
 
         public override void OnPickup()
         {
 #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickup");
+            Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickup - ignoreNextPickupEvent: {ignoreNextPickupEvent}");
 #endif
-            Data.itemSystem.OnLocalPlayerPickup(Data);
+            if (ignoreNextPickupEvent)
+            {
+                ignoreNextPickupEvent = false;
+                return;
+            }
+            if (!lockstep.IsInitialized)
+            {
+                ignoreNextDropEvent = true;
+                pickup.Drop();
+                return;
+            }
+            comingFromOnPickup = true;
+            itemSystem.SendPickupIA(data);
+            comingFromOnPickup = false;
         }
 
         public override void OnDrop()
@@ -86,7 +206,7 @@ namespace JanSharp
                 ignoreNextDropEvent = false;
                 return;
             }
-            Data.itemSystem.SendDropIA(Data);
+            itemSystem.SendDropIA(data);
         }
 
         public override void OnPickupUseDown()
@@ -103,22 +223,98 @@ namespace JanSharp
 #endif
         }
 
-        private bool continuouslyFlagForMovement;
-        public bool ContinuouslyFlagForMovement
+        public void SetAttachedBoneExists(bool boneExists, Vector3 offsetVector, Quaternion offsetRotation)
         {
-            get => continuouslyFlagForMovement;
-            set
-            {
 #if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  ContinuouslyFlagForMovement.set");
+            Debug.Log($"[ItemSystemDebug] ItemExtension  SetAttachedBoneExists");
 #endif
-                continuouslyFlagForMovement = value;
-                if (value)
-                    StartMovementLoop();
+            attachedOffsetVector = offsetVector;
+            attachedOffsetRotation = offsetRotation;
+
+            if (attachedBoneExists == boneExists)
+            {
+                if (!attachedBoneExists || attachedToPlayerId == 0u)
+                    return; // Realistically nothing changed.
+
+                if (attachedToPlayerId == localPlayerId)
+                {
+                    itemSystem.AttachToLocalPlayer(this); // Applies the changed offsets to the pickup.
+                    return;
+                }
+                // Attached to remote player, bone did exist, still exists, offsets have changed, interpolate.
+                Transform entityTransform = entity.transform;
+                itemSystem.interpolation.InterpolateLocalPosition(entityTransform, attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
+                itemSystem.interpolation.InterpolateLocalRotation(entityTransform, attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
+                return;
+            }
+
+            attachedBoneExists = boneExists;
+            StartStopMovementLoop();
+            if (attachedToPlayerId == 0)
+                return;
+
+            if (attachedToPlayerId == localPlayerId)
+            {
+                if (attachedBoneExists)
+                    itemSystem.AttachToLocalPlayer(this);
+                // Do not detach. Changing offsets should not make the local player drop the item.
+            }
+            else
+            {
+                if (attachedBoneExists)
+                    itemSystem.AttachToRemotePlayer(this);
+                else
+                    itemSystem.DetachFromRemotePlayer(this);
             }
         }
 
-        private bool movementLoopIsRunning = false;
+        private void TakeOrGiveBackControlOfTransformSync(bool interpolateToGameState)
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  TakeOrGiveBackControlOfTransformSync");
+#endif
+            bool prev = shouldHaveControlOfTransformSync;
+            shouldHaveControlOfTransformSync = attachedToPlayerId != 0u && attachedBoneExists;
+            if (shouldHaveControlOfTransformSync == prev)
+                return;
+
+            if (shouldHaveControlOfTransformSync)
+            {
+                entity.TakeControlOfTransformSync(itemSystem.transformController);
+                return;
+            }
+            if (interpolateToGameState)
+            {
+                entity.GiveBackControlOfTransformSync(
+                    itemSystem.transformController,
+                    entityData.position,
+                    entityData.rotation,
+                    entityData.scale);
+                return;
+            }
+            Transform t = entity.transform;
+            entity.GiveBackControlOfTransformSync(
+                itemSystem.transformController,
+                t.position,
+                t.rotation,
+                t.localScale);
+        }
+
+        public void StartStopMovementLoop(bool interpolateToGameState = false)
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtension  StartStopMovementLoop");
+#endif
+            TakeOrGiveBackControlOfTransformSync(interpolateToGameState);
+            bool prev = movementLoopShouldBeRunning;
+            movementLoopShouldBeRunning = !shouldHaveControlOfTransformSync && attachedToPlayerId == localPlayerId;
+            if (movementLoopShouldBeRunning == prev)
+                return;
+
+            if (movementLoopShouldBeRunning)
+                StartMovementLoop();
+        }
+
         private void StartMovementLoop()
         {
 #if ItemSystemDebug
@@ -127,20 +323,19 @@ namespace JanSharp
             if (movementLoopIsRunning)
                 return;
             movementLoopIsRunning = true;
-            MovementLoop();
+            SendCustomEventDelayedFrames(nameof(MovementLoop), 1);
         }
 
         public void MovementLoop()
         {
             // TODO: flag position and rotation separately and only if it actually changed.
             entity.FlagForPositionAndRotationChange();
-            if (!pickup.isHeld || !continuouslyFlagForMovement)
+            if (!movementLoopShouldBeRunning)
             {
                 movementLoopIsRunning = false;
-                continuouslyFlagForMovement = false;
                 return;
             }
-            SendCustomEventDelayedSeconds(nameof(MovementLoop), 0.1f);
+            SendCustomEventDelayedSeconds(nameof(MovementLoop), MovementLoopInterval);
         }
     }
 }

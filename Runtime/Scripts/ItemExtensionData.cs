@@ -14,19 +14,19 @@ namespace JanSharp
         public override uint DataVersion => 0u;
         public override uint LowestSupportedDataVersion => 0u;
 
-        public ItemExtension Extension => (ItemExtension)extension;
+        [System.NonSerialized] public ItemExtension ext;
 
         [System.NonSerialized] public uint attachedToPlayerId;
         /// <summary>
         /// <para>Part of game state, but synced through <see cref="ItemSystem"/>.</para>
         /// </summary>
         [System.NonSerialized] public int heldItemIndex;
-        [System.NonSerialized] public bool attachedBoneExists;
         /// <summary>
         /// <para>Explicit default of <see cref="HumanBodyBones.Head"/>, since we do not control
         /// <see cref="HumanBodyBones"/> values.</para>
         /// </summary>
         [System.NonSerialized] public HumanBodyBones attachedToBone = HumanBodyBones.Head;
+        [System.NonSerialized] public bool attachedBoneExists;
         [System.NonSerialized] public Vector3 attachedOffsetVector;
         [System.NonSerialized] public Quaternion attachedOffsetRotation;
 
@@ -54,38 +54,6 @@ namespace JanSharp
             // The item system should handle this case, however for now it does not. It should use the current
             // pickup data and initialize from that, though I'd have to think about what that implies for
             // syncing.
-        }
-
-        public void OnPositionSyncControlLost()
-        {
-#if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtensionData  OnPositionSyncControlLost");
-#endif
-            // TODO: cry
-        }
-
-        public void OnRotationSyncControlLost()
-        {
-#if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtensionData  OnRotationSyncControlLost");
-#endif
-            // TODO: cry
-        }
-
-        public void OnLatencyPositionSyncControlLost()
-        {
-#if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtensionData  OnLatencyPositionSyncControlLost");
-#endif
-            Extension.pickup.Drop(); // TODO: only if this is still held by the same player and hand
-        }
-
-        public void OnLatencyRotationSyncControlLost()
-        {
-#if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtensionData  OnLatencyRotationSyncControlLost");
-#endif
-            Extension.pickup.Drop(); // TODO: only if this is still held by the same player and hand
         }
 
         public override void Serialize(bool isExport)
@@ -117,6 +85,7 @@ namespace JanSharp
             {
                 attachedOffsetVector = lockstep.ReadVector3();
                 attachedOffsetRotation = lockstep.ReadQuaternion();
+                entityData.SetTransformSyncControllerDueToDeserialization(itemSystem.transformController);
             }
             else
             {

@@ -1,8 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
-using VRC.SDK3.Data;
 using VRC.SDKBase;
-using VRC.Udon;
 
 namespace JanSharp
 {
@@ -20,9 +18,10 @@ namespace JanSharp
         public override LockstepGameStateOptionsUI ImportUI => null;
 
         [HideInInspector][SerializeField][SingletonReference] private EntitySystem entitySystem;
+        [HideInInspector][SerializeField][SingletonReference] public ItemTransformController transformController;
         [HideInInspector][SerializeField][SingletonReference] private CustomInteractablesManagerAPI interactables;
         [HideInInspector][SerializeField][SingletonReference] private BoneAttachmentManager boneAttachment;
-        [HideInInspector][SerializeField][SingletonReference] private InterpolationManager interpolation;
+        [HideInInspector][SerializeField][SingletonReference] public InterpolationManager interpolation;
 
         private ItemExtensionData[] heldItems = new ItemExtensionData[ArrList.MinCapacity];
         private int heldItemsCount = 0;
@@ -95,7 +94,7 @@ namespace JanSharp
             ItemExtension item = pickup.GetComponent<ItemExtension>();
             if (item == null)
                 return;
-            SendChangeOffsetIA(item.Data);
+            SendChangeOffsetIA(item.data);
         }
 
         private bool LocalPlayerHasBone(HumanBodyBones bone) => localPlayer.GetBonePosition(bone) != Vector3.zero;
@@ -149,49 +148,59 @@ namespace JanSharp
                 : VRCPlayerApi.TrackingDataType.Head;
         }
 
-        public void AttachToLocalPlayer(ItemExtensionData itemData)
+        public void AttachToLocalPlayer(ItemExtension item)
         {
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemSystem  AttachToLocalPlayer");
 #endif
             // NOTE: Unfortunately this will only result in proper offsets if the player is in the same avatar,
             // or one with the same bone rotations, which let's be honest is unlikely.
-            VRCPlayerApi.TrackingDataType trackingType = BoneToTrackingType(itemData.attachedToBone);
+            VRCPlayerApi.TrackingDataType trackingType = BoneToTrackingType(item.attachedToBone);
             BoneOffsetsToTrackingDataOffsets(
-                trackingType, itemData.attachedToBone,
-                itemData.attachedOffsetVector, itemData.attachedOffsetRotation,
+                trackingType, item.attachedToBone,
+                item.attachedOffsetVector, item.attachedOffsetRotation,
                 out Vector3 offsetVector, out Quaternion offsetRotation);
-            itemData.Extension.pickup.ForceBeingPickedUp(trackingType, offsetVector, offsetRotation);
+            CustomPickup pickup = item.pickup;
+            if (!pickup.isHeld) // Only raises the OnPickup event if it is not already held.
+                item.ignoreNextPickupEvent = true;
+            pickup.ForceBeingPickedUp(trackingType, offsetVector, offsetRotation);
         }
 
-        public void AttachToRemotePlayer(ItemExtensionData itemData)
+        public void DetachFromLocalPlayer(ItemExtension item)
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  DetachFromLocalPlayer");
+#endif
+            if (!item.pickup.isHeld)
+                return;
+            item.ignoreNextDropEvent = true;
+            item.pickup.Drop();
+        }
+
+        public void AttachToRemotePlayer(ItemExtension item)
         {
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemSystem  AttachToRemotePlayer");
 #endif
-            VRCPlayerApi holdingPlayer = VRCPlayerApi.GetPlayerById((int)itemData.attachedToPlayerId);
-            if (holdingPlayer == null || itemData.extension == null)
-                return;
-            Transform entityTransform = itemData.entity.transform;
-            boneAttachment.AttachToBone(holdingPlayer, itemData.attachedToBone, entityTransform);
-            interpolation.InterpolateLocalPosition(entityTransform, itemData.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
-            interpolation.InterpolateLocalRotation(entityTransform, itemData.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
+            VRCPlayerApi holdingPlayer = VRCPlayerApi.GetPlayerById((int)item.attachedToPlayerId);
+            Transform entityTransform = item.entity.transform;
+            boneAttachment.AttachToBone(holdingPlayer, item.attachedToBone, entityTransform);
+            interpolation.InterpolateLocalPosition(entityTransform, item.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
+            interpolation.InterpolateLocalRotation(entityTransform, item.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
         }
 
-        private void DetachFromRemotePlayer(ItemExtensionData itemData)
+        public void DetachFromRemotePlayer(ItemExtension item)
         {
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemSystem  DetachFromRemotePlayer");
 #endif
-            if (itemData.extension == null)
-                return;
             boneAttachment.DetachFromBone(
-                (int)itemData.attachedToPlayerId,
-                itemData.attachedToBone,
-                itemData.entity.transform);
+                (int)item.attachedToPlayerId,
+                item.attachedToBone,
+                item.entity.transform);
         }
 
-        private void WriteOffsets(CustomPickup pickup)
+        private void WriteOffsets(CustomPickup pickup, out Vector3 offsetVector, out Quaternion offsetRotation)
         {
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemSystem  WriteOffsetsRelativeToBone");
@@ -200,7 +209,7 @@ namespace JanSharp
             TrackingDataOffsetsToBoneOffsets(
                 pickup.heldTrackingType, bone,
                 pickup.heldOffsetVector, pickup.heldOffsetRotation,
-                out Vector3 offsetVector, out Quaternion offsetRotation);
+                out offsetVector, out offsetRotation);
             lockstep.WriteVector3(offsetVector);
             lockstep.WriteQuaternion(offsetRotation);
         }
@@ -214,36 +223,33 @@ namespace JanSharp
             itemData.attachedOffsetRotation = lockstep.ReadQuaternion();
         }
 
-        public void OnLocalPlayerPickup(ItemExtensionData itemData)
-        {
-#if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemSystem  OnLocalPlayerPickup");
-#endif
-            CustomPickup pickup = itemData.Extension.pickup;
-            HumanBodyBones bone = TrackingTypeToBone(pickup.heldTrackingType);
-            bool boneExists = LocalPlayerHasBone(bone);
-            SendPickupIA(itemData, pickup, bone, boneExists);
-            if (!boneExists)
-                itemData.Extension.ContinuouslyFlagForMovement = true;
-            else
-            {
-                Entity entity = itemData.entity;
-                entity.TakeControlOfPositionSync(itemData);
-                entity.TakeControlOfRotationSync(itemData);
-            }
-        }
-
-        private void SendPickupIA(ItemExtensionData itemData, CustomPickup pickup, HumanBodyBones bone, bool boneExists)
+        public void SendPickupIA(ItemExtensionData itemData)
         {
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendPickupIA");
 #endif
+            CustomPickup pickup = itemData.ext.pickup;
+            if (!pickup.isHeld)
+            {
+                Debug.LogError("[ItemSystem] Attempt to SendPickupIA for an item which is not held by the local player.");
+                return;
+            }
+            HumanBodyBones bone = TrackingTypeToBone(pickup.heldTrackingType);
+            bool boneExists = LocalPlayerHasBone(bone);
+
             entitySystem.WriteEntityExtensionDataRef(itemData);
+            itemData.entityData.WritePotentiallyUnknownTransformValues();
             lockstep.WriteFlags(boneExists);
             lockstep.WriteSmallInt((int)bone);
+            Vector3 offsetVector = Vector3.zero;
+            Quaternion offsetRotation = Quaternion.identity;
             if (boneExists)
-                WriteOffsets(pickup);
-            lockstep.SendInputAction(onPickupIAId);
+                WriteOffsets(pickup, out offsetVector, out offsetRotation);
+            if (!itemData.entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(onPickupIAId)))
+                return; // TODO: Either drop the item, or send a pickup IA once lockstep is initialized.
+
+            // Latency hiding.
+            itemData.ext.AttachToPlayer(localPlayerId, bone, boneExists, offsetVector, offsetRotation);
         }
 
         [HideInInspector][SerializeField] private uint onPickupIAId;
@@ -265,31 +271,26 @@ namespace JanSharp
                         + $"entity without a DropIA in between.");
                 // If the above is false, then 2 different players attempted to pick up the same item at the
                 // same time, ignore the second one - so this current IA.
+                itemData.entityData.MarkLatencyHiddenUniqueIdAsProcessed();
                 return;
             }
+
+            itemData.entityData.ReadPotentiallyUnknownTransformValues();
             itemData.heldItemIndex = heldItemsCount;
             ArrList.Add(ref heldItems, ref heldItemsCount, itemData);
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
-            if (itemData.attachedToPlayerId != localPlayerId)
-            {
-                ItemExtension extension = itemData.Extension;
-                CustomPickup pickup = extension.pickup;
-                pickup.IncrementPreventInteraction();
-                if (pickup.isHeld)
-                {
-                    extension.ignoreNextDropEvent = true;
-                    pickup.Drop();
-                }
-            }
             lockstep.ReadFlags(out itemData.attachedBoneExists);
             itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
-            if (!itemData.attachedBoneExists)
+            if (itemData.attachedBoneExists)
+            {
+                ReadOffsets(itemData);
+                itemData.entityData.TakeControlOfTransformSync(transformController);
+            }
+
+            if (!itemData.entityData.ShouldApplyReceivedIAToLatencyState() || itemData.ext == null)
                 return;
-            ReadOffsets(itemData);
-            itemData.entityData.TakeControlOfPositionSync(itemData, updateLatencyState: true);
-            itemData.entityData.TakeControlOfRotationSync(itemData, updateLatencyState: true);
-            if (itemData.attachedToPlayerId != localPlayerId)
-                AttachToRemotePlayer(itemData);
+
+            itemData.ext.AttachToPlayerUsingItemData();
         }
 
         private void SendChangeOffsetIA(ItemExtensionData itemData)
@@ -297,7 +298,7 @@ namespace JanSharp
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendChangeOffsetIA");
 #endif
-            ItemExtension item = itemData.Extension;
+            ItemExtension item = itemData.ext;
             if (item == null)
             {
                 Debug.LogError($"[ItemSystem] Attempt to use SendChangeOffsetIA on an ItemExtensionData "
@@ -312,26 +313,21 @@ namespace JanSharp
             HumanBodyBones bone = TrackingTypeToBone(pickup.heldTrackingType);
             bool boneExists = LocalPlayerHasBone(bone);
             lockstep.WriteFlags(boneExists);
+            Vector3 offsetVector = Vector3.zero;
+            Quaternion offsetRotation = Quaternion.identity;
             if (boneExists)
-                WriteOffsets(pickup);
+                WriteOffsets(pickup, out offsetVector, out offsetRotation);
             else
             {
                 lockstep.WriteVector3(entityTransform.position);
                 lockstep.WriteQuaternion(entityTransform.rotation);
             }
-            lockstep.SendInputAction(changeOffsetIAId);
-            if (boneExists)
-            {
-                item.ContinuouslyFlagForMovement = false;
-                entity.TakeControlOfPositionSync(item);
-                entity.TakeControlOfRotationSync(item);
-            }
-            else
-            {
-                item.ContinuouslyFlagForMovement = true;
-                entity.GiveBackControlOfPositionSync(itemData, entityTransform.position, Entity.TransformChangeInterpolationDuration);
-                entity.GiveBackControlOfRotationSync(itemData, entityTransform.rotation, Entity.TransformChangeInterpolationDuration);
-            }
+
+            if (!itemData.entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(changeOffsetIAId)))
+                return;
+
+            // Latency hiding.
+            item.SetAttachedBoneExists(boneExists, offsetVector, offsetRotation);
         }
 
         [HideInInspector][SerializeField] private uint changeOffsetIAId;
@@ -344,42 +340,41 @@ namespace JanSharp
             ItemExtensionData itemData = entitySystem.ReadEntityExtensionDataRef<ItemExtensionData>();
             if (itemData == null)
                 return;
+            EntityData entityData = itemData.entityData;
             if (lockstep.SendingPlayerId != itemData.attachedToPlayerId)
+            {
+                entityData.MarkLatencyHiddenUniqueIdAsProcessed();
                 return; // If attached id is 0u this'll also return, which works out nicely.
+            }
 
             lockstep.ReadFlags(out bool boneExists);
-            if (!boneExists)
+            if (boneExists)
             {
-                itemData.entityData.GiveBackControlOfPositionSync(itemData, lockstep.ReadVector3(), Entity.TransformChangeInterpolationDuration, updateLatencyState: true);
-                itemData.entityData.GiveBackControlOfRotationSync(itemData, lockstep.ReadQuaternion(), Entity.TransformChangeInterpolationDuration, updateLatencyState: true);
-                if (itemData.attachedBoneExists && itemData.attachedToPlayerId != localPlayerId)
-                    DetachFromRemotePlayer(itemData); // Bone did exist, but does no longer.
+                if (!itemData.attachedBoneExists) // Bone didn't exist, but it does now.
+                    entityData.TakeControlOfTransformSync(transformController);
+                itemData.attachedBoneExists = true;
+                ReadOffsets(itemData);
+            }
+            else // Bone does not exist.
+            {
+                entityData.position = lockstep.ReadVector3();
+                entityData.rotation = lockstep.ReadQuaternion();
+                if (itemData.attachedBoneExists) // Bone did exist.
+                    entityData.GiveBackControlOfTransformSync(
+                        transformController,
+                        entityData.position,
+                        entityData.rotation,
+                        entityData.scale);
                 itemData.attachedBoneExists = false;
-                itemData.attachedToBone = HumanBodyBones.Head;
                 itemData.attachedOffsetVector = Vector3.zero;
                 itemData.attachedOffsetRotation = Quaternion.identity;
-                return;
             }
 
-            itemData.entityData.TakeControlOfPositionSync(itemData, updateLatencyState: true);
-            itemData.entityData.TakeControlOfRotationSync(itemData, updateLatencyState: true);
-            ReadOffsets(itemData);
-
-            // Bone didn't exist, but now it does.
-            if (!itemData.attachedBoneExists)
-            {
-                itemData.attachedBoneExists = true;
-                if (itemData.attachedToPlayerId != localPlayerId)
-                    AttachToRemotePlayer(itemData);
-                return;
-            }
-
-            if (itemData.extension == null)
-                return;
-            // Bone did exist, still exists, update offsets.
-            Transform entityTransform = itemData.entity.transform;
-            interpolation.InterpolateLocalPosition(entityTransform, itemData.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
-            interpolation.InterpolateLocalRotation(entityTransform, itemData.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
+            if (entityData.ShouldApplyReceivedIAToLatencyState() && itemData.ext != null)
+                itemData.ext.SetAttachedBoneExists(
+                    boneExists,
+                    itemData.attachedOffsetVector,
+                    itemData.attachedOffsetRotation);
         }
 
         public void SendDropIA(ItemExtensionData itemData)
@@ -392,20 +387,11 @@ namespace JanSharp
             entitySystem.WriteEntityExtensionDataRef(itemData);
             lockstep.WriteVector3(entityTransform.position);
             lockstep.WriteQuaternion(entityTransform.rotation);
-            lockstep.SendInputAction(onDropIAId);
-            // Latency hiding.
-            ItemExtension extension = itemData.Extension;
-            extension.ContinuouslyFlagForMovement = false;
-            entity.GiveBackControlOfPositionSync(itemData, entityTransform.position, Entity.TransformChangeInterpolationDuration);
-            entity.GiveBackControlOfRotationSync(itemData, entityTransform.rotation, Entity.TransformChangeInterpolationDuration);
-
-            // FIXME: This does not actually work, nor is the "throw script" logic implemented fully.
-            int extensionIndex = System.Array.IndexOf(itemData.entityData.entityPrototype.ExtensionDataClassNames, nameof(PhysicsEntityExtensionData));
-            if (extensionIndex < 0)
+            if (!itemData.entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(onDropIAId)))
                 return;
-            PhysicsEntityExtension physicsEntity = (PhysicsEntityExtension)entity.extensions[extensionIndex];
-            physicsEntity.WakeUp();
-            physicsEntity.rb.velocity = Vector3.up * 4f;
+
+            // Latency hiding.
+            itemData.ext.DetachFromPlayer();
         }
 
         [HideInInspector][SerializeField] private uint onDropIAId;
@@ -416,9 +402,14 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemSystem  OnDropIA");
 #endif
             ItemExtensionData itemData = entitySystem.ReadEntityExtensionDataRef<ItemExtensionData>();
-            if (itemData == null || lockstep.SendingPlayerId != itemData.attachedToPlayerId)
+            if (itemData == null)
+                return;
+            if (lockstep.SendingPlayerId != itemData.attachedToPlayerId)
+            {
+                itemData.entityData.MarkLatencyHiddenUniqueIdAsProcessed();
                 return; // If attached id is 0u this'll also return, which works out nicely.
-            Drop(itemData);
+            }
+            Drop(itemData, readPositionAndRotation: true, wasLatencyHidden: true);
         }
 
         private void SendForceDropSingletonIA(ItemExtensionData itemData)
@@ -428,21 +419,15 @@ namespace JanSharp
 #endif
             entitySystem.WriteEntityExtensionDataRef(itemData);
             Entity entity = itemData.entity;
-            if (entity != null)
+            bool didWritePositionAndRotation = entity != null;
+            lockstep.WriteFlags(didWritePositionAndRotation);
+            if (didWritePositionAndRotation)
             {
                 Transform entityTransform = entity.transform;
                 lockstep.WriteVector3(entityTransform.position);
                 lockstep.WriteQuaternion(entityTransform.rotation);
             }
-            else
-            {
-                // TODO: implement some kind of system in order to have better fallback values here.
-                // The most likely solution is for held items to periodically sync their current position and
-                // rotation. But with like a minute in between syncs, or something.
-                lockstep.WriteVector3(Vector3.zero);
-                lockstep.WriteQuaternion(Quaternion.identity);
-            }
-            lockstep.SendSingletonInputAction(onForceDropIAId);
+            lockstep.SendSingletonInputAction(onForceDropIAId); // Not latency hidden.
         }
 
         [HideInInspector][SerializeField] private uint onForceDropIAId;
@@ -455,42 +440,47 @@ namespace JanSharp
             ItemExtensionData itemData = entitySystem.ReadEntityExtensionDataRef<ItemExtensionData>();
             if (itemData == null || itemData.attachedToPlayerId == 0u) // Already detached.
                 return;
-            Drop(itemData);
+            lockstep.ReadFlags(out bool didWritePositionAndRotation);
+            Drop(itemData, didWritePositionAndRotation, wasLatencyHidden: false);
         }
 
-        private void Drop(ItemExtensionData itemData)
+        private void Drop(ItemExtensionData itemData, bool readPositionAndRotation, bool wasLatencyHidden)
         {
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemSystem  Drop");
 #endif
-            Vector3 position = lockstep.ReadVector3();
-            Quaternion rotation = lockstep.ReadQuaternion();
             EntityData entityData = itemData.entityData;
-            ItemExtension item = itemData.Extension;
-            entityData.GiveBackControlOfPositionSync(itemData, position, Entity.TransformChangeInterpolationDuration, updateLatencyState: true);
-            entityData.GiveBackControlOfRotationSync(itemData, rotation, Entity.TransformChangeInterpolationDuration, updateLatencyState: true);
-            RemoveFromHeldItems(itemData);
-            if (itemData.attachedToPlayerId != localPlayerId && item != null)
+            if (readPositionAndRotation)
             {
-                item.pickup.DecrementPreventInteraction();
-                if (itemData.attachedBoneExists)
-                    DetachFromRemotePlayer(itemData);
+                entityData.position = lockstep.ReadVector3();
+                entityData.rotation = lockstep.ReadQuaternion();
             }
+            UpdateDroppedItem(itemData);
+
+            if ((wasLatencyHidden && !entityData.ShouldApplyReceivedIAToLatencyState()) || itemData.ext == null)
+                return;
+
+            itemData.ext.DetachFromPlayer(interpolateToGameState: true);
+        }
+
+        public void UpdateDroppedItem(ItemExtensionData itemData)
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemSystem  UpdateDroppedItem");
+#endif
+            EntityData entityData = itemData.entityData;
+            entityData.GiveBackControlOfTransformSync(
+                transformController,
+                entityData.position,
+                entityData.rotation,
+                entityData.scale);
+            RemoveFromHeldItems(itemData);
+
             itemData.attachedToPlayerId = 0u;
             itemData.attachedBoneExists = false;
             itemData.attachedToBone = HumanBodyBones.Head;
             itemData.attachedOffsetVector = Vector3.zero;
             itemData.attachedOffsetRotation = Quaternion.identity;
-
-            // FIXME: This does not actually work, nor is the "throw script" logic implemented fully.
-            int extensionIndex = System.Array.IndexOf(entityData.entityPrototype.ExtensionDataClassNames, nameof(PhysicsEntityExtensionData));
-            if (extensionIndex < 0)
-                return;
-            PhysicsEntityExtensionData physicsData = (PhysicsEntityExtensionData)entityData.allExtensionData[extensionIndex];
-            physicsData.position = position;
-            physicsData.rotation = rotation;
-            physicsData.velocity = Vector3.up * 4f;
-            physicsData.WakeUp();
         }
 
         private void RemoveFromHeldItems(ItemExtensionData itemData)
@@ -530,10 +520,8 @@ namespace JanSharp
             for (int i = 0; i < heldItemsCount; i++)
             {
                 uint id = lockstep.ReadSmallUInt();
-                // TODO: have a better way to get specific extension data from entities and or entity data.
                 EntityData entityData = entitySystem.GetEntityData(id);
-                int extensionIndex = System.Array.IndexOf(entityData.entityPrototype.ExtensionDataClassNames, nameof(ItemExtensionData));
-                ItemExtensionData itemData = (ItemExtensionData)entityData.allExtensionData[extensionIndex];
+                ItemExtensionData itemData = entityData.GetExtensionData<ItemExtensionData>(nameof(ItemExtensionData));
                 heldItems[i] = itemData;
                 itemData.heldItemIndex = i;
             }
