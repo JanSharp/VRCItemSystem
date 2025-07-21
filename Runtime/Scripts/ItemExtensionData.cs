@@ -9,12 +9,15 @@ namespace JanSharp
     public class ItemExtensionData : EntityExtensionData
     {
         [HideInInspector][SingletonReference] public ItemSystem itemSystem;
+        [HideInInspector][SingletonReference] public UpdateManager updateManager;
 
         public override bool SupportsImportExport => true;
         public override uint DataVersion => 0u;
         public override uint LowestSupportedDataVersion => 0u;
 
         [System.NonSerialized] public ItemExtension ext;
+
+        [System.NonSerialized] public PhysicsEntityExtensionData physicsData;
 
         [System.NonSerialized] public uint attachedToPlayerId;
         /// <summary>
@@ -30,11 +33,20 @@ namespace JanSharp
         [System.NonSerialized] public Vector3 attachedOffsetVector;
         [System.NonSerialized] public Quaternion attachedOffsetRotation;
 
+        private void Init()
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  Init");
+#endif
+            physicsData = entityData.GetExtensionData<PhysicsEntityExtensionData>(nameof(PhysicsEntityExtensionData));
+        }
+
         public override void InitFromDefault(EntityExtension entityExtension)
         {
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  InitFromDefault");
 #endif
+            Init();
         }
 
         public override void InitFromPreInstantiated(EntityExtension entityExtension)
@@ -42,6 +54,7 @@ namespace JanSharp
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  InitFromPreInstantiated");
 #endif
+            Init();
         }
 
         public override void OnAssociatedWithExtension()
@@ -78,6 +91,8 @@ namespace JanSharp
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Deserialize");
 #endif
+            if (!isImport)
+                Init();
             lockstep.ReadFlags(out bool isAttached, out attachedBoneExists);
             attachedToPlayerId = isAttached ? lockstep.ReadSmallUInt() : 0u;
             attachedToBone = isAttached ? (HumanBodyBones)lockstep.ReadSmallInt() : HumanBodyBones.Head;

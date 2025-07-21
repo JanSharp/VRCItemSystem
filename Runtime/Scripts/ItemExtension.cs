@@ -15,6 +15,7 @@ namespace JanSharp
         [System.NonSerialized] public ItemExtensionData data;
         [System.NonSerialized] public ItemSystem itemSystem;
 
+        [System.NonSerialized] public PhysicsEntityExtension physicsExt;
         [System.NonSerialized] public CustomPickup pickup;
         private bool preventPickupInteraction;
 
@@ -26,9 +27,22 @@ namespace JanSharp
         private bool comingFromOnPickup = false;
 
         private bool shouldHaveControlOfTransformSync = false;
-        private bool movementLoopShouldBeRunning = false;
+        /// <summary>Used by the <see cref="UpdateManager"/>.</summary>
+        [System.NonSerialized] public int customUpdateInternalIndex;
+        private float nextMovementIntervalTime = 0f;
         private bool movementLoopIsRunning = false;
         public const float MovementLoopInterval = 0.1f;
+
+        private Vector3 positionLastFrame;
+        private Quaternion rotationLastFrame;
+        [System.NonSerialized] public Vector3 trackedVelocity;
+        [System.NonSerialized] public Vector3 trackedAngularVelocityAxis;
+        [System.NonSerialized] public float trackedAngularVelocityAngle;
+        /// <summary>An angle axis rotation, magnitude is radians per second. Matches the format of
+        /// <see cref="Rigidbody.angularVelocity"/>.</summary>
+        public Vector3 TrackedAngularVelocity => trackedAngularVelocityAxis * (trackedAngularVelocityAngle * Mathf.Deg2Rad);
+        private const float MaxVelocityWeight = 0.75f;
+        private const float VelocityRollingAverageSeconds = 0.1f;
 
         [System.NonSerialized] public uint attachedToPlayerId;
         /// <summary>
@@ -69,6 +83,7 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnInstantiate");
 #endif
             pickup = GetComponent<CustomPickup>();
+            physicsExt = entity.GetExtension<PhysicsEntityExtension>(nameof(PhysicsEntityExtensionData));
             localPlayer = Networking.LocalPlayer;
             localPlayerId = (uint)localPlayer.playerId;
             UpdatePickupInteractionPrevention();
@@ -306,36 +321,59 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtension  StartStopMovementLoop");
 #endif
             TakeOrGiveBackControlOfTransformSync(interpolateToGameState);
-            bool prev = movementLoopShouldBeRunning;
-            movementLoopShouldBeRunning = !shouldHaveControlOfTransformSync && attachedToPlayerId == localPlayerId;
-            if (movementLoopShouldBeRunning == prev)
+            bool movementLoopShouldBeRunning = attachedToPlayerId == localPlayerId
+                && (!shouldHaveControlOfTransformSync || physicsExt != null);
+            if (movementLoopShouldBeRunning == movementLoopIsRunning)
                 return;
+            movementLoopIsRunning = movementLoopShouldBeRunning;
 
-            if (movementLoopShouldBeRunning)
-                StartMovementLoop();
-        }
-
-        private void StartMovementLoop()
-        {
-#if ItemSystemDebug
-            Debug.Log($"[ItemSystemDebug] ItemExtension  StartMovementLoop");
-#endif
-            if (movementLoopIsRunning)
-                return;
-            movementLoopIsRunning = true;
-            SendCustomEventDelayedFrames(nameof(MovementLoop), 1);
-        }
-
-        public void MovementLoop()
-        {
-            // TODO: flag position and rotation separately and only if it actually changed.
-            entity.FlagForPositionAndRotationChange();
             if (!movementLoopShouldBeRunning)
             {
-                movementLoopIsRunning = false;
+                data.updateManager.Deregister(this);
                 return;
             }
-            SendCustomEventDelayedSeconds(nameof(MovementLoop), MovementLoopInterval);
+            data.updateManager.Register(this);
+            if (physicsExt == null)
+                return;
+            trackedVelocity = Vector3.zero;
+            trackedAngularVelocityAxis = Vector3.zero;
+            trackedAngularVelocityAngle = 0f;
+            Transform t = entity.transform;
+            positionLastFrame = t.position;
+            rotationLastFrame = t.rotation;
+        }
+
+        /// <summary>Called by the <see cref="UpdateManager"/>.</summary>
+        public void CustomUpdate()
+        {
+            if (!shouldHaveControlOfTransformSync)
+            {
+                float time = Time.time;
+                if (time >= nextMovementIntervalTime)
+                {
+                    // TODO: flag position and rotation separately and only if it actually changed.
+                    entity.FlagForPositionAndRotationChange();
+                    nextMovementIntervalTime = time + MovementLoopInterval;
+                }
+            }
+            if (physicsExt == null)
+                return;
+
+            float deltaTime = Time.deltaTime;
+            float weight = Mathf.Min(MaxVelocityWeight, deltaTime / VelocityRollingAverageSeconds);
+            float inverseWeight = 1f - weight;
+            Transform t = entity.transform;
+            Vector3 position = t.position;
+            Quaternion rotation = t.rotation;
+            (Quaternion.Inverse(rotationLastFrame) * rotation).ToAngleAxis(out float angle, out Vector3 axis);
+            trackedVelocity = weight * ((position - positionLastFrame) / deltaTime)
+                + inverseWeight * trackedVelocity;
+            trackedAngularVelocityAxis = weight * axis
+                + inverseWeight * trackedAngularVelocityAxis;
+            trackedAngularVelocityAngle = weight * (angle / deltaTime)
+                + inverseWeight * trackedAngularVelocityAngle;
+            positionLastFrame = position;
+            rotationLastFrame = rotation;
         }
     }
 }

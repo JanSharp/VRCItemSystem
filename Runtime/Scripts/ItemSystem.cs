@@ -30,6 +30,9 @@ namespace JanSharp
         private uint localPlayerId;
         private bool isInVR;
 
+        public const float VelocityThreshold = 0.1f;
+        public const float AngularVelocityDegreesThreshold = 10f;
+
         private void Start()
         {
 #if ItemSystemDebug
@@ -249,6 +252,14 @@ namespace JanSharp
                 return; // TODO: Either drop the item, or send a pickup IA once lockstep is initialized.
 
             // Latency hiding.
+
+            PhysicsEntityExtension physicsEntity = itemData.ext.physicsExt;
+            if (physicsEntity != null && !physicsEntity.isSleeping)
+            {
+                Transform t = itemData.entity.transform;
+                physicsEntity.GoToSleep(t.position, t.rotation);
+            }
+
             itemData.ext.AttachToPlayer(localPlayerId, bone, boneExists, offsetVector, offsetRotation);
         }
 
@@ -287,10 +298,22 @@ namespace JanSharp
                 itemData.entityData.TakeControlOfTransformSync(transformController);
             }
 
+            // Putting the physics entity to sleep after the item has taken control theoretically
+            // reduces the total amount of work that needs to be done by the entity system.
+            PhysicsEntityExtensionData physicsData = itemData.physicsData;
+            if (physicsData != null)
+                physicsData.GoToSleep();
+
             if (!itemData.entityData.ShouldApplyReceivedIAToLatencyState() || itemData.ext == null)
                 return;
 
             itemData.ext.AttachToPlayerUsingItemData();
+
+            if (physicsData != null && !physicsData.ext.isSleeping)
+            {
+                Transform t = itemData.entity.transform;
+                physicsData.ext.GoToSleep(t.position, t.rotation);
+            }
         }
 
         private void SendChangeOffsetIA(ItemExtensionData itemData)
@@ -387,11 +410,34 @@ namespace JanSharp
             entitySystem.WriteEntityExtensionDataRef(itemData);
             lockstep.WriteVector3(entityTransform.position);
             lockstep.WriteQuaternion(entityTransform.rotation);
+
+            ItemExtension item = itemData.ext;
+            PhysicsEntityExtension physicsExt = item.physicsExt;
+            bool doApplyVelocity = false;
+            if (physicsExt != null)
+            {
+                doApplyVelocity = item.trackedVelocity.magnitude > VelocityThreshold
+                    || item.trackedAngularVelocityAngle > AngularVelocityDegreesThreshold;
+                lockstep.WriteFlags(doApplyVelocity);
+                if (doApplyVelocity)
+                {
+                    lockstep.WriteVector3(item.trackedVelocity);
+                    lockstep.WriteVector3(item.TrackedAngularVelocity);
+                }
+            }
+
             if (!itemData.entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(onDropIAId)))
                 return;
 
             // Latency hiding.
-            itemData.ext.DetachFromPlayer();
+            item.DetachFromPlayer();
+
+            if (!doApplyVelocity)
+                return;
+            physicsExt.SetResponsiblePlayerId(localPlayerId);
+            physicsExt.WakeUp();
+            physicsExt.rb.velocity = item.trackedVelocity;
+            physicsExt.rb.angularVelocity = item.TrackedAngularVelocity;
         }
 
         [HideInInspector][SerializeField] private uint onDropIAId;
@@ -409,7 +455,7 @@ namespace JanSharp
                 itemData.entityData.MarkLatencyHiddenUniqueIdAsProcessed();
                 return; // If attached id is 0u this'll also return, which works out nicely.
             }
-            Drop(itemData, readPositionAndRotation: true, wasLatencyHidden: true);
+            Drop(itemData, readPositionAndRotation: true, wasLatencyHidden: true, mightHaveVelocity: true);
         }
 
         private void SendForceDropSingletonIA(ItemExtensionData itemData)
@@ -441,10 +487,10 @@ namespace JanSharp
             if (itemData == null || itemData.attachedToPlayerId == 0u) // Already detached.
                 return;
             lockstep.ReadFlags(out bool didWritePositionAndRotation);
-            Drop(itemData, didWritePositionAndRotation, wasLatencyHidden: false);
+            Drop(itemData, didWritePositionAndRotation, wasLatencyHidden: false, mightHaveVelocity: false);
         }
 
-        private void Drop(ItemExtensionData itemData, bool readPositionAndRotation, bool wasLatencyHidden)
+        private void Drop(ItemExtensionData itemData, bool readPositionAndRotation, bool wasLatencyHidden, bool mightHaveVelocity)
         {
 #if ItemSystemDebug
             Debug.Log($"[ItemSystemDebug] ItemSystem  Drop");
@@ -457,10 +503,35 @@ namespace JanSharp
             }
             UpdateDroppedItem(itemData);
 
+            PhysicsEntityExtensionData physicsData = itemData.physicsData;
+            bool doApplyVelocity = false;
+            Vector3 velocity = Vector3.zero;
+            Vector3 angularVelocity = Vector3.zero;
+            if (mightHaveVelocity && physicsData != null)
+            {
+                lockstep.ReadFlags(out doApplyVelocity);
+                if (doApplyVelocity)
+                {
+                    velocity = lockstep.ReadVector3();
+                    angularVelocity = lockstep.ReadVector3();
+                    physicsData.velocity = velocity;
+                    physicsData.angularVelocity = angularVelocity;
+                    physicsData.SetResponsiblePlayerId(lockstep.SendingPlayerId);
+                    physicsData.WakeUp();
+                }
+            }
+
             if ((wasLatencyHidden && !entityData.ShouldApplyReceivedIAToLatencyState()) || itemData.ext == null)
                 return;
 
-            itemData.ext.DetachFromPlayer(interpolateToGameState: true);
+            itemData.ext.DetachFromPlayer(interpolateToGameState: !doApplyVelocity);
+
+            if (!doApplyVelocity)
+                return;
+            PhysicsEntityExtension physicsExt = physicsData.ext;
+            physicsExt.SetResponsiblePlayerId(lockstep.SendingPlayerId);
+            physicsExt.WakeUp();
+            physicsExt.RigidbodyUpdate(); // Applies velocity and angularVelocity after interpolation.
         }
 
         public void UpdateDroppedItem(ItemExtensionData itemData)

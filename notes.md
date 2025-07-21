@@ -10,7 +10,7 @@
   - [ ] Use persistent ids from player data
 - [ ] bone attachment broke at some point throughout seemingly regular usage, requires testing and probably more debug messages
 - [x] prevent interacting with pickups until lockstep and the entity system have initialized
-- [ ] throw script, if velocity before dropping, enable physics
+- [x] throw script, if velocity before dropping, enable physics
   - [ ] if it falls through the world it has to revert to some location
 - [x] drop held items when a client leaves
 - [ ] test instantiate performance of prefab asset vs existing game object instance
