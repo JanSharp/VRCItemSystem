@@ -253,14 +253,14 @@ namespace JanSharp
 
             // Latency hiding.
 
+            itemData.ext.AttachToPlayer(localPlayerId, bone, boneExists, offsetVector, offsetRotation);
+
             PhysicsEntityExtension physicsEntity = itemData.ext.physicsExt;
             if (physicsEntity != null && !physicsEntity.isSleeping)
             {
                 Transform t = itemData.entity.transform;
                 physicsEntity.GoToSleep(t.position, t.rotation);
             }
-
-            itemData.ext.AttachToPlayer(localPlayerId, bone, boneExists, offsetVector, offsetRotation);
         }
 
         [HideInInspector][SerializeField] private uint onPickupIAId;
