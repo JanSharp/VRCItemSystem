@@ -16,3 +16,4 @@
 - [ ] test instantiate performance of prefab asset vs existing game object instance
 - [ ] some way to attach items to a selection of bones, like hips, chest, legs, arms, feet, head. Something like that, maybe less than that
 - [ ] being attached to moving platforms can break bone attachment? Check the source of smart object sync for that
+- [ ] ItemExtension OnPickup initialization checks error when it is not yet initialized. lockstep and pickup are both null
