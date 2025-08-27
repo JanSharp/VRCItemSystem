@@ -19,6 +19,7 @@ MonoBehaviour:
   entityPrefab: {fileID: 3150564698386271653, guid: cfe6eba0c60fb1b9b8e8dd97d4eb104a,
     type: 3}
   defaultScale: {x: 0.2, y: 0.2, z: 0.2}
+  highestExtensionId: 1
   localExtensionIds: 01000000
   extensionDataClassNames:
   - ItemExtensionData
