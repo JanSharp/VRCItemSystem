@@ -57,6 +57,14 @@ namespace JanSharp
             Init();
         }
 
+        public override void InitBeforeDeserialization()
+        {
+#if ItemSystemDebug
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  InitBeforeDeserialization");
+#endif
+            Init();
+        }
+
         public override void OnAssociatedWithExtension()
         {
 #if ItemSystemDebug
