@@ -56,7 +56,7 @@ namespace JanSharp
 
         private void SetPreventPickupInteraction(bool value)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  SetPreventPickupInteraction");
 #endif
             if (preventPickupInteraction == value)
@@ -70,7 +70,7 @@ namespace JanSharp
 
         private void UpdatePickupInteractionPrevention()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  UpdatePickupInteractionPrevention");
 #endif
             SetPreventPickupInteraction(data == null
@@ -79,7 +79,7 @@ namespace JanSharp
 
         public override void OnInstantiate()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnInstantiate");
 #endif
             pickup = GetComponent<CustomPickup>();
@@ -91,7 +91,7 @@ namespace JanSharp
 
         public override void DisassociateFromExtensionDataAndReset(EntityExtension defaultExtension)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  DisassociateFromExtensionDataAndReset");
 #endif
             DetachFromPlayer();
@@ -104,7 +104,7 @@ namespace JanSharp
 
         public override void AssociateWithExtensionData()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  AssociateWithExtensionData");
 #endif
             data = (ItemExtensionData)extensionData;
@@ -116,7 +116,7 @@ namespace JanSharp
 
         public override void ApplyExtensionData()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  ApplyExtensionData");
 #endif
             if (data.attachedToPlayerId != 0)
@@ -127,7 +127,7 @@ namespace JanSharp
 
         public void AttachToPlayerUsingItemData()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  AttachToPlayerUsingItemData");
 #endif
             AttachToPlayer(
@@ -140,7 +140,7 @@ namespace JanSharp
 
         public void AttachToPlayer(uint playerId, HumanBodyBones bone, bool boneExists, Vector3 offsetVector, Quaternion offsetRotation)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  AttachToPlayer");
 #endif
             if (attachedToPlayerId != 0u) // Cannot omit interpolateToGameState, U# generates improper code when doing so.
@@ -166,7 +166,7 @@ namespace JanSharp
 
         public void DetachFromPlayer(bool interpolateToGameState = false, bool comingFromAttach = false)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  DetachFromPlayer");
 #endif
             if (attachedToPlayerId == 0u)
@@ -192,7 +192,7 @@ namespace JanSharp
 
         public override void OnPickup()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickup - ignoreNextPickupEvent: {ignoreNextPickupEvent}");
 #endif
             if (ignoreNextPickupEvent)
@@ -213,7 +213,7 @@ namespace JanSharp
 
         public override void OnDrop()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnDrop - ignoreNextDropEvent: {ignoreNextDropEvent}");
 #endif
             if (ignoreNextDropEvent)
@@ -226,21 +226,21 @@ namespace JanSharp
 
         public override void OnPickupUseDown()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickupUseDown");
 #endif
         }
 
         public override void OnPickupUseUp()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickupUseUp");
 #endif
         }
 
         public void SetAttachedBoneExists(bool boneExists, Vector3 offsetVector, Quaternion offsetRotation)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  SetAttachedBoneExists");
 #endif
             attachedOffsetVector = offsetVector;
@@ -285,7 +285,7 @@ namespace JanSharp
 
         private void TakeOrGiveBackControlOfTransformSync(bool interpolateToGameState)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  TakeOrGiveBackControlOfTransformSync");
 #endif
             bool prev = shouldHaveControlOfTransformSync;
@@ -317,7 +317,7 @@ namespace JanSharp
 
         public void StartStopMovementLoop(bool interpolateToGameState = false)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  StartStopMovementLoop");
 #endif
             TakeOrGiveBackControlOfTransformSync(interpolateToGameState);

@@ -35,7 +35,7 @@ namespace JanSharp
 
         private void Init()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Init");
 #endif
             physicsData = entityData.GetExtensionData<PhysicsEntityExtensionData>(nameof(PhysicsEntityExtensionData));
@@ -43,7 +43,7 @@ namespace JanSharp
 
         public override void InitFromDefault(EntityExtension entityExtension)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  InitFromDefault");
 #endif
             Init();
@@ -51,7 +51,7 @@ namespace JanSharp
 
         public override void InitFromPreInstantiated(EntityExtension entityExtension)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  InitFromPreInstantiated");
 #endif
             Init();
@@ -59,7 +59,7 @@ namespace JanSharp
 
         public override void InitBeforeDeserialization()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  InitBeforeDeserialization");
 #endif
             Init();
@@ -67,7 +67,7 @@ namespace JanSharp
 
         public override void OnAssociatedWithExtension()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  OnAssociatedWithExtension");
 #endif
             // The only way for the pickup to be held by the player at this point is through another system
@@ -79,7 +79,7 @@ namespace JanSharp
 
         public override void Serialize(bool isExport)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Serialize");
 #endif
             bool isAttached = attachedToPlayerId != 0u;
@@ -96,7 +96,7 @@ namespace JanSharp
 
         public override void Deserialize(bool isImport, uint importedDataVersion)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Deserialize");
 #endif
             if (!isImport)

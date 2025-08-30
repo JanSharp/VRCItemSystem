@@ -11,7 +11,7 @@ namespace JanSharp
 
         public override void OnControlLost(EntityData entityData)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemTransformController  OnControlLost");
 #endif
             ItemExtensionData itemData = entityData.GetExtensionData<ItemExtensionData>(nameof(ItemExtensionData));
@@ -20,7 +20,7 @@ namespace JanSharp
 
         public override void OnControlTakenOver(EntityData entityData, EntityTransformController newController)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemTransformController  OnControlTakenOver");
 #endif
             OnControlLost(entityData);
@@ -28,7 +28,7 @@ namespace JanSharp
 
         public override void OnLatencyControlLost(Entity entity)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemTransformController  OnLatencyControlLost");
 #endif
             ItemExtension item = entity.GetExtension<ItemExtension>(nameof(ItemExtensionData));
@@ -37,7 +37,7 @@ namespace JanSharp
 
         public override void OnLatencyControlTakenOver(Entity entity, EntityTransformController newController)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemTransformController  OnLatencyControlTakenOver");
 #endif
             OnLatencyControlLost(entity);
@@ -45,7 +45,7 @@ namespace JanSharp
 
         public override bool TryGetGameStatePosition(EntityData entityData, out Vector3 position)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemTransformController  TryGetGameStatePosition");
 #endif
             position = Vector3.zero;
@@ -54,7 +54,7 @@ namespace JanSharp
 
         public override bool TryGetGameStateRotation(EntityData entityData, out Quaternion rotation)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemTransformController  TryGetGameStateRotation");
 #endif
             rotation = Quaternion.identity;
@@ -63,7 +63,7 @@ namespace JanSharp
 
         public override bool TryGetGameStateScale(EntityData entityData, out Vector3 scale)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemTransformController  TryGetGameStateScale");
 #endif
             scale = entityData.scale;

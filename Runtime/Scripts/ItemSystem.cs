@@ -35,7 +35,7 @@ namespace JanSharp
 
         private void Start()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  Start");
 #endif
             localPlayer = Networking.LocalPlayer;
@@ -46,7 +46,7 @@ namespace JanSharp
         [LockstepEvent(LockstepEventType.OnClientLeft)]
         public void OnClientLeft()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  OnClientLeft");
 #endif
             uint leftPlayerId = lockstep.LeftPlayerId;
@@ -61,7 +61,7 @@ namespace JanSharp
 
         public override void OnAvatarChanged(VRCPlayerApi player)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  OnAvatarChanged");
 #endif
             if (!player.isLocal)
@@ -75,7 +75,7 @@ namespace JanSharp
 
         public void OnLocalPlayerAvatarChangedDelayed()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  OnLocalPlayerAvatarChangedDelayed");
 #endif
             if (!isInVR)
@@ -89,7 +89,7 @@ namespace JanSharp
 
         private void UpdateHeldItemDueToAvatarChange(CustomPickup pickup)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  UpdateHeldItemDueToAvatarChange");
 #endif
             if (pickup == null)
@@ -153,7 +153,7 @@ namespace JanSharp
 
         public void AttachToLocalPlayer(ItemExtension item)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  AttachToLocalPlayer");
 #endif
             // NOTE: Unfortunately this will only result in proper offsets if the player is in the same avatar,
@@ -171,7 +171,7 @@ namespace JanSharp
 
         public void DetachFromLocalPlayer(ItemExtension item)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  DetachFromLocalPlayer");
 #endif
             if (!item.pickup.isHeld)
@@ -182,7 +182,7 @@ namespace JanSharp
 
         public void AttachToRemotePlayer(ItemExtension item)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  AttachToRemotePlayer");
 #endif
             VRCPlayerApi holdingPlayer = VRCPlayerApi.GetPlayerById((int)item.attachedToPlayerId);
@@ -194,7 +194,7 @@ namespace JanSharp
 
         public void DetachFromRemotePlayer(ItemExtension item)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  DetachFromRemotePlayer");
 #endif
             boneAttachment.DetachFromBone(
@@ -205,7 +205,7 @@ namespace JanSharp
 
         private void WriteOffsets(CustomPickup pickup, out Vector3 offsetVector, out Quaternion offsetRotation)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  WriteOffsetsRelativeToBone");
 #endif
             HumanBodyBones bone = TrackingTypeToBone(pickup.heldTrackingType);
@@ -219,7 +219,7 @@ namespace JanSharp
 
         private void ReadOffsets(ItemExtensionData itemData)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  ReadOffsets");
 #endif
             itemData.attachedOffsetVector = lockstep.ReadVector3();
@@ -228,7 +228,7 @@ namespace JanSharp
 
         public void SendPickupIA(ItemExtensionData itemData)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendPickupIA");
 #endif
             CustomPickup pickup = itemData.ext.pickup;
@@ -267,7 +267,7 @@ namespace JanSharp
         [LockstepInputAction(nameof(onPickupIAId))]
         public void OnPickupIA()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  OnPickupIA");
 #endif
             // TODO: add a way to get an extension of a specific type from the list of extensions on an entity.
@@ -318,7 +318,7 @@ namespace JanSharp
 
         private void SendChangeOffsetIA(ItemExtensionData itemData)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendChangeOffsetIA");
 #endif
             ItemExtension item = itemData.ext;
@@ -357,7 +357,7 @@ namespace JanSharp
         [LockstepInputAction(nameof(changeOffsetIAId))]
         public void OnChangeOffsetIA()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  OnChangeOffsetIA");
 #endif
             ItemExtensionData itemData = entitySystem.ReadEntityExtensionDataRef<ItemExtensionData>();
@@ -402,7 +402,7 @@ namespace JanSharp
 
         public void SendDropIA(ItemExtensionData itemData)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendDropIA");
 #endif
             Entity entity = itemData.entity;
@@ -444,7 +444,7 @@ namespace JanSharp
         [LockstepInputAction(nameof(onDropIAId))]
         public void OnDropIA()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  OnDropIA");
 #endif
             ItemExtensionData itemData = entitySystem.ReadEntityExtensionDataRef<ItemExtensionData>();
@@ -460,7 +460,7 @@ namespace JanSharp
 
         private void SendForceDropSingletonIA(ItemExtensionData itemData)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendForceDropSingletonIA");
 #endif
             entitySystem.WriteEntityExtensionDataRef(itemData);
@@ -480,7 +480,7 @@ namespace JanSharp
         [LockstepInputAction(nameof(onForceDropIAId))]
         public void OnForceDrop()
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  OnForceDrop");
 #endif
             ItemExtensionData itemData = entitySystem.ReadEntityExtensionDataRef<ItemExtensionData>();
@@ -492,7 +492,7 @@ namespace JanSharp
 
         private void Drop(ItemExtensionData itemData, bool readPositionAndRotation, bool wasLatencyHidden, bool mightHaveVelocity)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  Drop");
 #endif
             EntityData entityData = itemData.entityData;
@@ -536,7 +536,7 @@ namespace JanSharp
 
         public void UpdateDroppedItem(ItemExtensionData itemData)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  UpdateDroppedItem");
 #endif
             EntityData entityData = itemData.entityData;
@@ -556,7 +556,7 @@ namespace JanSharp
 
         private void RemoveFromHeldItems(ItemExtensionData itemData)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  RemoveFromHeldItems");
 #endif
             heldItemsCount--;
@@ -573,7 +573,7 @@ namespace JanSharp
 
         public override void SerializeGameState(bool isExport, LockstepGameStateOptionsData exportOptions)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  SerializeGameState");
 #endif
             lockstep.WriteSmallUInt((uint)heldItemsCount);
@@ -583,7 +583,7 @@ namespace JanSharp
 
         public override string DeserializeGameState(bool isImport, uint importedDataVersion, LockstepGameStateOptionsData importOptions)
         {
-#if ItemSystemDebug
+#if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  DeserializeGameState");
 #endif
             heldItemsCount = (int)lockstep.ReadSmallUInt();
