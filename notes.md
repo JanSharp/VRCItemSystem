@@ -23,3 +23,6 @@
 - [x] spawning and picking up an item still within latency state makes it not pick up for remote players...
 - [ ] picking up an item with the left hand makes remote players drop the item in the right hand, but locally it stays in the hand
   - appears to be a bone attachment issue. To reproduce, pick up 2 items, move 32 away from the remote client, drop right, pick up right, drop left, pickup left, move close to the remote player again. Perceive on the remote client how only 1 item is attached. Dropping the one that does appear attached causes the other one to get attached. Dropping the one that appears not attached does not make the one that was in the broken state to get attached
+- [ ] the hold still threshold is way too finicky in VR
+- [ ] picking up an item that is falling due to gravity makes it continue to fall for a few frames while it is already held
+  - [ ] Make a spawner that drops an item from a little above the ground in order to reproduce the issue and test it
