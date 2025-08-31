@@ -30,8 +30,8 @@ namespace JanSharp
         private uint localPlayerId;
         private bool isInVR;
 
-        public const float VelocityThreshold = 0.1f;
-        public const float AngularVelocityDegreesThreshold = 10f;
+        public const float VelocityThreshold = 0.2f;
+        public const float AngularVelocityDegreesThreshold = 20f;
 
         private void Start()
         {
