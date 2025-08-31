@@ -659,6 +659,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
         type: 3}
+      propertyPath: qd
+      value: 
+      objectReference: {fileID: 712361485}
+    - target: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
+        type: 3}
       propertyPath: serializationData.Prefab
       value: 
       objectReference: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
@@ -679,6 +684,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: ThrowableItem (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3394902157055695572, guid: 0918a6b991e971d279290a41ce383edb,
+        type: 3}
+      propertyPath: m_IsKinematic
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3645583456518475148, guid: 0918a6b991e971d279290a41ce383edb,
         type: 3}
@@ -3222,6 +3232,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
         type: 3}
+      propertyPath: qd
+      value: 
+      objectReference: {fileID: 712361485}
+    - target: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
+        type: 3}
       propertyPath: serializationData.Prefab
       value: 
       objectReference: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
@@ -3404,7 +3419,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 401084067}
-  vRReach: 0.05
+  vRReach: 0.1
   desktopReach: 2.5
   interactText: Spawn Auto Hold Cube
   listeners:
@@ -3593,7 +3608,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 407755057}
-  vRReach: 0.05
+  vRReach: 0.1
   desktopReach: 2.5
   interactText: Spawn Throwable Cube
   listeners:
@@ -5105,6 +5120,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
         type: 3}
+      propertyPath: qd
+      value: 
+      objectReference: {fileID: 712361485}
+    - target: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
+        type: 3}
       propertyPath: serializationData.Prefab
       value: 
       objectReference: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
@@ -5125,6 +5145,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: ThrowableItem (0)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3394902157055695572, guid: 0918a6b991e971d279290a41ce383edb,
+        type: 3}
+      propertyPath: m_IsKinematic
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3645583456518475148, guid: 0918a6b991e971d279290a41ce383edb,
         type: 3}
@@ -6031,7 +6056,7 @@ PrefabInstance:
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: NetworkIDs.Array.size
-      value: 107
+      value: 106
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -10305,7 +10330,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1007220219}
-  vRReach: 0.05
+  vRReach: 0.1
   desktopReach: 2.5
   interactText: Spawn Cube
   listeners:
@@ -13372,6 +13397,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
         type: 3}
+      propertyPath: qd
+      value: 
+      objectReference: {fileID: 712361485}
+    - target: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
+        type: 3}
       propertyPath: serializationData.Prefab
       value: 
       objectReference: {fileID: 200934919292547363, guid: 0918a6b991e971d279290a41ce383edb,
@@ -13742,12 +13772,12 @@ PrefabInstance:
     - target: {fileID: 3323032307758558537, guid: d627f7fa95da90f1f87280f822155c9d,
         type: 3}
       propertyPath: preInstantiatedEntityInstances.Array.size
-      value: 7
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 3323032307758558537, guid: d627f7fa95da90f1f87280f822155c9d,
         type: 3}
       propertyPath: preInstantiatedEntityInstanceIds.Array.size
-      value: 7
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 3323032307758558537, guid: d627f7fa95da90f1f87280f822155c9d,
         type: 3}

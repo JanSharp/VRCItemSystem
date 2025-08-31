@@ -164,7 +164,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 3957473601761328374}
-  vRReach: 0.05
+  vRReach: 0.1
   desktopReach: 2.5
   interactText: 
   useText: 
