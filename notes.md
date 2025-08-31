@@ -26,3 +26,5 @@
 - [x] the hold still threshold is way too finicky in VR
 - [ ] picking up an item that is falling due to gravity makes it continue to fall for a few frames while it is already held
   - [ ] Make a spawner that drops an item from a little above the ground in order to reproduce the issue and test it
+- [ ] could add a threshold as the maximum allowed offset between tracing data and their related bones, like 5 cm at an eye height of 2 m. this could improve edge cases where tracking data is stretched away from the associated bone, presumably temporarily
+- [ ] use the fact that entity prefabs are actually already instances in the scene, specifically by using te \[SingletonReference\] attribute for entities and entity extensions
