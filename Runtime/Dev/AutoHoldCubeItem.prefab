@@ -167,8 +167,8 @@ MonoBehaviour:
   vRReach: 0.1
   desktopReach: 2.5
   interactText: 
+  manager: {fileID: 0}
   useText: 
-  autoHold: 1
   exactGrip: {fileID: 0}
   listeners:
   - {fileID: 6824634162395658245}
