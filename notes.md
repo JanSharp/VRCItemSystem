@@ -28,3 +28,4 @@
   - [x] Make a spawner that drops an item from a little above the ground in order to reproduce the issue and test it
 - [ ] could add a threshold as the maximum allowed offset between tracing data and their related bones, like 5 cm at an eye height of 2 m. this could improve edge cases where tracking data is stretched away from the associated bone, presumably temporarily
 - [ ] use the fact that entity prefabs are actually already instances in the scene, specifically by using te \[SingletonReference\] attribute for entities and entity extensions
+- [x] make custom inspector for item entity extensions simply to remove the line that gets drawn by default by the UdonSharp inspector. For now anyway as there are no other options in that extension
