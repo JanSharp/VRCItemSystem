@@ -258,8 +258,8 @@ namespace JanSharp
                 }
                 // Attached to remote player, bone did exist, still exists, offsets have changed, interpolate.
                 Transform entityTransform = entity.transform;
-                itemSystem.interpolation.InterpolateLocalPosition(entityTransform, attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
-                itemSystem.interpolation.InterpolateLocalRotation(entityTransform, attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
+                itemSystem.interpolation.LerpLocalPosition(entityTransform, attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
+                itemSystem.interpolation.LerpLocalRotation(entityTransform, attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
                 return;
             }
 

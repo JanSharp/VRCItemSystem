@@ -188,8 +188,8 @@ namespace JanSharp
             VRCPlayerApi holdingPlayer = VRCPlayerApi.GetPlayerById((int)item.attachedToPlayerId);
             Transform entityTransform = item.entity.transform;
             boneAttachment.AttachToBone(holdingPlayer, item.attachedToBone, entityTransform);
-            interpolation.InterpolateLocalPosition(entityTransform, item.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
-            interpolation.InterpolateLocalRotation(entityTransform, item.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
+            interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
+            interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
         }
 
         public void DetachFromRemotePlayer(ItemExtension item)
