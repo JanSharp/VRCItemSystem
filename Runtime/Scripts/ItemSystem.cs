@@ -180,6 +180,10 @@ namespace JanSharp
             item.pickup.Drop();
         }
 
+        /// <summary>
+        /// <para>Only used by <see cref="OnPickupIA"/>.</para>
+        /// </summary>
+        private bool attachToRemoteUsingHermiteCurve = false;
         public void AttachToRemotePlayer(ItemExtension item)
         {
 #if ITEM_SYSTEM_DEBUG
@@ -188,8 +192,22 @@ namespace JanSharp
             VRCPlayerApi holdingPlayer = VRCPlayerApi.GetPlayerById((int)item.attachedToPlayerId);
             Transform entityTransform = item.entity.transform;
             boneAttachment.AttachToBone(holdingPlayer, item.attachedToBone, entityTransform);
-            interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
-            interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
+            // HACK: This is just copy paste from CustomInteractHandManager PickupActivePickup. Me no like.
+            if (attachToRemoteUsingHermiteCurve)
+            {
+                Vector3 heldOffsetVector = item.attachedOffsetVector;
+                Vector3 directVector = heldOffsetVector - entityTransform.localPosition;
+                float distance = directVector.magnitude;
+                Vector3 originVelocity = Quaternion.Inverse(entityTransform.parent.rotation) * Vector3.up * distance / 2f;
+                float duration = Mathf.Min(CustomInteractablesManagerAPI.MaxPickupInterpolationDuration, CustomInteractablesManagerAPI.PickupInterpolationDuration * distance);
+                interpolation.HermiteCurveLocalPosition(entityTransform, originVelocity, heldOffsetVector, directVector, duration);
+                interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, duration);
+            }
+            else
+            {
+                interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, CustomInteractablesManagerAPI.PickupInterpolationDuration);
+                interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, CustomInteractablesManagerAPI.PickupInterpolationDuration);
+            }
         }
 
         public void DetachFromRemotePlayer(ItemExtension item)
@@ -226,7 +244,7 @@ namespace JanSharp
             itemData.attachedOffsetRotation = lockstep.ReadQuaternion();
         }
 
-        public void SendPickupIA(ItemExtensionData itemData)
+        public void SendPickupIA(ItemExtensionData itemData, bool useHermiteCurve = false)
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendPickupIA");
@@ -242,7 +260,7 @@ namespace JanSharp
 
             entitySystem.WriteEntityExtensionDataRef(itemData);
             itemData.entityData.WritePotentiallyUnknownTransformValues();
-            lockstep.WriteFlags(boneExists);
+            lockstep.WriteFlags(boneExists, useHermiteCurve);
             lockstep.WriteSmallInt((int)bone);
             Vector3 offsetVector = Vector3.zero;
             Quaternion offsetRotation = Quaternion.identity;
@@ -290,7 +308,7 @@ namespace JanSharp
             itemData.heldItemIndex = heldItemsCount;
             ArrList.Add(ref heldItems, ref heldItemsCount, itemData);
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
-            lockstep.ReadFlags(out itemData.attachedBoneExists);
+            lockstep.ReadFlags(out itemData.attachedBoneExists, out bool useHermiteCurve);
             itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
             if (itemData.attachedBoneExists)
             {
@@ -307,7 +325,9 @@ namespace JanSharp
             if (!itemData.entityData.ShouldApplyReceivedIAToLatencyState() || itemData.ext == null)
                 return;
 
+            attachToRemoteUsingHermiteCurve = useHermiteCurve;
             itemData.ext.AttachToPlayerUsingItemData();
+            attachToRemoteUsingHermiteCurve = false;
 
             if (physicsData != null && !physicsData.ext.isSleeping)
             {

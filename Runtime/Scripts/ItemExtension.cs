@@ -207,7 +207,7 @@ namespace JanSharp
                 return;
             }
             comingFromOnPickup = true;
-            itemSystem.SendPickupIA(data);
+            itemSystem.SendPickupIA(data, pickup.usedHermiteCurveWhenLastPickedUp);
             comingFromOnPickup = false;
         }
 
