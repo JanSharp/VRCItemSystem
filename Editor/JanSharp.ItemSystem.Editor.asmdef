@@ -1,5 +1,5 @@
 {
-    "name": "Jansharp.ItemSystem.Editor",
+    "name": "JanSharp.ItemSystem.Editor",
     "rootNamespace": "",
     "references": [
         "JanSharp.ItemSystem",
