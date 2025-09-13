@@ -1,7 +1,5 @@
 ﻿using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
-using VRC.Udon;
 
 namespace JanSharp
 {
@@ -99,8 +97,6 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Deserialize");
 #endif
-            if (!isImport)
-                Init();
             lockstep.ReadFlags(out bool isAttached, out attachedBoneExists);
             attachedToPlayerId = isAttached ? lockstep.ReadSmallUInt() : 0u;
             attachedToBone = isAttached ? (HumanBodyBones)lockstep.ReadSmallInt() : HumanBodyBones.Head;
