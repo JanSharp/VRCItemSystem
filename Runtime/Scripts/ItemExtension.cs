@@ -12,8 +12,11 @@ namespace JanSharp
     [DisallowMultipleComponent]
     public class ItemExtension : EntityExtension
     {
+        [HideInInspector][SingletonReference] public ItemSystem itemSystem;
+        [HideInInspector][SingletonReference] public ItemTransformController transformController;
+        [HideInInspector][SingletonReference] public InterpolationManager interpolation;
+        [HideInInspector][SingletonReference] public UpdateManager updateManager;
         [System.NonSerialized] public ItemExtensionData data;
-        [System.NonSerialized] public ItemSystem itemSystem;
 
         [System.NonSerialized] public PhysicsEntityExtension physicsExt;
         [System.NonSerialized] public CustomPickup pickup;
@@ -96,7 +99,6 @@ namespace JanSharp
 #endif
             DetachFromPlayer();
             SetAttachedBoneExists(false, Vector3.zero, Quaternion.identity);
-            itemSystem = null;
             data.ext = null;
             data = null;
             UpdatePickupInteractionPrevention();
@@ -109,7 +111,6 @@ namespace JanSharp
 #endif
             data = (ItemExtensionData)extensionData;
             data.ext = this;
-            itemSystem = data.itemSystem;
             ApplyExtensionData();
             UpdatePickupInteractionPrevention();
         }
@@ -262,8 +263,8 @@ namespace JanSharp
                 }
                 // Attached to remote player, bone did exist, still exists, offsets have changed, interpolate.
                 Transform entityTransform = entity.transform;
-                itemSystem.interpolation.LerpLocalPosition(entityTransform, attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
-                itemSystem.interpolation.LerpLocalRotation(entityTransform, attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
+                interpolation.LerpLocalPosition(entityTransform, attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
+                interpolation.LerpLocalRotation(entityTransform, attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
                 return;
             }
 
@@ -299,13 +300,13 @@ namespace JanSharp
 
             if (shouldHaveControlOfTransformSync)
             {
-                entity.TakeControlOfTransformSync(itemSystem.transformController);
+                entity.TakeControlOfTransformSync(transformController);
                 return;
             }
             if (interpolateToGameState)
             {
                 entity.GiveBackControlOfTransformSync(
-                    itemSystem.transformController,
+                    transformController,
                     entityData.position,
                     entityData.rotation,
                     entityData.scale);
@@ -313,7 +314,7 @@ namespace JanSharp
             }
             Transform t = entity.transform;
             entity.GiveBackControlOfTransformSync(
-                itemSystem.transformController,
+                transformController,
                 t.position,
                 t.rotation,
                 t.localScale);
@@ -333,10 +334,10 @@ namespace JanSharp
 
             if (!movementLoopShouldBeRunning)
             {
-                data.updateManager.Deregister(this);
+                updateManager.Deregister(this);
                 return;
             }
-            data.updateManager.Register(this);
+            updateManager.Register(this);
             if (physicsExt == null)
                 return;
             trackedVelocity = Vector3.zero;

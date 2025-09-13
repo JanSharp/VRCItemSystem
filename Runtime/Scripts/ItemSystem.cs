@@ -18,10 +18,10 @@ namespace JanSharp
         public override LockstepGameStateOptionsUI ImportUI => null;
 
         [HideInInspector][SerializeField][SingletonReference] private EntitySystem entitySystem;
-        [HideInInspector][SerializeField][SingletonReference] public ItemTransformController transformController;
+        [HideInInspector][SerializeField][SingletonReference] private ItemTransformController transformController;
         [HideInInspector][SerializeField][SingletonReference] private CustomInteractablesManagerAPI interactables;
         [HideInInspector][SerializeField][SingletonReference] private BoneAttachmentManager boneAttachment;
-        [HideInInspector][SerializeField][SingletonReference] public InterpolationManager interpolation;
+        [HideInInspector][SerializeField][SingletonReference] private InterpolationManager interpolation;
 
         private ItemExtensionData[] heldItems = new ItemExtensionData[ArrList.MinCapacity];
         private int heldItemsCount = 0;

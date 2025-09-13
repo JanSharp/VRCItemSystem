@@ -7,6 +7,7 @@ namespace JanSharp
     public class ItemExtensionData : EntityExtensionData
     {
         [HideInInspector][SingletonReference] public ItemSystem itemSystem;
+        [HideInInspector][SingletonReference] public ItemTransformController transformController;
         [HideInInspector][SingletonReference] public UpdateManager updateManager;
         [HideInInspector][SingletonReference] public PlayerDataManager playerDataManager;
 
@@ -152,11 +153,11 @@ namespace JanSharp
             }
             attachedOffsetVector = lockstep.ReadVector3();
             attachedOffsetRotation = lockstep.ReadQuaternion();
-            entityData.SetTransformSyncControllerDueToDeserialization(itemSystem.transformController);
+            entityData.SetTransformSyncControllerDueToDeserialization(transformController);
             if (attachedToPlayerId != 0u)
                 return;
             entityData.GiveBackControlOfTransformSync(
-                itemSystem.transformController,
+                transformController,
                 entityData.position,
                 entityData.rotation,
                 entityData.scale);
