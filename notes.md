@@ -1,2 +1,31 @@
 
-- [ ] Change ItemSyncDebug to ItemSystemDebug
+- [x] whenever the local player changes avatar it changes the offset of items to their hand bones
+- [x] prevent the same pickup being picked up by multiple hands and or players
+- [x] add DisallowMultipleComponent to ItemExtension
+- [x] add RequiredComponent(typeof(Entity))... right? I mean why not.
+- [ ] look at the values of pickups and see which ones of those should be synced through items, if any
+- [ ] make disallow theft an option
+- [x] if 2 people try to pick up the same item, make the second one drop it locally
+- [ ] ItemExtensionData supports import export but it's using a VRChat player id even for exports, that doesn't work
+  - [ ] Use persistent ids from player data
+- [ ] bone attachment broke at some point throughout seemingly regular usage, requires testing and probably more debug messages
+- [x] prevent interacting with pickups until lockstep and the entity system have initialized
+- [x] throw script, if velocity before dropping, enable physics
+  - [ ] if it falls through the world it has to revert to some location
+- [x] drop held items when a client leaves
+- [ ] test instantiate performance of prefab asset vs existing game object instance
+- [ ] some way to attach items to a selection of bones, like hips, chest, legs, arms, feet, head. Something like that, maybe less than that
+  - [ ] use down on the right stick as the input to attach an item
+- [ ] being attached to moving platforms can break bone attachment? Check the source of smart object sync for that
+- [ ] ItemExtension OnPickup initialization checks error when it is not yet initialized. lockstep and pickup are both null
+- [x] (fixed in the EntitySystem) Import the following state and then pick up and throw the throwable item on the ground. Receive "\[EntitySystem\] Impossible, attempt to SendRigidbodyUpdateIA on a physics entity which is asleep or the local player is not the responsible player."
+  fEXPYaDl3UgPSXRlbVN5c3RlbVRlc3QABBdqYW5zaGFycC5lbnRpdHktc3lzdGVtDkVudGl0eSBTeXN0ZW0A1QEAAAYDARRhdXRvLWhvbGQtY3ViZS1pdGVtFEF1dG8gSG9sZCBDdWJlIEl0ZW0BAQIKY3ViZS1pdGVtCkN1YmUgSXRlbQEBAw90aHJvd2FibGUtaXRlbQ9UaHJvd2FibGUgSXRlbQIBAgcBAgICAwEEAQUDBgMHAwAAAABAAADAPwAAgD8AAAAAAAAAAAAAAAAAAIA/zcxMPs3MTD7NzEw+AAAAAAEBAQAAAAAgQAAAwD8AAIA/AAAAAAAAAAAAAAAAAACAP83MTD7NzEw+zcxMPgAAAAABAQEAAAAAgEAAAMA/AACAPwAAAAAAAAAAAAAAAAAAgD/NzEw+zcxMPs3MTD4AAAAAAQEBAAAAAJBAAADAPwAAgD8AAAAAAAAAAAAAAAAAAIA/zcxMPs3MTD7NzEw+AAAAAAEBAQAAAADAQAAAwD8AAIA/AAAAAAAAAAAAAAAAAACAP83MTD7NzEw+zcxMPgAAAAACAQEAAQEBAAAA0EAAAMA/AACAPwAAAAAAAAAAAAAAAAAAgD/NzEw+zcxMPs3MTD4AAAAAAgEBAAEBAQAXyRVB1czMPY7tIMCQJzS/bmSNPftjjT2IJzQ/zcxMPs3MTD7NzEw+AAAAAAIBAQABAQEVamFuc2hhcnAuaXRlbS1zeXN0ZW0MSXRlbSBTeXN0ZW0AAQAAAAAkamFuc2hhcnAubG9ja3N0ZXAtbWFzdGVyLXByZWZlcmVuY2UbTG9ja3N0ZXAgTWFzdGVyIFByZWZlcmVuY2UACwAAAAEJSmFuU2hhcnAAFWphbnNoYXJwLnBsYXllci1kYXRhDFBsYXllciBEYXRhAAwAAAABAQlKYW5TaGFycAC9FI9R
+- [x] spawning and picking up an item still within latency state makes it not pick up for remote players...
+- [x] picking up an item with the left hand makes remote players drop the item in the right hand, but locally it stays in the hand
+  - appears to be a bone attachment issue. To reproduce, pick up 2 items, move 32 away from the remote client, drop right, pick up right, drop left, pickup left, move close to the remote player again. Perceive on the remote client how only 1 item is attached. Dropping the one that does appear attached causes the other one to get attached. Dropping the one that appears not attached does not make the one that was in the broken state to get attached
+- [x] the hold still threshold is way too finicky in VR
+- [x] picking up an item that is falling due to gravity makes it continue to fall for a few frames while it is already held
+  - [x] Make a spawner that drops an item from a little above the ground in order to reproduce the issue and test it
+- [ ] could add a threshold as the maximum allowed offset between tracing data and their related bones, like 5 cm at an eye height of 2 m. this could improve edge cases where tracking data is stretched away from the associated bone, presumably temporarily
+- [ ] use the fact that entity prefabs are actually already instances in the scene, specifically by using te \[SingletonReference\] attribute for entities and entity extensions
+- [x] make custom inspector for item entity extensions simply to remove the line that gets drawn by default by the UdonSharp inspector. For now anyway as there are no other options in that extension

@@ -1,19 +1,24 @@
 {
-    "name": "JanSharp.ItemSystem",
+    "name": "JanSharp.ItemSystem.Editor",
     "rootNamespace": "",
     "references": [
+        "JanSharp.ItemSystem",
         "JanSharp.Common",
+        "JanSharp.Common.Editor",
         "JanSharp.Lockstep",
         "JanSharp.EntitySystem",
         "JanSharp.CustomInteractsAndPickups",
         "JanSharp.PlayerData",
         "UdonSharp.Runtime",
+        "UdonSharp.Editor",
         "Unity.TextMeshPro",
         "VRC.SDK3",
         "VRC.SDKBase",
         "VRC.Udon"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
