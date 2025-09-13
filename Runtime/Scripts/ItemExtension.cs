@@ -195,6 +195,8 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickup - ignoreNextPickupEvent: {ignoreNextPickupEvent}");
 #endif
+            if (pickup == null) // OnInstantiate has not run yet. This should only be possible by other systems
+                return; // forcing items into the local player's hand on Start, and order of operations being against us.
             if (ignoreNextPickupEvent)
             {
                 ignoreNextPickupEvent = false;
@@ -216,6 +218,8 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnDrop - ignoreNextDropEvent: {ignoreNextDropEvent}");
 #endif
+            if (pickup == null) // OnInstantiate has not run yet. Even less likely than OnPickup.
+                return;
             if (ignoreNextDropEvent)
             {
                 ignoreNextDropEvent = false;
