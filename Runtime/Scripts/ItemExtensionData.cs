@@ -8,6 +8,7 @@ namespace JanSharp
     {
         [HideInInspector][SingletonReference] public ItemSystem itemSystem;
         [HideInInspector][SingletonReference] public UpdateManager updateManager;
+        [HideInInspector][SingletonReference] public PlayerDataManager playerDataManager;
 
         public override bool SupportsImportExport => true;
         public override uint DataVersion => 0u;
@@ -75,6 +76,49 @@ namespace JanSharp
             // syncing.
         }
 
+        private void ClearAttachedOffsets()
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  ClearAttachedOffsets");
+#endif
+            attachedOffsetVector = Vector3.zero;
+            attachedOffsetRotation = Quaternion.identity;
+        }
+
+        private void WriteAttachedPlayer(bool isExport)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  WriteAttachedPlayer");
+#endif
+            if (!isExport)
+            {
+                lockstep.WriteSmallUInt(attachedToPlayerId);
+                return;
+            }
+            lockstep.WriteSmallUInt(playerDataManager.GetCorePlayerDataForPlayerId(attachedToPlayerId).persistentId);
+        }
+
+        private void ReadAttachedPlayer(bool isImport)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionData  ReadAttachedPlayer");
+#endif
+            if (!isImport)
+            {
+                attachedToPlayerId = lockstep.ReadSmallUInt();
+                return;
+            }
+            uint persistentId = lockstep.ReadSmallUInt();
+            if (persistentId == 0u)
+            {
+                attachedToPlayerId = 0u;
+                return;
+            }
+            persistentId = playerDataManager.GetPersistentIdFromImportedId(persistentId);
+            CorePlayerData playerData = playerDataManager.GetCorePlayerDataForPersistentId(persistentId);
+            attachedToPlayerId = playerData.isOffline ? 0u : playerData.playerId;
+        }
+
         public override void Serialize(bool isExport)
         {
 #if ITEM_SYSTEM_DEBUG
@@ -84,7 +128,7 @@ namespace JanSharp
             lockstep.WriteFlags(isAttached, attachedBoneExists);
             if (!isAttached)
                 return;
-            lockstep.WriteSmallUInt(attachedToPlayerId);
+            WriteAttachedPlayer(isExport);
             lockstep.WriteSmallInt((int)attachedToBone);
             if (!attachedBoneExists)
                 return;
@@ -98,19 +142,25 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Deserialize");
 #endif
             lockstep.ReadFlags(out bool isAttached, out attachedBoneExists);
-            attachedToPlayerId = isAttached ? lockstep.ReadSmallUInt() : 0u;
+            if (isAttached)
+                ReadAttachedPlayer(isImport);
             attachedToBone = isAttached ? (HumanBodyBones)lockstep.ReadSmallInt() : HumanBodyBones.Head;
-            if (isAttached && attachedBoneExists)
+            if (!isAttached || !attachedBoneExists)
             {
-                attachedOffsetVector = lockstep.ReadVector3();
-                attachedOffsetRotation = lockstep.ReadQuaternion();
-                entityData.SetTransformSyncControllerDueToDeserialization(itemSystem.transformController);
+                ClearAttachedOffsets();
+                return;
             }
-            else
-            {
-                attachedOffsetVector = Vector3.zero;
-                attachedOffsetRotation = Quaternion.identity;
-            }
+            attachedOffsetVector = lockstep.ReadVector3();
+            attachedOffsetRotation = lockstep.ReadQuaternion();
+            entityData.SetTransformSyncControllerDueToDeserialization(itemSystem.transformController);
+            if (attachedToPlayerId != 0u)
+                return;
+            entityData.GiveBackControlOfTransformSync(
+                itemSystem.transformController,
+                entityData.position,
+                entityData.rotation,
+                entityData.scale);
+            ClearAttachedOffsets();
         }
     }
 }

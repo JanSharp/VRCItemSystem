@@ -6,8 +6,8 @@
 - [ ] look at the values of pickups and see which ones of those should be synced through items, if any
 - [ ] make disallow theft an option
 - [x] if 2 people try to pick up the same item, make the second one drop it locally
-- [ ] ItemExtensionData supports import export but it's using a VRChat player id even for exports, that doesn't work
-  - [ ] Use persistent ids from player data
+- [x] ItemExtensionData supports import export but it's using a VRChat player id even for exports, that doesn't work
+  - [x] Use persistent ids from player data
 - [x] bone attachment broke at some point throughout seemingly regular usage, requires testing and probably more debug messages
 - [x] prevent interacting with pickups until lockstep and the entity system have initialized
 - [x] throw script, if velocity before dropping, enable physics
