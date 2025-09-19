@@ -25,8 +25,8 @@ namespace JanSharp
         private VRCPlayerApi localPlayer;
         private uint localPlayerId;
 
-        [System.NonSerialized] public bool ignoreNextPickupEvent = false;
-        [System.NonSerialized] public bool ignoreNextDropEvent = false;
+        [System.NonSerialized] public int ignorePickupEventCounter = 0;
+        [System.NonSerialized] public int ignoreDropEventCounter = 0;
         private bool comingFromOnPickup = false;
 
         private bool shouldHaveControlOfTransformSync = false;
@@ -194,18 +194,14 @@ namespace JanSharp
         public override void OnPickup()
         {
 #if ITEM_SYSTEM_DEBUG
-            Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickup - ignoreNextPickupEvent: {ignoreNextPickupEvent}");
+            Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickup - ignorePickupEventCounter: {ignorePickupEventCounter}");
 #endif
             if (pickup == null) // OnInstantiate has not run yet. This should only be possible by other systems
                 return; // forcing items into the local player's hand on Start, and order of operations being against us.
-            if (ignoreNextPickupEvent)
-            {
-                ignoreNextPickupEvent = false;
+            if (ignorePickupEventCounter != 0)
                 return;
-            }
             if (!lockstep.IsInitialized)
             {
-                ignoreNextDropEvent = true;
                 pickup.Drop();
                 return;
             }
@@ -217,13 +213,12 @@ namespace JanSharp
         public override void OnDrop()
         {
 #if ITEM_SYSTEM_DEBUG
-            Debug.Log($"[ItemSystemDebug] ItemExtension  OnDrop - ignoreNextDropEvent: {ignoreNextDropEvent}");
+            Debug.Log($"[ItemSystemDebug] ItemExtension  OnDrop - ignoreDropEventCounter: {ignoreDropEventCounter}");
 #endif
-            if (pickup == null) // OnInstantiate has not run yet. Even less likely than OnPickup.
-                return;
-            if (ignoreNextDropEvent)
+            if (pickup == null // OnInstantiate has not run yet. Even less likely than OnPickup.
+                || ignoreDropEventCounter != 0
+                || !lockstep.IsInitialized)
             {
-                ignoreNextDropEvent = false;
                 return;
             }
             itemSystem.SendDropIA(data);

@@ -164,9 +164,9 @@ namespace JanSharp
                 item.attachedOffsetVector, item.attachedOffsetRotation,
                 out Vector3 offsetVector, out Quaternion offsetRotation);
             CustomPickup pickup = item.pickup;
-            if (!pickup.isHeld) // Only raises the OnPickup event if it is not already held.
-                item.ignoreNextPickupEvent = true;
+            item.ignorePickupEventCounter++;
             pickup.ForceBeingPickedUp(trackingType, offsetVector, offsetRotation);
+            item.ignorePickupEventCounter--;
         }
 
         public void DetachFromLocalPlayer(ItemExtension item)
@@ -176,8 +176,9 @@ namespace JanSharp
 #endif
             if (!item.pickup.isHeld)
                 return;
-            item.ignoreNextDropEvent = true;
+            item.ignoreDropEventCounter++;
             item.pickup.Drop();
+            item.ignoreDropEventCounter--;
         }
 
         /// <summary>
@@ -250,6 +251,8 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendPickupIA");
 #endif
             CustomPickup pickup = itemData.ext.pickup;
+            if (pickup == null || !lockstep.IsInitialized)
+                return;
             if (!pickup.isHeld)
             {
                 Debug.LogError("[ItemSystem] Attempt to SendPickupIA for an item which is not held by the local player.");
