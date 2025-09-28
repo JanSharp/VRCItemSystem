@@ -25,9 +25,14 @@ namespace JanSharp
         private VRCPlayerApi localPlayer;
         private uint localPlayerId;
 
-        [System.NonSerialized] public int ignorePickupEventCounter = 0;
-        [System.NonSerialized] public int ignoreDropEventCounter = 0;
-        private bool comingFromOnPickup = false;
+        /// <summary>
+        /// <para>Only relevant on the client which is actually holding the pickup.</para>
+        /// </summary>
+        [System.NonSerialized] public bool pickupIsHeld;
+        /// <summary>
+        /// <para>Only relevant on the client to which the pickup is actually attached to.</para>
+        /// </summary>
+        [System.NonSerialized] public bool pickupIsAttached;
 
         private bool shouldHaveControlOfTransformSync = false;
         /// <summary>Used by the <see cref="UpdateManager"/>.</summary>
@@ -47,6 +52,7 @@ namespace JanSharp
         private const float MaxVelocityWeight = 0.75f;
         private const float VelocityRollingAverageSeconds = 0.1f;
 
+        [System.NonSerialized] public bool isHeldSpecifically;
         [System.NonSerialized] public uint attachedToPlayerId;
         /// <summary>
         /// <para>Explicit default of <see cref="HumanBodyBones.Head"/>, since we do not control
@@ -120,7 +126,7 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  ApplyExtensionData");
 #endif
-            if (data.attachedToPlayerId != 0)
+            if (data.IsAttached)
                 AttachToPlayerUsingItemData();
             else
                 DetachFromPlayer(interpolateToGameState: true);
@@ -132,6 +138,7 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtension  AttachToPlayerUsingItemData");
 #endif
             AttachToPlayer(
+                data.isHeldSpecifically,
                 data.attachedToPlayerId,
                 data.attachedToBone,
                 data.attachedBoneExists,
@@ -139,16 +146,27 @@ namespace JanSharp
                 data.attachedOffsetRotation);
         }
 
-        public void AttachToPlayer(uint playerId, HumanBodyBones bone, bool boneExists, Vector3 offsetVector, Quaternion offsetRotation)
+        public void AttachToPlayer(
+            bool isHeldSpecifically,
+            uint playerId,
+            HumanBodyBones bone,
+            bool boneExists,
+            Vector3 offsetVector,
+            Quaternion offsetRotation)
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  AttachToPlayer");
 #endif
-            if (attachedToPlayerId != 0u) // Cannot omit interpolateToGameState, U# generates improper code when doing so.
-                DetachFromPlayer(interpolateToGameState: false, comingFromAttach: true);
+            if (attachedToPlayerId != 0u && attachedToPlayerId != localPlayerId)
+                itemSystem.DetachFromRemotePlayer(this);
 
+            this.isHeldSpecifically = isHeldSpecifically;
             attachedToPlayerId = playerId;
             attachedToBone = bone;
+            // TODO: I think this should do its own bone existence check. There'd probably be 2 values, one
+            // for the bone existing on the sending side, which is also has a counter part in the game state,
+            // and then one that purely exists in the latency state which indicates if the bone for that
+            // remote player exists locally.
             attachedBoneExists = boneExists;
             attachedOffsetVector = offsetVector;
             attachedOffsetRotation = offsetRotation;
@@ -156,16 +174,20 @@ namespace JanSharp
             StartStopMovementLoop();
             UpdatePickupInteractionPrevention();
 
-            if (comingFromOnPickup)
-                return;
-
             if (playerId == localPlayerId)
-                itemSystem.AttachToLocalPlayer(this);
+            {
+                if (isHeldSpecifically)
+                    itemSystem.PickUpByLocalPlayer(this);
+                else if (boneExists)
+                    itemSystem.AttachToLocalPlayer(this);
+                else
+                    itemSystem.SendDropIA(data, forceNoVelocity: true);
+            }
             else if (boneExists)
                 itemSystem.AttachToRemotePlayer(this);
         }
 
-        public void DetachFromPlayer(bool interpolateToGameState = false, bool comingFromAttach = false)
+        public void DetachFromPlayer(bool interpolateToGameState = false)
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  DetachFromPlayer");
@@ -178,9 +200,7 @@ namespace JanSharp
             else
                 itemSystem.DetachFromRemotePlayer(this);
 
-            if (comingFromAttach)
-                return;
-
+            isHeldSpecifically = false;
             attachedToPlayerId = 0u;
             attachedToBone = HumanBodyBones.Head;
             attachedBoneExists = false;
@@ -191,37 +211,48 @@ namespace JanSharp
             UpdatePickupInteractionPrevention();
         }
 
-        public override void OnPickup()
+        public void OnPickupStateChanged()
         {
 #if ITEM_SYSTEM_DEBUG
-            Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickup - ignorePickupEventCounter: {ignorePickupEventCounter}");
+            Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickupStateChanged");
 #endif
-            if (pickup == null) // OnInstantiate has not run yet. This should only be possible by other systems
-                return; // forcing items into the local player's hand on Start, and order of operations being against us.
-            if (ignorePickupEventCounter != 0)
+            if (pickup == null || !lockstep.IsInitialized)
                 return;
-            if (!lockstep.IsInitialized)
+            bool newPickupIsHeld = pickup.isHeld;
+            bool newPickupIsAttached = pickup.isAttached;
+            if (!newPickupIsHeld && !newPickupIsAttached)
             {
-                pickup.Drop();
+                if (pickupIsHeld)
+                {
+                    pickupIsHeld = false;
+                    itemSystem.SendDropIA(data, forceNoVelocity: false);
+                    return;
+                }
+                if (pickupIsAttached)
+                {
+                    pickupIsAttached = false;
+                    itemSystem.SendDropIA(data, forceNoVelocity: true);
+                    return;
+                }
                 return;
             }
-            comingFromOnPickup = true;
-            itemSystem.SendPickupIA(data, pickup.usedHermiteCurveWhenLastPickedUp);
-            comingFromOnPickup = false;
-        }
-
-        public override void OnDrop()
-        {
-#if ITEM_SYSTEM_DEBUG
-            Debug.Log($"[ItemSystemDebug] ItemExtension  OnDrop - ignoreDropEventCounter: {ignoreDropEventCounter}");
-#endif
-            if (pickup == null // OnInstantiate has not run yet. Even less likely than OnPickup.
-                || ignoreDropEventCounter != 0
-                || !lockstep.IsInitialized)
+            // newPickupIsHeld xor newPickupIsAttached is true here.
+            if (newPickupIsHeld)
             {
-                return;
+                if (pickupIsHeld) // TODO: Hands or offsets changed. Could probably just send a pickup IA here and make it deal with it.
+                    return;
+                pickupIsHeld = true;
+                pickupIsAttached = false;
+                itemSystem.SendPickupIA(data, pickup.usedHermiteCurveWhenLastPickedUp);
             }
-            itemSystem.SendDropIA(data);
+            else // newPickupIsAttached is true.
+            {
+                if (pickupIsAttached) // TODO: Attached bone changed. Could probably just send an attach IA here and make it deal with it.
+                    return;
+                pickupIsHeld = false;
+                pickupIsAttached = true;
+                itemSystem.SendAttachIA(data);
+            }
         }
 
         public override void OnPickupUseDown()
@@ -236,6 +267,18 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  OnPickupUseUp");
 #endif
+        }
+
+        private void ApplyChangedOffsetsLocallyToPickup()
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtension  ApplyChangedOffsetsLocallyToPickup");
+#endif
+            if (isHeldSpecifically)
+                itemSystem.PickUpByLocalPlayer(this);
+            else if (attachedBoneExists)
+                itemSystem.AttachToLocalPlayer(this);
+            // Do not detach. Changing offsets should not make the local player drop the item.
         }
 
         public void SetAttachedBoneExists(bool boneExists, Vector3 offsetVector, Quaternion offsetRotation)
@@ -253,7 +296,7 @@ namespace JanSharp
 
                 if (attachedToPlayerId == localPlayerId)
                 {
-                    itemSystem.AttachToLocalPlayer(this); // Applies the changed offsets to the pickup.
+                    ApplyChangedOffsetsLocallyToPickup();
                     return;
                 }
                 // Attached to remote player, bone did exist, still exists, offsets have changed, interpolate.
@@ -269,11 +312,7 @@ namespace JanSharp
                 return;
 
             if (attachedToPlayerId == localPlayerId)
-            {
-                if (attachedBoneExists)
-                    itemSystem.AttachToLocalPlayer(this);
-                // Do not detach. Changing offsets should not make the local player drop the item.
-            }
+                ApplyChangedOffsetsLocallyToPickup();
             else
             {
                 if (attachedBoneExists)
@@ -322,6 +361,7 @@ namespace JanSharp
 #endif
             TakeOrGiveBackControlOfTransformSync(interpolateToGameState);
             bool movementLoopShouldBeRunning = attachedToPlayerId == localPlayerId
+                && isHeldSpecifically // Not when it is attached.
                 && (!shouldHaveControlOfTransformSync || physicsExt != null);
             if (movementLoopShouldBeRunning == movementLoopIsRunning)
                 return;

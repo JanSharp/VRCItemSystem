@@ -6,9 +6,7 @@ namespace JanSharp
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ItemExtensionData : EntityExtensionData
     {
-        [HideInInspector][SingletonReference] public ItemSystem itemSystem;
         [HideInInspector][SingletonReference] public ItemTransformController transformController;
-        [HideInInspector][SingletonReference] public UpdateManager updateManager;
         [HideInInspector][SingletonReference] public PlayerDataManager playerDataManager;
 
         public override bool SupportsImportExport => true;
@@ -19,6 +17,16 @@ namespace JanSharp
 
         [System.NonSerialized] public PhysicsEntityExtensionData physicsData;
 
+        /// <summary>
+        /// <para>When <see cref="IsAttached"/> is <see langword="true"/> this indicates whether this item is
+        /// attached due to being held by player or due to being attached to a bone of that player.</para>
+        /// <para>In both cases it is attached to a bone on remote remote players, except that when it is
+        /// held it might not actually be attached at all and position and rotation gets synced
+        /// periodically, as some avatars do not have hand (held in VR) or head (held in desktop)
+        /// bones.</para>
+        /// </summary>
+        [System.NonSerialized] public bool isHeldSpecifically;
+        public bool IsAttached => attachedToPlayerId != 0u;
         [System.NonSerialized] public uint attachedToPlayerId;
         /// <summary>
         /// <para>Part of game state, but synced through <see cref="ItemSystem"/>.</para>
@@ -27,6 +35,12 @@ namespace JanSharp
         /// <summary>
         /// <para>Explicit default of <see cref="HumanBodyBones.Head"/>, since we do not control
         /// <see cref="HumanBodyBones"/> values.</para>
+        /// <para>When <see cref="isHeldSpecifically"/> is <see langword="true"/> this is guaranteed to have
+        /// one of the following values: <see cref="HumanBodyBones.Head"/> (held in desktop),
+        /// <see cref="HumanBodyBones.LeftHand"/> (held in VR) or <see cref="HumanBodyBones.RightHand"/>
+        /// (held in VR).</para>
+        /// <para>When <see cref="isHeldSpecifically"/> is <see langword="false"/> this may have any value,
+        /// including head and hands.</para>
         /// </summary>
         [System.NonSerialized] public HumanBodyBones attachedToBone = HumanBodyBones.Head;
         [System.NonSerialized] public bool attachedBoneExists;
@@ -86,6 +100,8 @@ namespace JanSharp
             attachedOffsetRotation = Quaternion.identity;
         }
 
+        // TODO: These write and read functions can be moved out of this file to make it instantiate faster.
+
         private void WriteAttachedPlayer(bool isExport)
         {
 #if ITEM_SYSTEM_DEBUG
@@ -125,8 +141,8 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Serialize");
 #endif
-            bool isAttached = attachedToPlayerId != 0u;
-            lockstep.WriteFlags(isAttached, attachedBoneExists);
+            bool isAttached = IsAttached;
+            lockstep.WriteFlags(isAttached, isHeldSpecifically, attachedBoneExists);
             if (!isAttached)
                 return;
             WriteAttachedPlayer(isExport);
@@ -142,7 +158,11 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Deserialize");
 #endif
-            lockstep.ReadFlags(out bool isAttached, out attachedBoneExists);
+            // TODO: If it is attached (but not held) to the local player, and the attached bone does not
+            // exist anymore, place the item in latency state in front of the player and send another IA to
+            // drop the item. The latency state should probably still say that it is attached for the time being.
+            // TODO: Is importing a held or attached item for a player which is not in the instance handled?
+            lockstep.ReadFlags(out bool isAttached, out isHeldSpecifically, out attachedBoneExists);
             if (isAttached)
                 ReadAttachedPlayer(isImport);
             attachedToBone = isAttached ? (HumanBodyBones)lockstep.ReadSmallInt() : HumanBodyBones.Head;
