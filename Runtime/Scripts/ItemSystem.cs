@@ -85,6 +85,7 @@ namespace JanSharp
                 UpdateHeldItemDueToAvatarChange(interactables.HeldInLeftHand);
                 UpdateHeldItemDueToAvatarChange(interactables.HeldInRightHand);
             }
+            // TODO: Update attached items.
         }
 
         private void UpdateHeldItemDueToAvatarChange(CustomPickup pickup)
@@ -186,11 +187,18 @@ namespace JanSharp
                     + $"false, this must be caught and handled at some point sooner.");
                 return;
             }
+            Transform entityTransform = item.entity.transform;
+            if (!LocalPlayerHasBone(item.attachedToBone)) // Handles attachment due to imports.
+            {
+                var head = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+                entityTransform.SetPositionAndRotation(head.position + head.rotation * Vector3.forward, head.rotation);
+                SendDropIA(item.data, forceNoVelocity: true); // Will run DetachFromLocalPlayer.
+                return;
+            }
             CustomPickup pickup = item.pickup;
             item.pickupIsHeld = false;
             item.pickupIsAttached = true;
             pickup.ForceBeingAttached(item.attachedToBone);
-            Transform entityTransform = item.entity.transform;
             interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
             interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
         }

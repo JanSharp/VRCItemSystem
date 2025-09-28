@@ -158,9 +158,6 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Deserialize");
 #endif
-            // TODO: If it is attached (but not held) to the local player, and the attached bone does not
-            // exist anymore, place the item in latency state in front of the player and send another IA to
-            // drop the item. The latency state should probably still say that it is attached for the time being.
             // TODO: Is importing a held or attached item for a player which is not in the instance handled?
             lockstep.ReadFlags(out bool isAttached, out isHeldSpecifically, out attachedBoneExists);
             if (isAttached)

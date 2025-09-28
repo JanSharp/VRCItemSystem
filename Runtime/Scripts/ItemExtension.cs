@@ -59,6 +59,20 @@ namespace JanSharp
         /// <see cref="HumanBodyBones"/> values.</para>
         /// </summary>
         [System.NonSerialized] public HumanBodyBones attachedToBone = HumanBodyBones.Head;
+        /// <summary>
+        /// <para>Unlike the name might imply, the bone might actually just not exist. This is the latency
+        /// state side of <see cref="ItemExtensionData.attachedBoneExists"/>. So if the attached player is the
+        /// local player, this variable very very most likely reflects reality, only case where it might not
+        /// is when it was changed in latency state and then reset back to the game state through
+        /// <see cref="ApplyExtensionData"/> for any reason immediately after.</para>
+        /// <para>When the attached player is a remote player this is almost meaningless, the bone for that
+        /// player may or may not exist at this point in time, who knows. However what it does mean is that
+        /// even if the bone currently doesn't exist, it is likely going to exist in the relatively near
+        /// future. And if it legitimately doesn't exist, there is going to be a drop input action coming
+        /// soon.</para>
+        /// <para>Similar story for when this is <see langword="false"/>, the bone might actually exist,
+        /// though it likely doesn't and nothing is going to use the bone regardless.</para>
+        /// </summary>
         [System.NonSerialized] public bool attachedBoneExists;
         [System.NonSerialized] public Vector3 attachedOffsetVector;
         [System.NonSerialized] public Quaternion attachedOffsetRotation;
@@ -163,10 +177,6 @@ namespace JanSharp
             this.isHeldSpecifically = isHeldSpecifically;
             attachedToPlayerId = playerId;
             attachedToBone = bone;
-            // TODO: I think this should do its own bone existence check. There'd probably be 2 values, one
-            // for the bone existing on the sending side, which is also has a counter part in the game state,
-            // and then one that purely exists in the latency state which indicates if the bone for that
-            // remote player exists locally.
             attachedBoneExists = boneExists;
             attachedOffsetVector = offsetVector;
             attachedOffsetRotation = offsetRotation;
