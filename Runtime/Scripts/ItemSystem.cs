@@ -219,7 +219,8 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemSystem  AttachToRemotePlayer");
 #endif
             VRCPlayerApi attachedToPlayer = VRCPlayerApi.GetPlayerById((int)item.attachedToPlayerId);
-            // TODO: The attachedToPlayer might be null/invalid.
+            if (!Utilities.IsValid(attachedToPlayer))
+                return;
             Transform entityTransform = item.entity.transform;
             boneAttachment.AttachToBone(attachedToPlayer, item.attachedToBone, entityTransform);
             // HACK: This is just copy paste from CustomInteractHandManager PickupActivePickup. Me no like.
