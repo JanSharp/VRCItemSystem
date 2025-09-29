@@ -13241,7 +13241,7 @@ PrefabInstance:
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
       propertyPath: onImportFinishedListeners.Array.size
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
@@ -13302,10 +13302,15 @@ PrefabInstance:
         type: 3}
       propertyPath: onImportFinishedListeners.Array.data[0]
       value: 
-      objectReference: {fileID: 181149562}
+      objectReference: {fileID: 1621898358}
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
       propertyPath: onImportFinishedListeners.Array.data[1]
+      value: 
+      objectReference: {fileID: 181149562}
+    - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
+        type: 3}
+      propertyPath: onImportFinishedListeners.Array.data[2]
       value: 
       objectReference: {fileID: 2105746116}
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
@@ -19273,6 +19278,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1946170806113999126, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
         type: 3}
+      propertyPath: dropIAId
+      value: 26
+      objectReference: {fileID: 0}
+    - target: {fileID: 1946170806113999126, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
+        type: 3}
       propertyPath: lockstep
       value: 
       objectReference: {fileID: 1424185750}
@@ -19288,6 +19298,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1946170806113999126, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
         type: 3}
+      propertyPath: pickupIAId
+      value: 23
+      objectReference: {fileID: 0}
+    - target: {fileID: 1946170806113999126, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
+        type: 3}
       propertyPath: entitySystem
       value: 
       objectReference: {fileID: 1621898358}
@@ -19295,6 +19310,11 @@ PrefabInstance:
         type: 3}
       propertyPath: onPickupIAId
       value: 23
+      objectReference: {fileID: 0}
+    - target: {fileID: 1946170806113999126, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
+        type: 3}
+      propertyPath: forceDropIAId
+      value: 27
       objectReference: {fileID: 0}
     - target: {fileID: 1946170806113999126, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
         type: 3}
