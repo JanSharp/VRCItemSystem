@@ -716,7 +716,7 @@ namespace JanSharp
 #endif
             lockstep.WriteSmallUInt((uint)attachedItemsCount);
             for (int i = 0; i < attachedItemsCount; i++)
-                lockstep.WriteSmallUInt(attachedItems[i].entityData.id);
+                entitySystem.WriteEntityDataRef(attachedItems[i].entityData);
         }
 
         public override string DeserializeGameState(bool isImport, uint importedDataVersion, LockstepGameStateOptionsData importOptions)
@@ -728,8 +728,7 @@ namespace JanSharp
             ArrList.EnsureCapacity(ref attachedItems, attachedItemsCount);
             for (int i = 0; i < attachedItemsCount; i++)
             {
-                uint id = lockstep.ReadSmallUInt();
-                EntityData entityData = entitySystem.GetEntityData(id);
+                entitySystem.TryReadEntityDataRef(out EntityData entityData, isImport);
                 ItemExtensionData itemData = entityData.GetExtensionData<ItemExtensionData>(nameof(ItemExtensionData));
                 attachedItems[i] = itemData;
                 itemData.heldItemIndex = i;
