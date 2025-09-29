@@ -184,6 +184,7 @@ namespace JanSharp
             StartStopMovementLoop();
             UpdatePickupInteractionPrevention();
 
+            // TODO: Do not interpolate when coming from ApplyExtensionData.
             if (playerId == localPlayerId)
             {
                 if (isHeldSpecifically)
