@@ -159,7 +159,7 @@ namespace JanSharp
                 : VRCPlayerApi.TrackingDataType.Head;
         }
 
-        public void PickUpByLocalPlayer(ItemExtension item)
+        public void PickUpByLocalPlayer(ItemExtension item, bool doInterpolate)
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  PickUpByLocalPlayer");
@@ -175,9 +175,16 @@ namespace JanSharp
             item.pickupIsHeld = true;
             item.pickupIsAttached = false;
             pickup.ForceBeingPickedUp(trackingType, offsetVector, offsetRotation, attachUsingHermiteCurve);
+            if (doInterpolate)
+                return;
+            // The pickup system uses a callback on interpolations which set the position and rotation to
+            // whatever the target of the interpolation was.
+            Transform entityTransform = item.entity.transform;
+            interpolation.CancelPositionInterpolation(entityTransform);
+            interpolation.CancelRotationInterpolation(entityTransform);
         }
 
-        public void AttachToLocalPlayer(ItemExtension item)
+        public void AttachToLocalPlayer(ItemExtension item, bool doInterpolate)
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  AttachToLocalPlayer");
@@ -200,8 +207,16 @@ namespace JanSharp
             item.pickupIsHeld = false;
             item.pickupIsAttached = true;
             pickup.ForceBeingAttached(item.attachedToBone);
-            interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
-            interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
+            if (doInterpolate)
+            {
+                interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
+                interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
+            }
+            else
+            {
+                entityTransform.localPosition = item.attachedOffsetVector;
+                entityTransform.localRotation = item.attachedOffsetRotation;
+            }
         }
 
         public void DetachFromLocalPlayer(ItemExtension item)
@@ -222,7 +237,7 @@ namespace JanSharp
         /// <para>Only used by <see cref="OnPickupIA"/>.</para>
         /// </summary>
         private bool attachUsingHermiteCurve = false;
-        public void AttachToRemotePlayer(ItemExtension item)
+        public void AttachToRemotePlayer(ItemExtension item, bool doInterpolate)
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  AttachToRemotePlayer");
@@ -232,6 +247,12 @@ namespace JanSharp
                 return;
             Transform entityTransform = item.entity.transform;
             boneAttachment.AttachToBone(attachedToPlayer, item.attachedToBone, entityTransform);
+            if (!doInterpolate)
+            {
+                entityTransform.localPosition = item.attachedOffsetVector;
+                entityTransform.localRotation = item.attachedOffsetRotation;
+                return;
+            }
             // HACK: This is just copy paste from CustomInteractHandManager PickupActivePickup. Me no like.
             if (attachUsingHermiteCurve)
             {
@@ -326,7 +347,7 @@ namespace JanSharp
             entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(pickupIAId));
 
             // Latency hiding.
-            item.AttachToPlayer(isHeldSpecifically: true, localPlayerId, bone, boneExists, offsetVector, offsetRotation);
+            item.AttachToPlayer(isHeldSpecifically: true, localPlayerId, bone, boneExists, offsetVector, offsetRotation, doInterpolate: true);
             PutPhysicsEntityExtensionToSleep(item);
         }
 
@@ -372,7 +393,7 @@ namespace JanSharp
                 return;
 
             attachUsingHermiteCurve = useHermiteCurve;
-            item.AttachToPlayerUsingItemData();
+            item.AttachToPlayerUsingItemData(doInterpolate: true);
             attachUsingHermiteCurve = false;
             PutPhysicsEntityExtensionToSleep(item);
         }
@@ -408,7 +429,7 @@ namespace JanSharp
             entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(attachIAId));
 
             // Latency hiding.
-            item.AttachToPlayer(isHeldSpecifically: false, localPlayerId, bone, boneExists: true, offsetVector, offsetRotation);
+            item.AttachToPlayer(isHeldSpecifically: false, localPlayerId, bone, boneExists: true, offsetVector, offsetRotation, doInterpolate: true);
             PutPhysicsEntityExtensionToSleep(item);
         }
 
@@ -450,7 +471,7 @@ namespace JanSharp
             if (!entityData.ShouldApplyReceivedIAToLatencyState() || item == null)
                 return;
 
-            item.AttachToPlayerUsingItemData();
+            item.AttachToPlayerUsingItemData(doInterpolate: true);
             PutPhysicsEntityExtensionToSleep(item);
         }
 

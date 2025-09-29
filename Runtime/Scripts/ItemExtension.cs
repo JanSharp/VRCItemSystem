@@ -141,12 +141,12 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtension  ApplyExtensionData");
 #endif
             if (data.IsAttached)
-                AttachToPlayerUsingItemData();
+                AttachToPlayerUsingItemData(doInterpolate: false);
             else
                 DetachFromPlayer(interpolateToGameState: true);
         }
 
-        public void AttachToPlayerUsingItemData()
+        public void AttachToPlayerUsingItemData(bool doInterpolate)
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  AttachToPlayerUsingItemData");
@@ -157,7 +157,8 @@ namespace JanSharp
                 data.attachedToBone,
                 data.attachedBoneExists,
                 data.attachedOffsetVector,
-                data.attachedOffsetRotation);
+                data.attachedOffsetRotation,
+                doInterpolate);
         }
 
         public void AttachToPlayer(
@@ -166,7 +167,8 @@ namespace JanSharp
             HumanBodyBones bone,
             bool boneExists,
             Vector3 offsetVector,
-            Quaternion offsetRotation)
+            Quaternion offsetRotation,
+            bool doInterpolate)
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  AttachToPlayer");
@@ -184,18 +186,17 @@ namespace JanSharp
             StartStopMovementLoop();
             UpdatePickupInteractionPrevention();
 
-            // TODO: Do not interpolate when coming from ApplyExtensionData.
             if (playerId == localPlayerId)
             {
                 if (isHeldSpecifically)
-                    itemSystem.PickUpByLocalPlayer(this);
+                    itemSystem.PickUpByLocalPlayer(this, doInterpolate);
                 else if (boneExists)
-                    itemSystem.AttachToLocalPlayer(this);
-                else
+                    itemSystem.AttachToLocalPlayer(this, doInterpolate);
+                else // I don't even think this is possible as it stands currently...
                     itemSystem.SendDropIA(data, forceNoVelocity: true);
             }
             else if (boneExists)
-                itemSystem.AttachToRemotePlayer(this);
+                itemSystem.AttachToRemotePlayer(this, doInterpolate);
         }
 
         public void DetachFromPlayer(bool interpolateToGameState = false)
@@ -292,9 +293,9 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtension  ApplyChangedOffsetsLocallyToPickup");
 #endif
             if (isHeldSpecifically)
-                itemSystem.PickUpByLocalPlayer(this);
+                itemSystem.PickUpByLocalPlayer(this, doInterpolate: true);
             else if (attachedBoneExists)
-                itemSystem.AttachToLocalPlayer(this);
+                itemSystem.AttachToLocalPlayer(this, doInterpolate: true);
             // Do not detach. Changing offsets should not make the local player drop the item.
         }
 
@@ -333,7 +334,7 @@ namespace JanSharp
             else
             {
                 if (attachedBoneExists)
-                    itemSystem.AttachToRemotePlayer(this);
+                    itemSystem.AttachToRemotePlayer(this, doInterpolate: true);
                 else
                     itemSystem.DetachFromRemotePlayer(this);
             }
