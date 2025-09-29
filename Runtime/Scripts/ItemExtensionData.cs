@@ -158,7 +158,6 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Deserialize");
 #endif
-            // TODO: Is importing a held or attached item for a player which is not in the instance handled?
             lockstep.ReadFlags(out bool isAttached, out isHeldSpecifically, out attachedBoneExists);
             if (isAttached)
                 ReadAttachedPlayer(isImport);
@@ -173,11 +172,13 @@ namespace JanSharp
             entityData.SetTransformSyncControllerDueToDeserialization(transformController);
             if (attachedToPlayerId != 0u)
                 return;
+            // Only possible for imports, where the player the item was attached to is currently not in the instance.
             entityData.GiveBackControlOfTransformSync(
                 transformController,
                 entityData.position,
                 entityData.rotation,
                 entityData.scale);
+            attachedToBone = HumanBodyBones.Head; // Reset.
             ClearAttachedOffsets();
         }
     }
