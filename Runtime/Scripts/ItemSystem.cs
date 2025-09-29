@@ -85,7 +85,8 @@ namespace JanSharp
                 UpdateHeldItemDueToAvatarChange(interactables.HeldInLeftHand);
                 UpdateHeldItemDueToAvatarChange(interactables.HeldInRightHand);
             }
-            // TODO: Update attached items.
+            // Cannot do anything for the attached items, they might move around but so be it. We don't have a
+            // tracking data reference point for those, while for held items we do.
         }
 
         private void UpdateHeldItemDueToAvatarChange(CustomPickup pickup)
