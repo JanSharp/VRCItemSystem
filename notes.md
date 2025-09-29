@@ -29,4 +29,4 @@
 - [ ] could add a threshold as the maximum allowed offset between tracking data and their related bones, like 5 cm at an eye height of 2 m. this could improve edge cases where tracking data is stretched away from the associated bone, presumably temporarily
 - [x] use the fact that entity prefabs are actually already instances in the scene, specifically by using te \[SingletonReference\] attribute for entities and entity extensions
 - [x] make custom inspector for item entity extensions simply to remove the line that gets drawn by default by the UdonSharp inspector. For now anyway as there are no other options in that extension
-- [ ] remove the on prefix from onPickupIAId, onDropIAId and onForceDropIAId
+- [x] remove the on prefix from onPickupIAId, onDropIAId and onForceDropIAId

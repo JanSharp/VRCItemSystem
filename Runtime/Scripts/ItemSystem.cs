@@ -322,15 +322,15 @@ namespace JanSharp
             Quaternion offsetRotation = Quaternion.identity;
             if (boneExists)
                 WriteOffsets(pickup, out offsetVector, out offsetRotation);
-            entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(onPickupIAId));
+            entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(pickupIAId));
 
             // Latency hiding.
             item.AttachToPlayer(isHeldSpecifically: true, localPlayerId, bone, boneExists, offsetVector, offsetRotation);
             PutPhysicsEntityExtensionToSleep(item);
         }
 
-        [HideInInspector][SerializeField] private uint onPickupIAId;
-        [LockstepInputAction(nameof(onPickupIAId))]
+        [HideInInspector][SerializeField] private uint pickupIAId;
+        [LockstepInputAction(nameof(pickupIAId))]
         public void OnPickupIA()
         {
 #if ITEM_SYSTEM_DEBUG
@@ -564,7 +564,7 @@ namespace JanSharp
                 }
             }
 
-            if (!itemData.entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(onDropIAId)))
+            if (!itemData.entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(dropIAId)))
                 return;
 
             // Latency hiding.
@@ -578,8 +578,8 @@ namespace JanSharp
             physicsExt.rb.angularVelocity = item.TrackedAngularVelocity;
         }
 
-        [HideInInspector][SerializeField] private uint onDropIAId;
-        [LockstepInputAction(nameof(onDropIAId))]
+        [HideInInspector][SerializeField] private uint dropIAId;
+        [LockstepInputAction(nameof(dropIAId))]
         public void OnDropIA()
         {
 #if ITEM_SYSTEM_DEBUG
@@ -611,11 +611,11 @@ namespace JanSharp
                 lockstep.WriteVector3(entityTransform.position);
                 lockstep.WriteQuaternion(entityTransform.rotation);
             }
-            lockstep.SendSingletonInputAction(onForceDropIAId); // Not latency hidden.
+            lockstep.SendSingletonInputAction(forceDropIAId); // Not latency hidden.
         }
 
-        [HideInInspector][SerializeField] private uint onForceDropIAId;
-        [LockstepInputAction(nameof(onForceDropIAId))]
+        [HideInInspector][SerializeField] private uint forceDropIAId;
+        [LockstepInputAction(nameof(forceDropIAId))]
         public void OnForceDrop()
         {
 #if ITEM_SYSTEM_DEBUG
