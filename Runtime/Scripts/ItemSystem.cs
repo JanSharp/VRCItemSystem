@@ -23,8 +23,8 @@ namespace JanSharp
         [HideInInspector][SerializeField][SingletonReference] private BoneAttachmentManager boneAttachment;
         [HideInInspector][SerializeField][SingletonReference] private InterpolationManager interpolation;
 
-        private ItemExtensionData[] heldItems = new ItemExtensionData[ArrList.MinCapacity];
-        private int heldItemsCount = 0;
+        private ItemExtensionData[] attachedItems = new ItemExtensionData[ArrList.MinCapacity];
+        private int attachedItemsCount = 0;
 
         private VRCPlayerApi localPlayer;
         private uint localPlayerId;
@@ -50,9 +50,9 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemSystem  OnClientLeft");
 #endif
             uint leftPlayerId = lockstep.LeftPlayerId;
-            for (int i = heldItemsCount - 1; i >= 0; i--)
+            for (int i = attachedItemsCount - 1; i >= 0; i--)
             {
-                ItemExtensionData itemData = heldItems[i];
+                ItemExtensionData itemData = attachedItems[i];
                 if (itemData.attachedToPlayerId != leftPlayerId)
                     continue;
                 SendForceDropSingletonIA(itemData);
@@ -349,8 +349,8 @@ namespace JanSharp
             }
 
             entityData.ReadPotentiallyUnknownTransformValues();
-            itemData.heldItemIndex = heldItemsCount;
-            ArrList.Add(ref heldItems, ref heldItemsCount, itemData);
+            itemData.heldItemIndex = attachedItemsCount;
+            ArrList.Add(ref attachedItems, ref attachedItemsCount, itemData);
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
             lockstep.ReadFlags(out itemData.attachedBoneExists, out bool useHermiteCurve);
             itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
@@ -431,8 +431,8 @@ namespace JanSharp
             }
 
             entityData.ReadPotentiallyUnknownTransformValues();
-            itemData.heldItemIndex = heldItemsCount;
-            ArrList.Add(ref heldItems, ref heldItemsCount, itemData);
+            itemData.heldItemIndex = attachedItemsCount;
+            ArrList.Add(ref attachedItems, ref attachedItemsCount, itemData);
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
             itemData.attachedBoneExists = true;
             itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
@@ -697,16 +697,16 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  RemoveFromHeldItems");
 #endif
-            heldItemsCount--;
+            attachedItemsCount--;
             int index = itemData.heldItemIndex;
             itemData.heldItemIndex = 0;
-            if (index != heldItemsCount)
+            if (index != attachedItemsCount)
             {
-                ItemExtensionData other = heldItems[heldItemsCount];
-                heldItems[index] = other;
+                ItemExtensionData other = attachedItems[attachedItemsCount];
+                attachedItems[index] = other;
                 other.heldItemIndex = index;
             }
-            heldItems[heldItemsCount] = null; // Make GC happy.
+            attachedItems[attachedItemsCount] = null; // Make GC happy.
         }
 
         public override void SerializeGameState(bool isExport, LockstepGameStateOptionsData exportOptions)
@@ -714,9 +714,9 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  SerializeGameState");
 #endif
-            lockstep.WriteSmallUInt((uint)heldItemsCount);
-            for (int i = 0; i < heldItemsCount; i++)
-                lockstep.WriteSmallUInt(heldItems[i].entityData.id);
+            lockstep.WriteSmallUInt((uint)attachedItemsCount);
+            for (int i = 0; i < attachedItemsCount; i++)
+                lockstep.WriteSmallUInt(attachedItems[i].entityData.id);
         }
 
         public override string DeserializeGameState(bool isImport, uint importedDataVersion, LockstepGameStateOptionsData importOptions)
@@ -724,14 +724,14 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  DeserializeGameState");
 #endif
-            heldItemsCount = (int)lockstep.ReadSmallUInt();
-            ArrList.EnsureCapacity(ref heldItems, heldItemsCount);
-            for (int i = 0; i < heldItemsCount; i++)
+            attachedItemsCount = (int)lockstep.ReadSmallUInt();
+            ArrList.EnsureCapacity(ref attachedItems, attachedItemsCount);
+            for (int i = 0; i < attachedItemsCount; i++)
             {
                 uint id = lockstep.ReadSmallUInt();
                 EntityData entityData = entitySystem.GetEntityData(id);
                 ItemExtensionData itemData = entityData.GetExtensionData<ItemExtensionData>(nameof(ItemExtensionData));
-                heldItems[i] = itemData;
+                attachedItems[i] = itemData;
                 itemData.heldItemIndex = i;
             }
             return null;
