@@ -250,16 +250,22 @@ namespace JanSharp
             // newPickupIsHeld xor newPickupIsAttached is true here.
             if (newPickupIsHeld)
             {
-                if (pickupIsHeld) // TODO: Hands or offsets changed. Could probably just send a pickup IA here and make it deal with it.
+                if (pickupIsHeld) // Hands or offsets changed.
+                {
+                    itemSystem.SendPickupIA(data);
                     return;
+                }
                 pickupIsHeld = true;
                 pickupIsAttached = false;
                 itemSystem.SendPickupIA(data, pickup.usedHermiteCurveWhenLastPickedUp);
             }
             else // newPickupIsAttached is true.
             {
-                if (pickupIsAttached) // TODO: Attached bone changed. Could probably just send an attach IA here and make it deal with it.
+                if (pickupIsAttached) // Attached bone changed.
+                {
+                    itemSystem.SendAttachIA(data);
                     return;
+                }
                 pickupIsHeld = false;
                 pickupIsAttached = true;
                 itemSystem.SendAttachIA(data);
