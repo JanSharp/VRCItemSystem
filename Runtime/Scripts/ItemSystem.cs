@@ -174,7 +174,13 @@ namespace JanSharp
             CustomPickup pickup = item.pickup;
             item.pickupIsHeld = true;
             item.pickupIsAttached = false;
-            pickup.ForceBeingPickedUp(trackingType, offsetVector, offsetRotation, attachUsingHermiteCurve);
+            if (!pickup.isHeld
+                || pickup.heldTrackingType != trackingType
+                || pickup.heldOffsetVector != offsetVector
+                || pickup.heldOffsetRotation != offsetRotation)
+            {
+                pickup.ForceBeingPickedUp(trackingType, offsetVector, offsetRotation, attachUsingHermiteCurve);
+            }
             if (doInterpolate)
                 return;
             // The pickup system uses a callback on interpolations which set the position and rotation to
@@ -195,8 +201,9 @@ namespace JanSharp
                     + $"false, this must be caught and handled at some point sooner.");
                 return;
             }
+            HumanBodyBones attachedToBone = item.attachedToBone;
             Transform entityTransform = item.entity.transform;
-            if (!LocalPlayerHasBone(item.attachedToBone)) // Handles attachment due to imports.
+            if (!LocalPlayerHasBone(attachedToBone)) // Handles attachment due to imports.
             {
                 var head = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
                 entityTransform.SetPositionAndRotation(head.position + head.rotation * Vector3.forward, head.rotation);
@@ -206,7 +213,8 @@ namespace JanSharp
             CustomPickup pickup = item.pickup;
             item.pickupIsHeld = false;
             item.pickupIsAttached = true;
-            pickup.ForceBeingAttached(item.attachedToBone);
+            if (!pickup.isAttached || pickup.attachedToBone != attachedToBone)
+                pickup.ForceBeingAttached(attachedToBone);
             if (doInterpolate)
             {
                 interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
