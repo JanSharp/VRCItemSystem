@@ -7,7 +7,7 @@ namespace JanSharp
     public class ItemExtensionData : EntityExtensionData
     {
         [HideInInspector][SingletonReference] public ItemTransformController transformController;
-        [HideInInspector][SingletonReference] public PlayerDataManager playerDataManager;
+        [HideInInspector][SingletonReference] public PlayerDataManagerAPI playerDataManager;
 
         public override bool SupportsImportExport => true;
         public override uint DataVersion => 0u;
