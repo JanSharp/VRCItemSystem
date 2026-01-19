@@ -112,7 +112,7 @@ namespace JanSharp
                 lockstep.WriteSmallUInt(attachedToPlayerId);
                 return;
             }
-            lockstep.WriteSmallUInt(playerDataManager.GetCorePlayerDataForPlayerId(attachedToPlayerId).persistentId);
+            playerDataManager.WriteCorePlayerDataRef(playerDataManager.GetCorePlayerDataForPlayerId(attachedToPlayerId));
         }
 
         private void ReadAttachedPlayer(bool isImport)
@@ -125,15 +125,8 @@ namespace JanSharp
                 attachedToPlayerId = lockstep.ReadSmallUInt();
                 return;
             }
-            uint persistentId = lockstep.ReadSmallUInt();
-            if (persistentId == 0u)
-            {
-                attachedToPlayerId = 0u;
-                return;
-            }
-            persistentId = playerDataManager.GetPersistentIdFromImportedId(persistentId);
-            CorePlayerData playerData = playerDataManager.GetCorePlayerDataForPersistentId(persistentId);
-            attachedToPlayerId = playerData.isOffline ? 0u : playerData.playerId;
+            CorePlayerData playerData = playerDataManager.ReadCorePlayerDataRef(isImport: true);
+            attachedToPlayerId = playerData == null || playerData.isOffline ? 0u : playerData.playerId;
         }
 
         public override void Serialize(bool isExport)
