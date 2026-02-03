@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 2697108108823642119}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.23356913, y: 0.39445943, z: 0.34985542}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -62,10 +62,11 @@ MonoBehaviour:
   interactables: {fileID: 0}
   boneAttachment: {fileID: 0}
   interpolation: {fileID: 0}
-  onPickupIAId: 0
+  pickupIAId: 0
+  attachIAId: 0
   changeOffsetIAId: 0
-  onDropIAId: 0
-  onForceDropIAId: 0
+  dropIAId: 0
+  forceDropIAId: 0
 --- !u!114 &4216441302419733382
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -146,6 +147,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1942317607169821820}
+  itemSystem: {fileID: 0}
 --- !u!114 &1942317607169821820
 MonoBehaviour:
   m_ObjectHideFlags: 0
