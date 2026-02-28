@@ -744,6 +744,8 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  SerializeGameState");
 #endif
+            if (!entitySystem.ExportOptions.includeEntities)
+                return;
             lockstep.WriteSmallUInt((uint)attachedItemsCount);
             for (int i = 0; i < attachedItemsCount; i++)
                 entitySystem.WriteEntityDataRef(attachedItems[i].entityData);
@@ -754,6 +756,8 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  DeserializeGameState");
 #endif
+            if (!entitySystem.OptionsFromExport.includeEntities || !entitySystem.ImportOptions.includeEntities)
+                return null;
             attachedItemsCount = (int)lockstep.ReadSmallUInt();
             ArrList.EnsureCapacity(ref attachedItems, attachedItemsCount);
             for (int i = 0; i < attachedItemsCount; i++)
