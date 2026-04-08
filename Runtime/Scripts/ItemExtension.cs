@@ -33,6 +33,10 @@ namespace JanSharp
         /// <para>Only relevant on the client to which the pickup is actually attached to.</para>
         /// </summary>
         [System.NonSerialized] public bool pickupIsAttached;
+        /// <summary>
+        /// <para>Used to prevent recursion.</para>
+        /// </summary>
+        [System.NonSerialized] public bool isInOnPickupStateChanged;
 
         private bool shouldHaveControlOfTransformSync = false;
         /// <summary>Used by the <see cref="UpdateManager"/>.</summary>
@@ -230,6 +234,7 @@ namespace JanSharp
 #endif
             if (pickup == null || !lockstep.IsInitialized)
                 return;
+            isInOnPickupStateChanged = true;
             bool newPickupIsHeld = pickup.isHeld;
             bool newPickupIsAttached = pickup.isAttached;
             if (!newPickupIsHeld && !newPickupIsAttached)
@@ -238,14 +243,17 @@ namespace JanSharp
                 {
                     pickupIsHeld = false;
                     itemSystem.SendDropIA(data, forceNoVelocity: false);
+                    isInOnPickupStateChanged = false;
                     return;
                 }
                 if (pickupIsAttached)
                 {
                     pickupIsAttached = false;
                     itemSystem.SendDropIA(data, forceNoVelocity: true);
+                    isInOnPickupStateChanged = false;
                     return;
                 }
+                isInOnPickupStateChanged = false;
                 return;
             }
             // newPickupIsHeld xor newPickupIsAttached is true here.
@@ -254,6 +262,7 @@ namespace JanSharp
                 if (pickupIsHeld) // Hands or offsets changed.
                 {
                     itemSystem.SendPickupIA(data);
+                    isInOnPickupStateChanged = false;
                     return;
                 }
                 pickupIsHeld = true;
@@ -265,12 +274,14 @@ namespace JanSharp
                 if (pickupIsAttached) // Attached bone changed.
                 {
                     itemSystem.SendAttachIA(data);
+                    isInOnPickupStateChanged = false;
                     return;
                 }
                 pickupIsHeld = false;
                 pickupIsAttached = true;
                 itemSystem.SendAttachIA(data);
             }
+            isInOnPickupStateChanged = false;
         }
 
         public override void OnPickupUseDown()

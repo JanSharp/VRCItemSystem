@@ -174,10 +174,12 @@ namespace JanSharp
             CustomPickup pickup = item.pickup;
             item.pickupIsHeld = true;
             item.pickupIsAttached = false;
-            if (!pickup.isHeld
-                || pickup.heldTrackingType != trackingType
-                || pickup.heldOffsetVector != offsetVector
-                || pickup.heldOffsetRotation != offsetRotation)
+            // In theory the isInOnPickupStateChanged check is redundant, however there is no reason to risk it.
+            if (!item.isInOnPickupStateChanged
+                && (!pickup.isHeld
+                    || pickup.heldTrackingType != trackingType
+                    || Vector3.Distance(pickup.heldOffsetVector, offsetVector) > 0.01f
+                    || Quaternion.Angle(pickup.heldOffsetRotation, offsetRotation) > 0.1f))
             {
                 pickup.ForceBeingPickedUp(trackingType, offsetVector, offsetRotation, attachUsingHermiteCurve);
             }
@@ -213,7 +215,8 @@ namespace JanSharp
             CustomPickup pickup = item.pickup;
             item.pickupIsHeld = false;
             item.pickupIsAttached = true;
-            if (!pickup.isAttached || pickup.attachedToBone != attachedToBone)
+            // In theory the isInOnPickupStateChanged check is redundant, however there is no reason to risk it.
+            if (!item.isInOnPickupStateChanged && (!pickup.isAttached || pickup.attachedToBone != attachedToBone))
                 pickup.ForceBeingAttached(attachedToBone);
             if (doInterpolate)
             {
