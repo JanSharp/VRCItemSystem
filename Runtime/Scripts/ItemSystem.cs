@@ -758,6 +758,15 @@ namespace JanSharp
 #endif
             if (isImport && (!entitySystem.OptionsFromExport.includeEntities || !entitySystem.ImportOptions.includeEntities))
                 return null;
+
+            if (isImport)
+                for (int i = 0; i < attachedItemsCount; i++)
+                {
+                    ItemExtensionData itemData = attachedItems[i];
+                    if (itemData != null)
+                        itemData.heldItemIndex = 0;
+                }
+
             attachedItemsCount = (int)lockstep.ReadSmallUInt();
             ArrList.EnsureCapacity(ref attachedItems, attachedItemsCount);
             for (int i = 0; i < attachedItemsCount; i++)
