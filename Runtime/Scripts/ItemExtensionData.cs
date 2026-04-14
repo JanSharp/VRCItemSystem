@@ -47,6 +47,21 @@ namespace JanSharp
         [System.NonSerialized] public Vector3 attachedOffsetVector;
         [System.NonSerialized] public Quaternion attachedOffsetRotation;
 
+        public override bool WannaBeClassSupportsPooling => true;
+        public override void ResetWannaBeClassToDefault()
+        {
+            base.ResetWannaBeClassToDefault();
+            ext = default;
+            physicsData = default;
+            isHeldSpecifically = default;
+            attachedToPlayerId = default;
+            heldItemIndex = default;
+            attachedToBone = HumanBodyBones.Head;
+            attachedBoneExists = default;
+            attachedOffsetVector = default;
+            attachedOffsetRotation = default;
+        }
+
         private void Init()
         {
 #if ITEM_SYSTEM_DEBUG
