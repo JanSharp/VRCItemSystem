@@ -335,9 +335,9 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendPickupIA");
 #endif
             ItemExtension item = itemData.ext;
-            CustomPickup pickup = item.pickup;
-            if (pickup == null || !lockstep.IsInitialized)
+            if (item == null || !lockstep.IsInitialized)
                 return; // TODO: Either drop the item, or send a pickup IA once lockstep is initialized.
+            CustomPickup pickup = item.pickup;
             if (!pickup.isHeld)
             {
                 Debug.LogError("[ItemSystem] Attempt to SendPickupIA for an item which is not held by the local player.");
@@ -416,9 +416,9 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendAttachIA");
 #endif
             ItemExtension item = itemData.ext;
-            CustomPickup pickup = item.pickup;
-            if (pickup == null || !lockstep.IsInitialized)
+            if (item == null || !lockstep.IsInitialized)
                 return; // TODO: Either detach the item, or send an attach IA once lockstep is initialized.
+            CustomPickup pickup = item.pickup;
             if (!pickup.isAttached)
             {
                 Debug.LogError("[ItemSystem] Attempt to SendAttachIA for an item which is not attached to the local player.");
