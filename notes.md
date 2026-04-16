@@ -31,5 +31,5 @@
 - [x] make custom inspector for item entity extensions simply to remove the line that gets drawn by default by the UdonSharp inspector. For now anyway as there are no other options in that extension
 - [x] remove the on prefix from onPickupIAId, onDropIAId and onForceDropIAId
 - [ ] make VelocityThreshold and or AngularVelocityDegreesThreshold significantly less finicky
-- [ ] improve velocity transfer upon dropping/throwing an item. Weight it more towards the most recent movement
+- [x] improve velocity transfer upon dropping/throwing an item. Weight it more towards the most recent movement
 - [ ] attached item offsets after import are very off

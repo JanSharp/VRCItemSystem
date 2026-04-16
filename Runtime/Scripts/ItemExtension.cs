@@ -53,8 +53,8 @@ namespace JanSharp
         /// <summary>An angle axis rotation, magnitude is radians per second. Matches the format of
         /// <see cref="Rigidbody.angularVelocity"/>.</summary>
         public Vector3 TrackedAngularVelocity => trackedAngularVelocityAxis * (trackedAngularVelocityAngle * Mathf.Deg2Rad);
-        private const float MaxVelocityWeight = 0.75f;
-        private const float VelocityRollingAverageSeconds = 0.1f;
+        private const float MaxVelocityWeight = 0.8f;
+        private const float VelocityRollingAverageSeconds = 0.05f;
 
         [System.NonSerialized] public bool isHeldSpecifically;
         [System.NonSerialized] public uint attachedToPlayerId;
