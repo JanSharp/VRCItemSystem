@@ -31,7 +31,7 @@ namespace JanSharp
         /// <summary>
         /// <para>Part of game state, but synced through <see cref="ItemSystem"/>.</para>
         /// </summary>
-        [System.NonSerialized] public int heldItemIndex;
+        [System.NonSerialized] public int attachedItemIndex;
         /// <summary>
         /// <para>Explicit default of <see cref="HumanBodyBones.Head"/>, since we do not control
         /// <see cref="HumanBodyBones"/> values.</para>
@@ -55,7 +55,7 @@ namespace JanSharp
             physicsData = default;
             isHeldSpecifically = default;
             attachedToPlayerId = default;
-            heldItemIndex = default;
+            attachedItemIndex = default;
             attachedToBone = HumanBodyBones.Head;
             attachedBoneExists = default;
             attachedOffsetVector = default;

@@ -387,8 +387,7 @@ namespace JanSharp
             }
 
             entityData.ReadPotentiallyUnknownTransformValues();
-            itemData.heldItemIndex = attachedItemsCount;
-            ArrList.Add(ref attachedItems, ref attachedItemsCount, itemData);
+            AddToAttachedItems(itemData);
             itemData.isHeldSpecifically = true;
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
             lockstep.ReadFlags(out itemData.attachedBoneExists, out bool useHermiteCurve);
@@ -470,8 +469,7 @@ namespace JanSharp
             }
 
             entityData.ReadPotentiallyUnknownTransformValues();
-            itemData.heldItemIndex = attachedItemsCount;
-            ArrList.Add(ref attachedItems, ref attachedItemsCount, itemData);
+            AddToAttachedItems(itemData);
             itemData.isHeldSpecifically = false;
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
             itemData.attachedBoneExists = true;
@@ -726,7 +724,7 @@ namespace JanSharp
                 entityData.position,
                 entityData.rotation,
                 entityData.scale);
-            RemoveFromHeldItems(itemData);
+            RemoveFromAttachedItems(itemData);
 
             itemData.isHeldSpecifically = false;
             itemData.attachedToPlayerId = 0u;
@@ -736,19 +734,35 @@ namespace JanSharp
             itemData.attachedOffsetRotation = Quaternion.identity;
         }
 
-        private void RemoveFromHeldItems(ItemExtensionData itemData)
+        private void AddToAttachedItems(ItemExtensionData itemData)
         {
 #if ITEM_SYSTEM_DEBUG
-            Debug.Log($"[ItemSystemDebug] ItemSystem  RemoveFromHeldItems");
+            Debug.Log($"[ItemSystemDebug] ItemSystem  AddToAttachedItems");
+#endif
+            if (itemData.attachedItemIndex != 0)
+                return;
+            itemData.attachedItemIndex = attachedItemsCount;
+            ArrList.Add(ref attachedItems, ref attachedItemsCount, itemData);
+        }
+
+        private void RemoveFromAttachedItems(ItemExtensionData itemData)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemSystem  RemoveFromAttachedItems");
+            if (itemData.attachedItemIndex == 0)
+            {
+                Debug.LogError($"[ItemSystemDebug] Impossible, heldItemIndex is zero inside of RemoveFromAttachedItems.");
+                return;
+            }
 #endif
             attachedItemsCount--;
-            int index = itemData.heldItemIndex;
-            itemData.heldItemIndex = 0;
+            int index = itemData.attachedItemIndex;
+            itemData.attachedItemIndex = 0;
             if (index != attachedItemsCount)
             {
                 ItemExtensionData other = attachedItems[attachedItemsCount];
                 attachedItems[index] = other;
-                other.heldItemIndex = index;
+                other.attachedItemIndex = index;
             }
             attachedItems[attachedItemsCount] = null; // Make GC happy.
         }
@@ -778,7 +792,7 @@ namespace JanSharp
                 {
                     ItemExtensionData itemData = attachedItems[i];
                     if (itemData != null)
-                        itemData.heldItemIndex = 0;
+                        itemData.attachedItemIndex = 0;
                 }
 
             attachedItemsCount = (int)lockstep.ReadSmallUInt();
@@ -788,7 +802,7 @@ namespace JanSharp
                 entitySystem.TryReadEntityDataRef(out EntityData entityData, isImport);
                 ItemExtensionData itemData = entityData.GetExtensionData<ItemExtensionData>(nameof(ItemExtensionData));
                 attachedItems[i] = itemData;
-                itemData.heldItemIndex = i;
+                itemData.attachedItemIndex = i;
             }
             return null;
         }
