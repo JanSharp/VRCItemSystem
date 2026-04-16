@@ -596,6 +596,9 @@ namespace JanSharp
                 doApplyVelocity = !forceNoVelocity
                     && (item.trackedVelocity.magnitude > VelocityThreshold
                         || item.trackedAngularVelocityAngle > AngularVelocityDegreesThreshold);
+#if ITEM_SYSTEM_DEBUG
+                Debug.Log($"[ItemSystemDebug] ItemSystem  SendDropIA (inner) - forceNoVelocity: {forceNoVelocity}, item.trackedVelocity: {item.trackedVelocity}, item.trackedVelocity.magnitude: {item.trackedVelocity.magnitude}, item.trackedAngularVelocityAxis: {item.trackedAngularVelocityAxis}, item.trackedAngularVelocityAngle: {item.trackedAngularVelocityAngle}, doApplyVelocity: {doApplyVelocity}");
+#endif
                 lockstep.WriteFlags(doApplyVelocity);
                 if (doApplyVelocity)
                 {
