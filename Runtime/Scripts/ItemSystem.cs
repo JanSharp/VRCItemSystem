@@ -351,10 +351,15 @@ namespace JanSharp
             entityData.WritePotentiallyUnknownTransformValues();
             lockstep.WriteFlags(boneExists, useHermiteCurve);
             lockstep.WriteSmallInt((int)bone);
-            Vector3 offsetVector = Vector3.zero;
-            Quaternion offsetRotation = Quaternion.identity;
+            Vector3 offsetVector;
+            Quaternion offsetRotation;
             if (boneExists)
                 WriteOffsets(pickup, out offsetVector, out offsetRotation);
+            else
+            {
+                offsetVector = pickup.heldOffsetVector;
+                offsetRotation = pickup.heldOffsetRotation;
+            }
             entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(pickupIAId));
 
             // Latency hiding.
