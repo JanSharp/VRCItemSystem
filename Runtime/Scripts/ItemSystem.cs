@@ -384,6 +384,7 @@ namespace JanSharp
             entityData.ReadPotentiallyUnknownTransformValues();
             itemData.heldItemIndex = attachedItemsCount;
             ArrList.Add(ref attachedItems, ref attachedItemsCount, itemData);
+            itemData.isHeldSpecifically = true;
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
             lockstep.ReadFlags(out itemData.attachedBoneExists, out bool useHermiteCurve);
             itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
@@ -466,6 +467,7 @@ namespace JanSharp
             entityData.ReadPotentiallyUnknownTransformValues();
             itemData.heldItemIndex = attachedItemsCount;
             ArrList.Add(ref attachedItems, ref attachedItemsCount, itemData);
+            itemData.isHeldSpecifically = false;
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
             itemData.attachedBoneExists = true;
             itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
@@ -718,6 +720,7 @@ namespace JanSharp
                 entityData.scale);
             RemoveFromHeldItems(itemData);
 
+            itemData.isHeldSpecifically = false;
             itemData.attachedToPlayerId = 0u;
             itemData.attachedBoneExists = false;
             itemData.attachedToBone = HumanBodyBones.Head;
