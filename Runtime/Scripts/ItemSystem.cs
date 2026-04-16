@@ -382,7 +382,8 @@ namespace JanSharp
             EntityData entityData = itemData.entityData;
             if (itemData.IsAttached && lockstep.SendingPlayerId != itemData.attachedToPlayerId)
             {
-                entityData.MarkLatencyHiddenUniqueIdAsProcessed();
+                // Handles two players picking up the same item simultaneously.
+                entityData.ResetLatencyStateBecauseIAGotAppliedDifferently();
                 return;
             }
 
@@ -464,7 +465,8 @@ namespace JanSharp
             EntityData entityData = itemData.entityData;
             if (itemData.IsAttached && lockstep.SendingPlayerId != itemData.attachedToPlayerId)
             {
-                entityData.MarkLatencyHiddenUniqueIdAsProcessed();
+                // Handles two players picking up the same item simultaneously.
+                entityData.ResetLatencyStateBecauseIAGotAppliedDifferently();
                 return;
             }
 
