@@ -170,6 +170,7 @@ MonoBehaviour:
   manager: {fileID: 0}
   useText: 
   exactGrip: {fileID: 0}
+  attachmentMode: 0
   listeners:
   - {fileID: 6824634162395658245}
 --- !u!114 &7425795890846845220
