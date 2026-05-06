@@ -741,7 +741,7 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  AddToAttachedItems");
 #endif
-            if (itemData.attachedItemIndex != 0)
+            if (itemData.attachedItemIndex != ItemExtensionData.DetachedItemIndex)
                 return;
             itemData.attachedItemIndex = attachedItemsCount;
             ArrList.Add(ref attachedItems, ref attachedItemsCount, itemData);
@@ -751,7 +751,7 @@ namespace JanSharp
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  RemoveFromAttachedItems");
-            if (itemData.attachedItemIndex == 0)
+            if (itemData.attachedItemIndex == ItemExtensionData.DetachedItemIndex)
             {
                 Debug.LogError($"[ItemSystemDebug] Impossible, heldItemIndex is zero inside of RemoveFromAttachedItems.");
                 return;
@@ -759,7 +759,7 @@ namespace JanSharp
 #endif
             attachedItemsCount--;
             int index = itemData.attachedItemIndex;
-            itemData.attachedItemIndex = 0;
+            itemData.attachedItemIndex = ItemExtensionData.DetachedItemIndex;
             if (index != attachedItemsCount)
             {
                 ItemExtensionData other = attachedItems[attachedItemsCount];
@@ -794,7 +794,7 @@ namespace JanSharp
                 {
                     ItemExtensionData itemData = attachedItems[i];
                     if (itemData != null)
-                        itemData.attachedItemIndex = 0;
+                        itemData.attachedItemIndex = ItemExtensionData.DetachedItemIndex;
                 }
 
             attachedItemsCount = (int)lockstep.ReadSmallUInt();
