@@ -177,11 +177,12 @@ namespace JanSharp
             // In theory the isInOnPickupStateChanged check is redundant, however there is no reason to risk it.
             if (!item.isInOnPickupStateChanged
                 && (!pickup.isHeld
-                    || pickup.heldTrackingType != trackingType
-                    || Vector3.Distance(pickup.heldOffsetVector, offsetVector) > 0.01f
-                    || Quaternion.Angle(pickup.heldOffsetRotation, offsetRotation) > 0.1f))
+                    || pickup.primaryHeldTrackingType != trackingType
+                    || Vector3.Distance(pickup.primaryOffsetVector, offsetVector) > 0.01f
+                    || Quaternion.Angle(pickup.primaryOffsetRotation, offsetRotation) > 0.1f))
             {
-                pickup.ForceBeingPickedUp(trackingType, offsetVector, offsetRotation, attachUsingHermiteCurve);
+                // pickup.ForceBeingPickedUp(trackingType, offsetVector, offsetRotation, attachUsingHermiteCurve);
+                pickup.ForceBeingPickedUp(trackingType); // FIXME: Must use/respect offsetVector and offsetRotation.
             }
             if (doInterpolate)
                 return;
@@ -298,10 +299,10 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  WriteOffsetsRelativeToBone");
 #endif
-            HumanBodyBones bone = TrackingTypeToBone(pickup.heldTrackingType);
+            HumanBodyBones bone = TrackingTypeToBone(pickup.primaryHeldTrackingType);
             TrackingDataOffsetsToBoneOffsets(
-                pickup.heldTrackingType, bone,
-                pickup.heldOffsetVector, pickup.heldOffsetRotation,
+                pickup.primaryHeldTrackingType, bone,
+                pickup.primaryOffsetVector, pickup.primaryOffsetRotation,
                 out offsetVector, out offsetRotation);
             lockstep.WriteVector3(offsetVector);
             lockstep.WriteQuaternion(offsetRotation);
@@ -343,7 +344,7 @@ namespace JanSharp
                 Debug.LogError("[ItemSystem] Attempt to SendPickupIA for an item which is not held by the local player.");
                 return;
             }
-            HumanBodyBones bone = TrackingTypeToBone(pickup.heldTrackingType);
+            HumanBodyBones bone = TrackingTypeToBone(pickup.primaryHeldTrackingType);
             bool boneExists = LocalPlayerHasBone(bone);
 
             EntityData entityData = itemData.entityData;
@@ -357,8 +358,8 @@ namespace JanSharp
                 WriteOffsets(pickup, out offsetVector, out offsetRotation);
             else
             {
-                offsetVector = pickup.heldOffsetVector;
-                offsetRotation = pickup.heldOffsetRotation;
+                offsetVector = pickup.primaryOffsetVector;
+                offsetRotation = pickup.primaryOffsetRotation;
             }
             entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(pickupIAId));
 
@@ -510,7 +511,7 @@ namespace JanSharp
             Entity entity = item.entity;
             Transform entityTransform = entity.transform;
             CustomPickup pickup = item.pickup;
-            HumanBodyBones bone = TrackingTypeToBone(pickup.heldTrackingType);
+            HumanBodyBones bone = TrackingTypeToBone(pickup.primaryHeldTrackingType);
             bool boneExists = LocalPlayerHasBone(bone);
             lockstep.WriteFlags(boneExists);
             Vector3 offsetVector = Vector3.zero;

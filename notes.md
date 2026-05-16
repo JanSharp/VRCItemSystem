@@ -34,3 +34,4 @@
   - [ ] requires more testing
 - [x] improve velocity transfer upon dropping/throwing an item. Weight it more towards the most recent movement
 - [ ] attached item offsets after import are very off
+- [ ] handle two primary and secondary held states of pickups
