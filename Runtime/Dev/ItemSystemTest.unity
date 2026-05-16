@@ -1067,7 +1067,7 @@ PrefabInstance:
     - target: {fileID: 3394902157055695572, guid: 0918a6b991e971d279290a41ce383edb,
         type: 3}
       propertyPath: m_IsKinematic
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3645583456518475148, guid: 0918a6b991e971d279290a41ce383edb,
         type: 3}
@@ -5724,12 +5724,12 @@ PrefabInstance:
     - target: {fileID: 8496571412903997291, guid: 1bd594581ac1adfa7800b38830440a84,
         type: 3}
       propertyPath: m_Name
-      value: jansharp.player-data (MainGSEntry)
+      value: jansharp.entity-system-options (MainGSEntry)
       objectReference: {fileID: 0}
     - target: {fileID: 8496571412956490156, guid: 1bd594581ac1adfa7800b38830440a84,
         type: 3}
       propertyPath: m_text
-      value: Player Data
+      value: Entity System Options
       objectReference: {fileID: 0}
     - target: {fileID: 8958779144156792744, guid: 1bd594581ac1adfa7800b38830440a84,
         type: 3}
@@ -13817,12 +13817,12 @@ PrefabInstance:
     - target: {fileID: 8496571412903997291, guid: 1bd594581ac1adfa7800b38830440a84,
         type: 3}
       propertyPath: m_Name
-      value: jansharp.entity-system-options (MainGSEntry)
+      value: jansharp.player-data (MainGSEntry)
       objectReference: {fileID: 0}
     - target: {fileID: 8496571412956490156, guid: 1bd594581ac1adfa7800b38830440a84,
         type: 3}
       propertyPath: m_text
-      value: Entity System Options
+      value: Player Data
       objectReference: {fileID: 0}
     - target: {fileID: 8958779144156792744, guid: 1bd594581ac1adfa7800b38830440a84,
         type: 3}
@@ -15433,12 +15433,12 @@ PrefabInstance:
         type: 3}
       propertyPath: onImportFinishedListeners.Array.data[2]
       value: 
-      objectReference: {fileID: 211944796}
+      objectReference: {fileID: 181149562}
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
       propertyPath: onImportFinishedListeners.Array.data[3]
       value: 
-      objectReference: {fileID: 181149562}
+      objectReference: {fileID: 211944796}
     - target: {fileID: 4728509102619734785, guid: 4f5050760fb932762b18e249c98c7afd,
         type: 3}
       propertyPath: onImportFinishingUpListeners.Array.size

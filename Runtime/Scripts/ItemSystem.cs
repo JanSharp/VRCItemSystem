@@ -245,10 +245,6 @@ namespace JanSharp
                 pickup.Detach();
         }
 
-        /// <summary>
-        /// <para>Only used by <see cref="OnPickupIA"/>.</para>
-        /// </summary>
-        private bool attachUsingHermiteCurve = false;
         public void AttachToRemotePlayer(ItemExtension item, bool doInterpolate)
         {
 #if ITEM_SYSTEM_DEBUG
@@ -265,22 +261,9 @@ namespace JanSharp
                 entityTransform.localRotation = item.attachedOffsetRotation;
                 return;
             }
-            // HACK: This is just copy paste from CustomInteractHandManager PickupActivePickup. Me no like.
-            if (attachUsingHermiteCurve)
-            {
-                Vector3 heldOffsetVector = item.attachedOffsetVector;
-                Vector3 directVector = heldOffsetVector - entityTransform.localPosition;
-                float distance = directVector.magnitude;
-                Vector3 originVelocity = Quaternion.Inverse(entityTransform.parent.rotation) * Vector3.up * distance / 2f;
-                float duration = Mathf.Min(CustomInteractablesManagerAPI.MaxPickupInterpolationDuration, CustomInteractablesManagerAPI.PickupInterpolationDuration * distance);
-                interpolation.HermiteCurveLocalPosition(entityTransform, originVelocity, heldOffsetVector, directVector, duration);
-                interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, duration);
-            }
-            else
-            {
-                interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, CustomInteractablesManagerAPI.PickupInterpolationDuration);
-                interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, CustomInteractablesManagerAPI.PickupInterpolationDuration);
-            }
+            // FIXME: As with many things that need to be changed for the new pickup system, this does too.
+            interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, CustomInteractablesManagerAPI.PickupInterpolationDuration);
+            interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, CustomInteractablesManagerAPI.PickupInterpolationDuration);
         }
 
         public void DetachFromRemotePlayer(ItemExtension item)
@@ -410,9 +393,7 @@ namespace JanSharp
             if (!entityData.ShouldApplyReceivedIAToLatencyState() || item == null)
                 return;
 
-            attachUsingHermiteCurve = useHermiteCurve;
             item.AttachToPlayerUsingItemData(doInterpolate: true);
-            attachUsingHermiteCurve = false;
             PutPhysicsEntityExtensionToSleep(item);
         }
 
