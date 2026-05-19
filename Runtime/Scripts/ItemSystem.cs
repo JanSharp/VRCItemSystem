@@ -262,8 +262,8 @@ namespace JanSharp
                 return;
             }
             // FIXME: As with many things that need to be changed for the new pickup system, this does too.
-            interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, CustomInteractablesManagerAPI.PickupInterpolationDuration);
-            interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, CustomInteractablesManagerAPI.PickupInterpolationDuration);
+            interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, CustomPickup.InterpolationDuration);
+            interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, CustomPickup.InterpolationDuration);
         }
 
         public void DetachFromRemotePlayer(ItemExtension item)
