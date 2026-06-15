@@ -313,7 +313,7 @@ namespace JanSharp
             }
         }
 
-        public void SendPickupIA(ItemExtensionData itemData, bool useHermiteCurve = false)
+        public void SendPickupIA(ItemExtensionData itemData)
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  SendPickupIA");
@@ -333,7 +333,7 @@ namespace JanSharp
             EntityData entityData = itemData.entityData;
             entitySystem.WriteEntityExtensionDataRef(itemData);
             entityData.WritePotentiallyUnknownTransformValues();
-            lockstep.WriteFlags(boneExists, useHermiteCurve);
+            lockstep.WriteFlags(boneExists);
             lockstep.WriteSmallInt((int)bone);
             Vector3 offsetVector;
             Quaternion offsetRotation;
@@ -375,7 +375,7 @@ namespace JanSharp
             AddToAttachedItems(itemData);
             itemData.isHeldSpecifically = true;
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
-            lockstep.ReadFlags(out itemData.attachedBoneExists, out bool useHermiteCurve);
+            lockstep.ReadFlags(out itemData.attachedBoneExists);
             itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
             if (itemData.attachedBoneExists)
             {
@@ -489,8 +489,6 @@ namespace JanSharp
                 return;
             }
             entitySystem.WriteEntityExtensionDataRef(itemData);
-            Entity entity = item.entity;
-            Transform entityTransform = entity.transform;
             CustomPickup pickup = item.pickup;
             HumanBodyBones bone = TrackingTypeToBone(pickup.primaryHeldTrackingType);
             bool boneExists = LocalPlayerHasBone(bone);
@@ -501,6 +499,7 @@ namespace JanSharp
                 WriteOffsets(pickup, out offsetVector, out offsetRotation);
             else
             {
+                Transform entityTransform = item.entity.transform;
                 lockstep.WriteVector3(entityTransform.position);
                 lockstep.WriteQuaternion(entityTransform.rotation);
             }

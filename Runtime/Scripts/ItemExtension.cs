@@ -267,7 +267,7 @@ namespace JanSharp
                 }
                 pickupIsHeld = true;
                 pickupIsAttached = false;
-                itemSystem.SendPickupIA(data, pickup.usedHermiteCurveWhenLastPickedUp);
+                itemSystem.SendPickupIA(data);
             }
             else // newPickupIsAttached is true.
             {
