@@ -13,8 +13,9 @@ namespace JanSharp
     public class ItemExtension : EntityExtension
     {
         [HideInInspector][SingletonReference] public ItemSystem itemSystem;
+        [HideInInspector][SingletonReference] public PlayerTrackingDataSyncManagerAPI trackingDataSync;
+        [HideInInspector][SingletonReference] public PlayerDataManagerAPI playerDataManager;
         [HideInInspector][SingletonReference] public ItemTransformController transformController;
-        [HideInInspector][SingletonReference] public InterpolationManager interpolation;
         [HideInInspector][SingletonReference] public UpdateManager updateManager;
         [System.NonSerialized] public ItemExtensionData data;
 
@@ -37,14 +38,18 @@ namespace JanSharp
         /// <para>Used to prevent recursion.</para>
         /// </summary>
         [System.NonSerialized] public bool isInOnPickupStateChanged;
+        /// <summary>
+        /// <para>Used to not depend on any guarantees of pickup and drop functions running in exact
+        /// pairs. This is simply more robust, even if it might be redundant.</para>
+        /// </summary>
+        [System.NonSerialized] public bool isTrackingDataSyncActive;
 
         private bool shouldHaveControlOfTransformSync = false;
         /// <summary>Used by the <see cref="UpdateManager"/>.</summary>
         [System.NonSerialized] public int customUpdateInternalIndex;
-        private float nextMovementIntervalTime = 0f;
-        private bool movementLoopIsRunning = false;
-        public const float MovementLoopInterval = 0.1f;
+        private bool isUpdatingPickupController = false;
 
+        private bool isTrackingVelocity = false;
         private Vector3 positionLastFrame;
         private Quaternion rotationLastFrame;
         [System.NonSerialized] public Vector3 trackedVelocity;
@@ -182,7 +187,7 @@ namespace JanSharp
 
             this.isHeldSpecifically = isHeldSpecifically;
             attachedToPlayerId = playerId;
-            attachedToBone = bone;
+            itemSystem.SetAttachedToBone(this, bone);
             attachedBoneExists = boneExists;
             attachedOffsetVector = offsetVector;
             attachedOffsetRotation = offsetRotation;
@@ -199,7 +204,7 @@ namespace JanSharp
                 else // I don't even think this is possible as it stands currently...
                     itemSystem.SendDropIA(data, forceNoVelocity: true);
             }
-            else if (boneExists)
+            else
                 itemSystem.AttachToRemotePlayer(this, doInterpolate);
         }
 
@@ -218,7 +223,7 @@ namespace JanSharp
 
             isHeldSpecifically = false;
             attachedToPlayerId = 0u;
-            attachedToBone = HumanBodyBones.Head;
+            attachedToBone = HumanBodyBones.Head; // isTrackingDataSyncActive is false here, no need to call SetAttachedToBone.
             attachedBoneExists = false;
             attachedOffsetVector = Vector3.zero;
             attachedOffsetRotation = Quaternion.identity;
@@ -235,7 +240,7 @@ namespace JanSharp
             if (pickup == null || !lockstep.IsInitialized)
                 return;
             isInOnPickupStateChanged = true;
-            bool newPickupIsHeld = pickup.isHeld;
+            bool newPickupIsHeld = pickup.isHeldByPrimaryHand;
             bool newPickupIsAttached = pickup.isAttached;
             if (!newPickupIsHeld && !newPickupIsAttached)
             {
@@ -324,31 +329,21 @@ namespace JanSharp
                     return; // Realistically nothing changed.
 
                 if (attachedToPlayerId == localPlayerId)
-                {
                     ApplyChangedOffsetsLocallyToPickup();
-                    return;
-                }
-                // Attached to remote player, bone did exist, still exists, offsets have changed, interpolate.
-                Transform entityTransform = entity.transform;
-                interpolation.LerpLocalPosition(entityTransform, attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
-                interpolation.LerpLocalRotation(entityTransform, attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
+                else
+                    itemSystem.AttachToRemotePlayer(this, doInterpolate: true);
                 return;
             }
 
             attachedBoneExists = boneExists;
             StartStopMovementLoop();
-            if (attachedToPlayerId == 0)
+            if (attachedToPlayerId == 0u)
                 return;
 
             if (attachedToPlayerId == localPlayerId)
                 ApplyChangedOffsetsLocallyToPickup();
             else
-            {
-                if (attachedBoneExists)
-                    itemSystem.AttachToRemotePlayer(this, doInterpolate: true);
-                else
-                    itemSystem.DetachFromRemotePlayer(this);
-            }
+                itemSystem.AttachToRemotePlayer(this, doInterpolate: true);
         }
 
         private void TakeOrGiveBackControlOfTransformSync(bool interpolateToGameState)
@@ -356,10 +351,12 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  TakeOrGiveBackControlOfTransformSync");
 #endif
-            bool prev = shouldHaveControlOfTransformSync;
-            shouldHaveControlOfTransformSync = attachedToPlayerId != 0u && attachedBoneExists;
-            if (shouldHaveControlOfTransformSync == prev)
+            // Could technically add this to the following condition: && (isHeldSpecifically || attachedBoneExists)
+            // However that actually always ends up being true, because when isHeldSpecifically is false, attachedBoneExists is always true.
+            bool newValue = attachedToPlayerId != 0u;
+            if (shouldHaveControlOfTransformSync == newValue)
                 return;
+            shouldHaveControlOfTransformSync = newValue;
 
             if (shouldHaveControlOfTransformSync)
             {
@@ -389,20 +386,16 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtension  StartStopMovementLoop");
 #endif
             TakeOrGiveBackControlOfTransformSync(interpolateToGameState);
-            bool movementLoopShouldBeRunning = attachedToPlayerId == localPlayerId
-                && isHeldSpecifically // Not when it is attached.
-                && (!shouldHaveControlOfTransformSync || physicsExt != null);
-            if (movementLoopShouldBeRunning == movementLoopIsRunning)
-                return;
-            movementLoopIsRunning = movementLoopShouldBeRunning;
 
-            if (!movementLoopShouldBeRunning)
-            {
+            isUpdatingPickupController = attachedToPlayerId != localPlayerId && (isHeldSpecifically || attachedBoneExists);
+            isTrackingVelocity = isHeldSpecifically && physicsExt != null;
+
+            if (isUpdatingPickupController || isTrackingVelocity)
+                updateManager.Register(this);
+            else
                 updateManager.Deregister(this);
-                return;
-            }
-            updateManager.Register(this);
-            if (physicsExt == null)
+
+            if (!isTrackingVelocity)
                 return;
             trackedVelocity = Vector3.zero;
             trackedAngularVelocityAxis = Vector3.zero;
@@ -415,19 +408,58 @@ namespace JanSharp
         /// <summary>Called by the <see cref="UpdateManager"/>.</summary>
         public void CustomUpdate()
         {
-            if (!shouldHaveControlOfTransformSync)
-            {
-                float time = Time.time;
-                if (time >= nextMovementIntervalTime)
-                {
-                    // TODO: flag position and rotation separately and only if it actually changed.
-                    entity.FlagForPositionAndRotationChange();
-                    nextMovementIntervalTime = time + MovementLoopInterval;
-                }
-            }
-            if (physicsExt == null)
-                return;
+            if (isUpdatingPickupController)
+                UpdateRemotePickupController();
+            if (isTrackingVelocity)
+                TrackVelocity();
+        }
 
+        private void UpdateRemotePickupController()
+        {
+            if (isHeldSpecifically)
+            {
+                CustomPickupState state = itemSystem.stateForPickupController;
+                state.pickup = pickup;
+                state.pickupTransform = pickup.transform;
+                if (attachedBoneExists)
+                {
+                    VRCPlayerApi player = pickup.controllingPlayer;
+                    if (player == null)
+                        return;
+                    Vector3 bonePosition = player.GetBonePosition(attachedToBone);
+                    if (bonePosition == Vector3.zero)
+                        return;
+                    state.primaryHandPosition = bonePosition;
+                    state.primaryHandRotation = player.GetBoneRotation(attachedToBone);
+                }
+                else
+                {
+                    PlayerTrackingDataSync player = playerDataManager.GetPlayerDataForPlayerId<PlayerTrackingDataSync>(nameof(PlayerTrackingDataSync), attachedToPlayerId);
+                    player.GetCurrentPosition(attachedToBone);
+                    state.primaryHandPosition = player.resultPosition;
+                    state.primaryHandRotation = player.resultRotation;
+                }
+                pickup.GetPickupController().MovePickup(state);
+            }
+            else
+            {
+                CustomPickupAttachedState state = itemSystem.stateForAttachedPickupController;
+                state.pickup = pickup;
+                state.pickupTransform = pickup.transform;
+                VRCPlayerApi player = pickup.controllingPlayer;
+                if (player == null)
+                    return;
+                Vector3 bonePosition = player.GetBonePosition(attachedToBone);
+                if (bonePosition == Vector3.zero)
+                    return;
+                state.bonePosition = bonePosition;
+                state.boneRotation = player.GetBoneRotation(attachedToBone);
+                pickup.GetPickupController().MoveAttachedPickup(state);
+            }
+        }
+
+        private void TrackVelocity()
+        {
             float deltaTime = Time.deltaTime;
             float weight = Mathf.Min(MaxVelocityWeight, deltaTime / VelocityRollingAverageSeconds);
             float inverseWeight = 1f - weight;

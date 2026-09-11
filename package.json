@@ -19,7 +19,8 @@
     "com.jansharp.lockstep": ">=1.0.0",
     "com.jansharp.entity-system": ">=0.1.0",
     "com.jansharp.custom-interacts-and-pickups": ">=0.1.0",
-    "com.jansharp.player-data": ">=0.1.0"
+    "com.jansharp.player-data": ">=0.1.0",
+    "com.jansharp.player-tracking-data-sync": ">=0.1.0"
   },
   "url": "https://github.com/JanSharp/VRCItemSystem/releases/download/v0.1.0/com.jansharp.item-system.zip",
   "changelogUrl": "https://github.com/JanSharp/VRCItemSystem/blob/v0.1.0/CHANGELOG.md"

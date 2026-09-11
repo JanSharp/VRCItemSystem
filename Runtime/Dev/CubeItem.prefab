@@ -169,8 +169,11 @@ MonoBehaviour:
   interactText: 
   manager: {fileID: 0}
   useText: 
-  exactGrip: {fileID: 0}
+  primaryExactGrip: {fileID: 0}
+  secondaryExactGrip: {fileID: 0}
   attachmentMode: 0
+  droppingTransfersPrimaryHand: 1
+  pickupController: {fileID: 0}
   listeners:
   - {fileID: 1459994459520829161}
 --- !u!114 &3957473601761328374
@@ -276,8 +279,9 @@ MonoBehaviour:
   lockstep: {fileID: 0}
   entitySystem: {fileID: 0}
   itemSystem: {fileID: 0}
+  trackingDataSync: {fileID: 0}
+  playerDataManager: {fileID: 0}
   transformController: {fileID: 0}
-  interpolation: {fileID: 0}
   updateManager: {fileID: 0}
 --- !u!114 &3819297181055071929
 MonoBehaviour:

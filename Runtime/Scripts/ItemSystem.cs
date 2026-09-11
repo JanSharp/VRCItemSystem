@@ -20,8 +20,11 @@ namespace JanSharp
         [HideInInspector][SerializeField][SingletonReference] private EntitySystem entitySystem;
         [HideInInspector][SerializeField][SingletonReference] private ItemTransformController transformController;
         [HideInInspector][SerializeField][SingletonReference] private CustomInteractablesManagerAPI interactables;
-        [HideInInspector][SerializeField][SingletonReference] private BoneAttachmentManager boneAttachment;
         [HideInInspector][SerializeField][SingletonReference] private InterpolationManager interpolation;
+        [HideInInspector][SerializeField][SingletonReference] private PlayerTrackingDataSyncManagerAPI trackingDataSync;
+
+        public CustomPickupState stateForPickupController;
+        public CustomPickupAttachedState stateForAttachedPickupController;
 
         private ItemExtensionData[] attachedItems = new ItemExtensionData[ArrList.MinCapacity];
         private int attachedItemsCount = 0;
@@ -124,13 +127,16 @@ namespace JanSharp
         private void BoneOffsetsToTrackingDataOffsets(
             VRCPlayerApi.TrackingDataType trackingType,
             HumanBodyBones bone,
+            // When this is false - even if the bone exists now - the offsets
+            // were calculated relative to tracking data and should remain as such.
+            bool boneExists,
             Vector3 offsetVector,
             Quaternion offsetRotation,
             out Vector3 resultVector,
             out Quaternion resultRotation)
         {
             Vector3 bonePosition = localPlayer.GetBonePosition(bone);
-            if (bonePosition == Vector3.zero)
+            if (!boneExists || bonePosition == Vector3.zero)
             {
                 resultVector = offsetVector;
                 resultRotation = offsetRotation;
@@ -159,6 +165,47 @@ namespace JanSharp
                 : VRCPlayerApi.TrackingDataType.Head;
         }
 
+        private void CancelManualInterpolation(ItemExtension item)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemSystem  CancelManualInterpolation");
+#endif
+            Transform entityTransform = item.entity.transform;
+            interpolation.CancelPositionInterpolation(entityTransform);
+            interpolation.CancelRotationInterpolation(entityTransform);
+        }
+
+        private void MoveItemToEntityDataLocationManually(ItemExtension item, bool doInterpolate)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemSystem  InterpolateToEntityDataLocationManually");
+#endif
+            EntityData entityData = item.entityData;
+            Transform entityTransform = item.entity.transform;
+            if (doInterpolate)
+            {
+                interpolation.LerpWorldPosition(entityTransform, entityData.position, Entity.TransformChangeInterpolationDuration);
+                interpolation.LerpWorldRotation(entityTransform, entityData.rotation, Entity.TransformChangeInterpolationDuration);
+            }
+            else
+                entityTransform.SetPositionAndRotation(entityData.position, entityData.rotation);
+        }
+
+        public void SetAttachedToBone(ItemExtension item, HumanBodyBones bone)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemSystem  SetAttachedToBone");
+#endif
+            HumanBodyBones attachedToBone = item.attachedToBone;
+            if (attachedToBone == bone)
+                return;
+            item.attachedToBone = bone;
+            if (!item.isTrackingDataSyncActive)
+                return;
+            trackingDataSync.SendStopTrackingIA(BoneToTrackingType(attachedToBone));
+            trackingDataSync.SendBeginTrackingIA(BoneToTrackingType(bone));
+        }
+
         public void PickUpByLocalPlayer(ItemExtension item, bool doInterpolate)
         {
 #if ITEM_SYSTEM_DEBUG
@@ -167,8 +214,16 @@ namespace JanSharp
             // NOTE: Unfortunately this will only result in proper offsets if the player is in the same avatar,
             // or one with the same bone rotations, which let's be honest is unlikely.
             VRCPlayerApi.TrackingDataType trackingType = BoneToTrackingType(item.attachedToBone);
+            if (!item.attachedBoneExists && !item.isTrackingDataSyncActive)
+            {
+                item.isTrackingDataSyncActive = true;
+                trackingDataSync.SendBeginTrackingIA(trackingType);
+            }
+
+            CancelManualInterpolation(item); // Would interfere with the pickup system.
+
             BoneOffsetsToTrackingDataOffsets(
-                trackingType, item.attachedToBone,
+                trackingType, item.attachedToBone, item.attachedBoneExists,
                 item.attachedOffsetVector, item.attachedOffsetRotation,
                 out Vector3 offsetVector, out Quaternion offsetRotation);
             CustomPickup pickup = item.pickup;
@@ -176,21 +231,18 @@ namespace JanSharp
             item.pickupIsAttached = false;
             // In theory the isInOnPickupStateChanged check is redundant, however there is no reason to risk it.
             if (!item.isInOnPickupStateChanged
-                && (!pickup.isHeld
-                    || pickup.primaryHeldTrackingType != trackingType
-                    || Vector3.Distance(pickup.primaryOffsetVector, offsetVector) > 0.01f
-                    || Quaternion.Angle(pickup.primaryOffsetRotation, offsetRotation) > 0.1f))
+                && (!pickup.isHeldByPrimaryHand
+                || pickup.primaryHeldTrackingType != trackingType
+                || Vector3.Distance(pickup.primaryOffsetVector, offsetVector) > 0.01f
+                || Quaternion.Angle(pickup.primaryOffsetRotation, offsetRotation) > 0.1f))
             {
-                // pickup.ForceBeingPickedUp(trackingType, offsetVector, offsetRotation, attachUsingHermiteCurve);
-                pickup.ForceBeingPickedUp(trackingType); // FIXME: Must use/respect offsetVector and offsetRotation.
+                pickup.ForceBeingPickedUpExplicit(trackingType, shouldBecomeSecondaryHand: false, offsetVector, offsetRotation);
             }
+
             if (doInterpolate)
-                return;
-            // The pickup system uses a callback on interpolations which set the position and rotation to
-            // whatever the target of the interpolation was.
-            Transform entityTransform = item.entity.transform;
-            interpolation.CancelPositionInterpolation(entityTransform);
-            interpolation.CancelRotationInterpolation(entityTransform);
+                pickup.StartInterpolation();
+            else
+                pickup.StopInterpolation();
         }
 
         public void AttachToLocalPlayer(ItemExtension item, bool doInterpolate)
@@ -204,12 +256,14 @@ namespace JanSharp
                     + $"false, this must be caught and handled at some point sooner.");
                 return;
             }
+
+            CancelManualInterpolation(item); // Would interfere with the pickup system.
+
             HumanBodyBones attachedToBone = item.attachedToBone;
-            Transform entityTransform = item.entity.transform;
             if (!LocalPlayerHasBone(attachedToBone)) // Handles attachment due to imports.
             {
                 var head = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-                entityTransform.SetPositionAndRotation(head.position + head.rotation * Vector3.forward, head.rotation);
+                item.entity.transform.SetPositionAndRotation(head.position + head.rotation * Vector3.forward, head.rotation);
                 SendDropIA(item.data, forceNoVelocity: true); // Will run DetachFromLocalPlayer.
                 return;
             }
@@ -219,16 +273,11 @@ namespace JanSharp
             // In theory the isInOnPickupStateChanged check is redundant, however there is no reason to risk it.
             if (!item.isInOnPickupStateChanged && (!pickup.isAttached || pickup.attachedToBone != attachedToBone))
                 pickup.ForceBeingAttached(attachedToBone);
+
             if (doInterpolate)
-            {
-                interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, Entity.TransformChangeInterpolationDuration);
-                interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, Entity.TransformChangeInterpolationDuration);
-            }
+                pickup.StartInterpolation();
             else
-            {
-                entityTransform.localPosition = item.attachedOffsetVector;
-                entityTransform.localRotation = item.attachedOffsetRotation;
-            }
+                pickup.StopInterpolation();
         }
 
         public void DetachFromLocalPlayer(ItemExtension item)
@@ -236,13 +285,24 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  DetachFromLocalPlayer");
 #endif
+            if (item.isTrackingDataSyncActive)
+            {
+                item.isTrackingDataSyncActive = false;
+                trackingDataSync.SendStopTrackingIA(BoneToTrackingType(item.attachedToBone));
+            }
+
             item.pickupIsHeld = false;
             item.pickupIsAttached = false;
-            CustomPickup pickup = item.pickup;
-            if (pickup.isHeld)
-                pickup.Drop();
-            else if (pickup.isAttached)
-                pickup.Detach();
+            DropAndDetachPickupLocally(item.pickup);
+        }
+
+        private void DropAndDetachPickupLocally(CustomPickup pickup)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemSystem  DropAndDetachPickupLocally");
+#endif
+            pickup.Drop(preventAttachment: true); // Only does anything if it is held by the local player.
+            pickup.Detach(); // Only does anything if it is attached to the local player.
         }
 
         public void AttachToRemotePlayer(ItemExtension item, bool doInterpolate)
@@ -253,17 +313,38 @@ namespace JanSharp
             VRCPlayerApi attachedToPlayer = VRCPlayerApi.GetPlayerById((int)item.attachedToPlayerId);
             if (!Utilities.IsValid(attachedToPlayer))
                 return;
-            Transform entityTransform = item.entity.transform;
-            boneAttachment.AttachToBone(attachedToPlayer, item.attachedToBone, entityTransform);
-            if (!doInterpolate)
+
+            CustomPickup pickup = item.pickup;
+            DropAndDetachPickupLocally(pickup);
+            pickup.SetControllingPlayer(attachedToPlayer);
+
+            if (item.isHeldSpecifically)
             {
-                entityTransform.localPosition = item.attachedOffsetVector;
-                entityTransform.localRotation = item.attachedOffsetRotation;
-                return;
+                pickup.SetControlState(CustomPickupControlState.Held);
+                pickup.isHeldByPrimaryHand = true;
+                pickup.primaryHeldTrackingType = BoneToTrackingType(item.attachedToBone);
+                pickup.primaryOffsetVector = item.attachedOffsetVector;
+                pickup.primaryOffsetRotation = item.attachedOffsetRotation;
+                CancelManualInterpolation(item);
             }
-            // FIXME: As with many things that need to be changed for the new pickup system, this does too.
-            interpolation.LerpLocalPosition(entityTransform, item.attachedOffsetVector, CustomPickup.InterpolationDuration);
-            interpolation.LerpLocalRotation(entityTransform, item.attachedOffsetRotation, CustomPickup.InterpolationDuration);
+            else
+            {
+                pickup.SetControlState(CustomPickupControlState.Attached);
+                pickup.isHeldByPrimaryHand = false;
+                pickup.attachedToBone = item.attachedToBone;
+                pickup.attachedOffsetVector = item.attachedOffsetVector;
+                pickup.attachedOffsetRotation = item.attachedOffsetRotation;
+                if (item.attachedBoneExists)
+                    CancelManualInterpolation(item);
+                else
+                    MoveItemToEntityDataLocationManually(item, doInterpolate);
+            }
+
+            // Thanks to this only doing anything when the pickup controller Move functions get called,
+            // it is fine to run this even when manual interpolation is running. Because in that case the
+            // pickup controller will not do anything because the bone does not exist.
+            if (doInterpolate)
+                pickup.StartInterpolation();
         }
 
         public void DetachFromRemotePlayer(ItemExtension item)
@@ -271,22 +352,38 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  DetachFromRemotePlayer");
 #endif
-            boneAttachment.DetachFromBone(
-                (int)item.attachedToPlayerId,
-                item.attachedToBone,
-                item.entity.transform);
+            CustomPickup pickup = item.pickup;
+            pickup.SetControlState(CustomPickupControlState.None);
+            pickup.isHeldByPrimaryHand = false;
         }
 
-        private void WriteOffsets(CustomPickup pickup, out Vector3 offsetVector, out Quaternion offsetRotation)
+        private void CalculateOffsets(CustomPickup pickup, out Vector3 offsetVector, out Quaternion offsetRotation)
         {
 #if ITEM_SYSTEM_DEBUG
-            Debug.Log($"[ItemSystemDebug] ItemSystem  WriteOffsetsRelativeToBone");
+            Debug.Log($"[ItemSystemDebug] ItemSystem  CalculateOffsets");
 #endif
             HumanBodyBones bone = TrackingTypeToBone(pickup.primaryHeldTrackingType);
             TrackingDataOffsetsToBoneOffsets(
                 pickup.primaryHeldTrackingType, bone,
                 pickup.primaryOffsetVector, pickup.primaryOffsetRotation,
                 out offsetVector, out offsetRotation);
+        }
+
+        private void WriteOffsets(CustomPickup pickup, out Vector3 offsetVector, out Quaternion offsetRotation)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemSystem  WriteOffsets");
+#endif
+            CalculateOffsets(pickup, out offsetVector, out offsetRotation);
+            lockstep.WriteVector3(offsetVector);
+            lockstep.WriteQuaternion(offsetRotation);
+        }
+
+        private void WriteOffsets(CustomPickup pickup, Vector3 offsetVector, Quaternion offsetRotation)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemSystem  WriteOffsets");
+#endif
             lockstep.WriteVector3(offsetVector);
             lockstep.WriteQuaternion(offsetRotation);
         }
@@ -322,33 +419,39 @@ namespace JanSharp
             if (item == null || !lockstep.IsInitialized)
                 return; // TODO: Either drop the item, or send a pickup IA once lockstep is initialized.
             CustomPickup pickup = item.pickup;
-            if (!pickup.isHeld)
+            if (!pickup.isHeldByPrimaryHand)
             {
                 Debug.LogError("[ItemSystem] Attempt to SendPickupIA for an item which is not held by the local player.");
                 return;
             }
-            HumanBodyBones bone = TrackingTypeToBone(pickup.primaryHeldTrackingType);
-            bool boneExists = LocalPlayerHasBone(bone);
 
-            EntityData entityData = itemData.entityData;
-            entitySystem.WriteEntityExtensionDataRef(itemData);
-            entityData.WritePotentiallyUnknownTransformValues();
-            lockstep.WriteFlags(boneExists);
-            lockstep.WriteSmallInt((int)bone);
+            // Setup.
+            VRCPlayerApi.TrackingDataType trackingDataType = pickup.primaryHeldTrackingType;
+            HumanBodyBones bone = TrackingTypeToBone(trackingDataType);
+            bool boneExists = LocalPlayerHasBone(bone);
             Vector3 offsetVector;
             Quaternion offsetRotation;
             if (boneExists)
-                WriteOffsets(pickup, out offsetVector, out offsetRotation);
+                CalculateOffsets(pickup, out offsetVector, out offsetRotation);
             else
             {
                 offsetVector = pickup.primaryOffsetVector;
                 offsetRotation = pickup.primaryOffsetRotation;
             }
-            entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(pickupIAId));
 
             // Latency hiding.
+            // Must happen before sending the pickup IA in order for tracking data sync IA to run first, if it's used.
             item.AttachToPlayer(isHeldSpecifically: true, localPlayerId, bone, boneExists, offsetVector, offsetRotation, doInterpolate: true);
             PutPhysicsEntityExtensionToSleep(item);
+
+            // Sending IA.
+            EntityData entityData = itemData.entityData;
+            entitySystem.WriteEntityExtensionDataRef(itemData);
+            entityData.WritePotentiallyUnknownTransformValues();
+            lockstep.WriteFlags(boneExists);
+            lockstep.WriteSmallInt((int)bone);
+            WriteOffsets(pickup, offsetVector, offsetRotation);
+            entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(pickupIAId));
         }
 
         [HideInInspector][SerializeField] private uint pickupIAId;
@@ -377,11 +480,8 @@ namespace JanSharp
             itemData.attachedToPlayerId = lockstep.SendingPlayerId;
             lockstep.ReadFlags(out itemData.attachedBoneExists);
             itemData.attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
-            if (itemData.attachedBoneExists)
-            {
-                ReadOffsets(itemData);
-                entityData.TakeControlOfTransformSync(transformController);
-            }
+            entityData.TakeControlOfTransformSync(transformController);
+            ReadOffsets(itemData);
 
             // Putting the physics entity to sleep after the item has taken control theoretically
             // reduces the total amount of work that needs to be done by the entity system.
@@ -415,20 +515,26 @@ namespace JanSharp
             // the pickup, so it can only not exist if SendAttachIA gets sent outside of an OnAttach event.
             // The item system itself does not do that and it's arguably even invalid.
             HumanBodyBones bone = pickup.attachedToBone;
-
+            Vector3 attachedOffsetVector = pickup.attachedOffsetVector;
+            Quaternion attachedOffsetRotation = pickup.attachedOffsetRotation;
             EntityData entityData = itemData.entityData;
+
             entitySystem.WriteEntityExtensionDataRef(itemData);
             entityData.WritePotentiallyUnknownTransformValues();
             lockstep.WriteSmallInt((int)bone);
-            Transform entityTransform = itemData.entity.transform;
-            Vector3 offsetVector = entityTransform.localPosition;
-            Quaternion offsetRotation = entityTransform.localRotation;
-            lockstep.WriteVector3(offsetVector);
-            lockstep.WriteQuaternion(offsetRotation);
+            lockstep.WriteVector3(attachedOffsetVector);
+            lockstep.WriteQuaternion(attachedOffsetRotation);
             entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(attachIAId));
 
             // Latency hiding.
-            item.AttachToPlayer(isHeldSpecifically: false, localPlayerId, bone, boneExists: true, offsetVector, offsetRotation, doInterpolate: true);
+            item.AttachToPlayer(
+                isHeldSpecifically: false,
+                localPlayerId,
+                bone,
+                boneExists: true,
+                attachedOffsetVector,
+                attachedOffsetRotation,
+                doInterpolate: true);
             PutPhysicsEntityExtensionToSleep(item);
         }
 
@@ -492,10 +598,11 @@ namespace JanSharp
             CustomPickup pickup = item.pickup;
             HumanBodyBones bone = TrackingTypeToBone(pickup.primaryHeldTrackingType);
             bool boneExists = LocalPlayerHasBone(bone);
-            lockstep.WriteFlags(boneExists);
+            lockstep.WriteFlags(boneExists, item.isHeldSpecifically);
+
             Vector3 offsetVector = Vector3.zero;
             Quaternion offsetRotation = Quaternion.identity;
-            if (boneExists)
+            if (item.isHeldSpecifically || boneExists)
                 WriteOffsets(pickup, out offsetVector, out offsetRotation);
             else
             {
@@ -528,25 +635,15 @@ namespace JanSharp
                 return; // If attached id is 0u this'll also return, which works out nicely.
             }
 
-            lockstep.ReadFlags(out bool boneExists);
-            if (boneExists)
-            {
-                if (!itemData.attachedBoneExists) // Bone didn't exist, but it does now.
-                    entityData.TakeControlOfTransformSync(transformController);
-                itemData.attachedBoneExists = true;
+            lockstep.ReadFlags(out bool boneExists, out bool isHeldSpecifically);
+            itemData.attachedBoneExists = boneExists;
+
+            if (isHeldSpecifically || boneExists)
                 ReadOffsets(itemData);
-            }
-            else // Bone does not exist.
+            else // Is attached to bone and bone does not exist.
             {
                 entityData.position = lockstep.ReadVector3();
                 entityData.rotation = lockstep.ReadQuaternion();
-                if (itemData.attachedBoneExists) // Bone did exist.
-                    entityData.GiveBackControlOfTransformSync(
-                        transformController,
-                        entityData.position,
-                        entityData.rotation,
-                        entityData.scale);
-                itemData.attachedBoneExists = false;
                 itemData.attachedOffsetVector = Vector3.zero;
                 itemData.attachedOffsetRotation = Quaternion.identity;
             }
@@ -667,17 +764,13 @@ namespace JanSharp
 
             PhysicsEntityExtensionData physicsData = itemData.physicsData;
             bool doApplyVelocity = false;
-            Vector3 velocity = Vector3.zero;
-            Vector3 angularVelocity = Vector3.zero;
             if (mightHaveVelocity && physicsData != null)
             {
                 lockstep.ReadFlags(out doApplyVelocity);
                 if (doApplyVelocity)
                 {
-                    velocity = lockstep.ReadVector3();
-                    angularVelocity = lockstep.ReadVector3();
-                    physicsData.velocity = velocity;
-                    physicsData.angularVelocity = angularVelocity;
+                    physicsData.velocity = lockstep.ReadVector3();
+                    physicsData.angularVelocity = lockstep.ReadVector3();
                     physicsData.SetResponsiblePlayerId(lockstep.SendingPlayerId);
                     physicsData.WakeUp();
                 }

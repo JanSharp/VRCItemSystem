@@ -9,6 +9,7 @@
         "JanSharp.EntitySystem",
         "JanSharp.CustomInteractsAndPickups",
         "JanSharp.PlayerData",
+        "JanSharp.PlayerTrackingDataSync",
         "UdonSharp.Runtime",
         "UdonSharp.Editor",
         "Unity.TextMeshPro",
