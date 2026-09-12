@@ -165,12 +165,13 @@ namespace JanSharp
             lockstep.WriteFlags(isAttached, isHeldSpecifically, attachedBoneExists);
             if (!isAttached)
                 return;
+
             WriteAttachedPlayer(isExport);
             lockstep.WriteSmallInt((int)attachedToBone);
-            if (!attachedBoneExists)
-                return;
             lockstep.WriteVector3(attachedOffsetVector);
             lockstep.WriteQuaternion(attachedOffsetRotation);
+            if (!isHeldSpecifically)
+                return;
             lockstep.WriteVector3(playerToAnchorOffsetVector);
             lockstep.WriteQuaternion(playerToAnchorOffsetRotation);
         }
@@ -181,18 +182,24 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtensionData  Deserialize");
 #endif
             lockstep.ReadFlags(out bool isAttached, out isHeldSpecifically, out attachedBoneExists);
-            if (isAttached)
-                ReadAttachedPlayer(isImport);
-            attachedToBone = isAttached ? (HumanBodyBones)lockstep.ReadSmallInt() : HumanBodyBones.Head;
-            if (!isAttached || !attachedBoneExists)
+            if (!isAttached)
             {
+                attachedToPlayerId = 0u;
+                attachedToBone = HumanBodyBones.Head;
                 ClearAttachedOffsets();
                 return;
             }
+
+            ReadAttachedPlayer(isImport);
+            attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
             attachedOffsetVector = lockstep.ReadVector3();
             attachedOffsetRotation = lockstep.ReadQuaternion();
-            playerToAnchorOffsetVector = lockstep.ReadVector3();
-            playerToAnchorOffsetRotation = lockstep.ReadQuaternion();
+            if (isHeldSpecifically)
+            {
+                playerToAnchorOffsetVector = lockstep.ReadVector3();
+                playerToAnchorOffsetRotation = lockstep.ReadQuaternion();
+            }
+
             entityData.SetTransformSyncControllerDueToDeserialization(transformController);
             if (attachedToPlayerId != 0u)
                 return;
