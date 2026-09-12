@@ -44,9 +44,16 @@ namespace JanSharp
         /// including head and hands.</para>
         /// </summary>
         [System.NonSerialized] public HumanBodyBones attachedToBone = HumanBodyBones.Head;
+        /// <summary>
+        /// <para>Must be expected to be possible for this to be <see langword="false"/> even while
+        /// <see cref="isHeldSpecifically"/> is <see langword="false"/>. Even if the item system currently may
+        /// never actually have that be the case.</para>
+        /// </summary>
         [System.NonSerialized] public bool attachedBoneExists;
         [System.NonSerialized] public Vector3 attachedOffsetVector;
         [System.NonSerialized] public Quaternion attachedOffsetRotation;
+        [System.NonSerialized] public Vector3 playerToAnchorOffsetVector;
+        [System.NonSerialized] public Quaternion playerToAnchorOffsetRotation;
 
         public override bool WannaBeClassSupportsPooling => true;
         public override void ResetWannaBeClassToDefault()
@@ -61,6 +68,8 @@ namespace JanSharp
             attachedBoneExists = default;
             attachedOffsetVector = default;
             attachedOffsetRotation = default;
+            playerToAnchorOffsetVector = default;
+            playerToAnchorOffsetRotation = default;
         }
 
         private void Init()
@@ -114,6 +123,8 @@ namespace JanSharp
 #endif
             attachedOffsetVector = Vector3.zero;
             attachedOffsetRotation = Quaternion.identity;
+            playerToAnchorOffsetVector = Vector3.zero;
+            playerToAnchorOffsetRotation = Quaternion.identity;
         }
 
         // TODO: These write and read functions can be moved out of this file to make it instantiate faster.
@@ -160,6 +171,8 @@ namespace JanSharp
                 return;
             lockstep.WriteVector3(attachedOffsetVector);
             lockstep.WriteQuaternion(attachedOffsetRotation);
+            lockstep.WriteVector3(playerToAnchorOffsetVector);
+            lockstep.WriteQuaternion(playerToAnchorOffsetRotation);
         }
 
         public override void Deserialize(bool isImport, uint importedDataVersion)
@@ -178,6 +191,8 @@ namespace JanSharp
             }
             attachedOffsetVector = lockstep.ReadVector3();
             attachedOffsetRotation = lockstep.ReadQuaternion();
+            playerToAnchorOffsetVector = lockstep.ReadVector3();
+            playerToAnchorOffsetRotation = lockstep.ReadQuaternion();
             entityData.SetTransformSyncControllerDueToDeserialization(transformController);
             if (attachedToPlayerId != 0u)
                 return;

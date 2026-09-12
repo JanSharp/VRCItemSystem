@@ -85,6 +85,8 @@ namespace JanSharp
         [System.NonSerialized] public bool attachedBoneExists;
         [System.NonSerialized] public Vector3 attachedOffsetVector;
         [System.NonSerialized] public Quaternion attachedOffsetRotation;
+        [System.NonSerialized] public Vector3 playerToAnchorOffsetVector;
+        [System.NonSerialized] public Quaternion playerToAnchorOffsetRotation;
 
         private void SetPreventPickupInteraction(bool value)
         {
@@ -127,7 +129,7 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemExtension  DisassociateFromExtensionDataAndReset");
 #endif
             DetachFromPlayer();
-            SetAttachedBoneExists(false, Vector3.zero, Quaternion.identity);
+            SetAttachedBoneExists(false, Vector3.zero, Quaternion.identity, Vector3.zero, Quaternion.identity);
             data.ext = null;
             data = null;
             UpdatePickupInteractionPrevention();
@@ -167,6 +169,8 @@ namespace JanSharp
                 data.attachedBoneExists,
                 data.attachedOffsetVector,
                 data.attachedOffsetRotation,
+                data.playerToAnchorOffsetVector,
+                data.playerToAnchorOffsetRotation,
                 doInterpolate);
         }
 
@@ -175,8 +179,10 @@ namespace JanSharp
             uint playerId,
             HumanBodyBones bone,
             bool boneExists,
-            Vector3 offsetVector,
-            Quaternion offsetRotation,
+            Vector3 attachedOffsetVector,
+            Quaternion attachedOffsetRotation,
+            Vector3 playerToAnchorOffsetVector,
+            Quaternion playerToAnchorOffsetRotation,
             bool doInterpolate)
         {
 #if ITEM_SYSTEM_DEBUG
@@ -189,8 +195,10 @@ namespace JanSharp
             attachedToPlayerId = playerId;
             itemSystem.SetAttachedToBone(this, bone);
             attachedBoneExists = boneExists;
-            attachedOffsetVector = offsetVector;
-            attachedOffsetRotation = offsetRotation;
+            this.attachedOffsetVector = attachedOffsetVector;
+            this.attachedOffsetRotation = attachedOffsetRotation;
+            this.playerToAnchorOffsetVector = playerToAnchorOffsetVector;
+            this.playerToAnchorOffsetRotation = playerToAnchorOffsetRotation;
 
             StartStopMovementLoop();
             UpdatePickupInteractionPrevention();
@@ -227,6 +235,8 @@ namespace JanSharp
             attachedBoneExists = false;
             attachedOffsetVector = Vector3.zero;
             attachedOffsetRotation = Quaternion.identity;
+            playerToAnchorOffsetVector = Vector3.zero;
+            playerToAnchorOffsetRotation = Quaternion.identity;
 
             StartStopMovementLoop(interpolateToGameState);
             UpdatePickupInteractionPrevention();
@@ -315,13 +325,20 @@ namespace JanSharp
             // Do not detach. Changing offsets should not make the local player drop the item.
         }
 
-        public void SetAttachedBoneExists(bool boneExists, Vector3 offsetVector, Quaternion offsetRotation)
+        public void SetAttachedBoneExists(
+            bool boneExists,
+            Vector3 attachedOffsetVector,
+            Quaternion attachedOffsetRotation,
+            Vector3 playerToAnchorOffsetVector,
+            Quaternion playerToAnchorOffsetRotation)
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtension  SetAttachedBoneExists");
 #endif
-            attachedOffsetVector = offsetVector;
-            attachedOffsetRotation = offsetRotation;
+            this.attachedOffsetVector = attachedOffsetVector;
+            this.attachedOffsetRotation = attachedOffsetRotation;
+            this.playerToAnchorOffsetVector = playerToAnchorOffsetVector;
+            this.playerToAnchorOffsetRotation = playerToAnchorOffsetRotation;
 
             if (attachedBoneExists == boneExists)
             {
@@ -429,15 +446,17 @@ namespace JanSharp
                     Vector3 bonePosition = player.GetBonePosition(attachedToBone);
                     if (bonePosition == Vector3.zero)
                         return;
-                    state.primaryHandPosition = bonePosition;
-                    state.primaryHandRotation = player.GetBoneRotation(attachedToBone);
+                    Quaternion boneRotation = player.GetBoneRotation(attachedToBone);
+                    state.primaryHandPosition = bonePosition + boneRotation * playerToAnchorOffsetVector;
+                    state.primaryHandRotation = boneRotation * playerToAnchorOffsetRotation;
                 }
                 else
                 {
                     PlayerTrackingDataSync player = playerDataManager.GetPlayerDataForPlayerId<PlayerTrackingDataSync>(nameof(PlayerTrackingDataSync), attachedToPlayerId);
                     player.GetCurrentPosition(attachedToBone);
-                    state.primaryHandPosition = player.resultPosition;
-                    state.primaryHandRotation = player.resultRotation;
+                    Quaternion resultRotation = player.resultRotation;
+                    state.primaryHandPosition = player.resultPosition + resultRotation * playerToAnchorOffsetVector;
+                    state.primaryHandRotation = resultRotation * playerToAnchorOffsetRotation;
                 }
                 pickup.GetPickupController().MovePickup(state);
             }
