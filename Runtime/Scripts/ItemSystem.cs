@@ -206,6 +206,24 @@ namespace JanSharp
             trackingDataSync.SendBeginTrackingIA(BoneToTrackingType(bone));
         }
 
+        private void SetIsTrackingDataSyncActive(
+            ItemExtension item,
+            VRCPlayerApi.TrackingDataType trackingType,
+            bool isTrackingDataSyncActive)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemSystem  SetIsTrackingDataSyncActive");
+#endif
+            if (item.isTrackingDataSyncActive == isTrackingDataSyncActive)
+                return;
+            item.isTrackingDataSyncActive = isTrackingDataSyncActive;
+
+            if (isTrackingDataSyncActive)
+                trackingDataSync.SendBeginTrackingIA(trackingType);
+            else
+                trackingDataSync.SendStopTrackingIA(trackingType);
+        }
+
         public void PickUpByLocalPlayer(ItemExtension item, bool doInterpolate)
         {
 #if ITEM_SYSTEM_DEBUG
@@ -213,12 +231,10 @@ namespace JanSharp
 #endif
             // NOTE: Unfortunately this will only result in proper offsets if the player is in the same avatar,
             // or one with the same bone rotations, which let's be honest is unlikely.
+
             VRCPlayerApi.TrackingDataType trackingType = BoneToTrackingType(item.attachedToBone);
-            if (!item.attachedBoneExists && !item.isTrackingDataSyncActive)
-            {
-                item.isTrackingDataSyncActive = true;
-                trackingDataSync.SendBeginTrackingIA(trackingType);
-            }
+            // May cause it to begin or stop tracking, bones can begin and stop existing because of avatar changes.
+            SetIsTrackingDataSyncActive(item, trackingType, !item.attachedBoneExists);
 
             CancelManualInterpolation(item); // Would interfere with the pickup system.
 
@@ -285,12 +301,7 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  DetachFromLocalPlayer");
 #endif
-            if (item.isTrackingDataSyncActive)
-            {
-                item.isTrackingDataSyncActive = false;
-                trackingDataSync.SendStopTrackingIA(BoneToTrackingType(item.attachedToBone));
-            }
-
+            SetIsTrackingDataSyncActive(item, BoneToTrackingType(item.attachedToBone), false);
             item.pickupIsHeld = false;
             item.pickupIsAttached = false;
             DropAndDetachPickupLocally(item.pickup);
