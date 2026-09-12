@@ -603,8 +603,6 @@ namespace JanSharp
                 return;
             }
 
-            entitySystem.WriteEntityExtensionDataRef(itemData);
-
             CustomPickup pickup = item.pickup;
             VRCPlayerApi.TrackingDataType trackingDataType = pickup.primaryHeldTrackingType;
             HumanBodyBones bone = TrackingTypeToBone(trackingDataType);
@@ -623,27 +621,35 @@ namespace JanSharp
                         anchorOffsetVector, anchorOffsetRotation,
                         out anchorOffsetVector, out anchorOffsetRotation);
 
+                // This comes either before or after the changeOffsetIA, depending on if it may being or stop
+                // syncing player tracking data, which sends its own input action.
+                if (!boneExists)
+                    item.SetAttachedBoneExists( // Latency hiding.
+                        boneExists,
+                        attachedOffsetVector,
+                        attachedOffsetRotation,
+                        anchorOffsetVector,
+                        anchorOffsetRotation);
+
+                entitySystem.WriteEntityExtensionDataRef(itemData);
                 lockstep.WriteFlags(true, boneExists); // isHeldSpecifically, boneExists
                 WriteOffsets(
                     attachedOffsetVector,
                     attachedOffsetRotation,
                     anchorOffsetVector,
                     anchorOffsetRotation);
+                itemData.entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(changeOffsetIAId));
 
-                // Latency hiding.
-                item.SetAttachedBoneExists(
-                    boneExists,
-                    attachedOffsetVector,
-                    attachedOffsetRotation,
-                    anchorOffsetVector,
-                    anchorOffsetRotation);
+                if (boneExists)
+                    item.SetAttachedBoneExists( // Latency hiding.
+                        boneExists,
+                        attachedOffsetVector,
+                        attachedOffsetRotation,
+                        anchorOffsetVector,
+                        anchorOffsetRotation);
             }
             else
             {
-                lockstep.WriteFlags(false, true); // isHeldSpecifically, boneExists
-                lockstep.WriteVector3(pickup.attachedOffsetVector);
-                lockstep.WriteQuaternion(pickup.attachedOffsetRotation);
-
                 // Latency hiding.
                 item.SetAttachedBoneExists(
                     boneExists: true,
@@ -651,9 +657,13 @@ namespace JanSharp
                     attachedOffsetRotation,
                     playerToAnchorOffsetVector: Vector3.zero,
                     playerToAnchorOffsetRotation: Quaternion.identity);
-            }
 
-            itemData.entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(changeOffsetIAId));
+                entitySystem.WriteEntityExtensionDataRef(itemData);
+                lockstep.WriteFlags(false, true); // isHeldSpecifically, boneExists
+                lockstep.WriteVector3(pickup.attachedOffsetVector);
+                lockstep.WriteQuaternion(pickup.attachedOffsetRotation);
+                itemData.entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(changeOffsetIAId));
+            }
         }
 
         [HideInInspector][SerializeField] private uint changeOffsetIAId;
