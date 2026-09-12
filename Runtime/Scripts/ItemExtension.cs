@@ -63,6 +63,7 @@ namespace JanSharp
 
         [System.NonSerialized] public bool isHeldSpecifically;
         [System.NonSerialized] public uint attachedToPlayerId;
+        [System.NonSerialized] public PlayerTrackingDataSync attachedTrackingDataSync;
         /// <summary>
         /// <para>Explicit default of <see cref="HumanBodyBones.Head"/>, since we do not control
         /// <see cref="HumanBodyBones"/> values.</para>
@@ -193,6 +194,7 @@ namespace JanSharp
 
             this.isHeldSpecifically = isHeldSpecifically;
             attachedToPlayerId = playerId;
+            attachedTrackingDataSync = playerDataManager.GetPlayerDataForPlayerId<PlayerTrackingDataSync>(nameof(PlayerTrackingDataSync), playerId);
             itemSystem.SetAttachedToBone(this, bone);
             attachedBoneExists = boneExists;
             this.attachedOffsetVector = attachedOffsetVector;
@@ -231,6 +233,7 @@ namespace JanSharp
 
             isHeldSpecifically = false;
             attachedToPlayerId = 0u;
+            attachedTrackingDataSync = null;
             attachedToBone = HumanBodyBones.Head; // isTrackingDataSyncActive is false here, no need to call SetAttachedToBone.
             attachedBoneExists = false;
             attachedOffsetVector = Vector3.zero;
@@ -452,10 +455,9 @@ namespace JanSharp
                 }
                 else
                 {
-                    PlayerTrackingDataSync player = playerDataManager.GetPlayerDataForPlayerId<PlayerTrackingDataSync>(nameof(PlayerTrackingDataSync), attachedToPlayerId);
-                    player.GetCurrentPosition(attachedToBone);
-                    Quaternion resultRotation = player.resultRotation;
-                    state.primaryHandPosition = player.resultPosition + resultRotation * playerToAnchorOffsetVector;
+                    attachedTrackingDataSync.GetCurrentPosition(attachedToBone);
+                    Quaternion resultRotation = attachedTrackingDataSync.resultRotation;
+                    state.primaryHandPosition = attachedTrackingDataSync.resultPosition + resultRotation * playerToAnchorOffsetVector;
                     state.primaryHandRotation = resultRotation * playerToAnchorOffsetRotation;
                 }
                 pickup.GetPickupController().MovePickup(state);
