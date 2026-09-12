@@ -35,3 +35,5 @@
 - [x] improve velocity transfer upon dropping/throwing an item. Weight it more towards the most recent movement
 - [ ] attached item offsets after import are very off
 - [ ] handle primary and secondary held states of pickups
+  - [x] handle primary
+  - [ ] handle secondary
