@@ -189,7 +189,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 5996023}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 28
+  internalClassIndex: 29
   lockstep: {fileID: 1424185750}
   permissionManager: {fileID: 0}
 --- !u!4 &5996025
@@ -685,7 +685,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 63057833}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 35
+  internalClassIndex: 36
   lockstep: {fileID: 1424185750}
 --- !u!4 &63057832
 Transform:
@@ -876,7 +876,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 68434771}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 30
+  internalClassIndex: 31
   lockstep: {fileID: 1424185750}
   menuSettingsManager: {fileID: 0}
 --- !u!4 &68434773
@@ -941,7 +941,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 118856140}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 46
+  internalClassIndex: 47
   lockstep: {fileID: 1424185750}
 --- !u!4 &118856139
 Transform:
@@ -3419,7 +3419,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 177830161}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 53
+  internalClassIndex: 54
   lockstep: {fileID: 1424185750}
   voiceRangeManager: {fileID: 0}
 --- !u!4 &177830163
@@ -3853,7 +3853,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 191641170}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 27
+  internalClassIndex: 28
   lockstep: {fileID: 1424185750}
 --- !u!4 &191641172
 Transform:
@@ -4197,7 +4197,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 276815340}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 50
+  internalClassIndex: 51
 --- !u!4 &276815339
 Transform:
   m_ObjectHideFlags: 0
@@ -5948,12 +5948,12 @@ PrefabInstance:
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.size
-      value: 54
+      value: 55
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.size
-      value: 54
+      value: 55
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
@@ -6088,141 +6088,146 @@ PrefabInstance:
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[26]
-      value: PermissionGroup
+      value: ObjectEntityExtensionData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[27]
-      value: PermissionImportExportOptions
+      value: PermissionGroup
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[28]
-      value: PermissionsPlayerData
+      value: PermissionImportExportOptions
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[29]
-      value: PerPlayerCustomLocationData
+      value: PermissionsPlayerData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[30]
-      value: PerPlayerMenuSettings
+      value: PerPlayerCustomLocationData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[31]
-      value: PerPlayerSelectionData
+      value: PerPlayerMenuSettings
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[32]
-      value: PhysicsEntityExtensionData
+      value: PerPlayerSelectionData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[33]
-      value: PlayerDataExportOptions
+      value: PhysicsEntityExtensionData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[34]
-      value: PlayerDataImportOptions
+      value: PlayerDataExportOptions
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[35]
-      value: PlayerHealthAndExpData
+      value: PlayerDataImportOptions
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[36]
-      value: PlayersBackendImportExportOptions
+      value: PlayerHealthAndExpData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[37]
-      value: PlayerSelectionGroup
+      value: PlayersBackendImportExportOptions
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[38]
-      value: PlayerSummonIndicatorGroup
+      value: PlayerSelectionGroup
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[39]
-      value: PlayerTrackingDataSync
+      value: PlayerSummonIndicatorGroup
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[40]
-      value: RNG
+      value: PlayerTrackingDataSync
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[41]
-      value: RPPlayerData
+      value: RNG
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[42]
-      value: SerializableRNG
+      value: RPPlayerData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[43]
-      value: SliderFieldWidgetData
+      value: SerializableRNG
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[44]
-      value: SpaceWidgetData
+      value: SliderFieldWidgetData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[45]
-      value: StringFieldWidgetData
+      value: SpaceWidgetData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[46]
-      value: TestGSExportOptions
+      value: StringFieldWidgetData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[47]
-      value: TestGSImportOptions
+      value: TestGSExportOptions
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[48]
-      value: TestWannaBeClass
+      value: TestGSImportOptions
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[49]
-      value: ToggleFieldWidgetData
+      value: TestWannaBeClass
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[50]
-      value: Vector2FieldWidgetData
+      value: ToggleFieldWidgetData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[51]
-      value: Vector3FieldWidgetData
+      value: Vector2FieldWidgetData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[52]
-      value: VoiceRangeImportExportOptions
+      value: Vector3FieldWidgetData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassNames.Array.data[53]
+      value: VoiceRangeImportExportOptions
+      objectReference: {fileID: 0}
+    - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
+        type: 3}
+      propertyPath: wannaBeClassNames.Array.data[54]
       value: VoiceRangePlayerData
       objectReference: {fileID: 0}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
@@ -6359,140 +6364,145 @@ PrefabInstance:
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[26]
       value: 
-      objectReference: {fileID: 780620485}
+      objectReference: {fileID: 1314435256}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[27]
       value: 
-      objectReference: {fileID: 191641169}
+      objectReference: {fileID: 780620485}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[28]
       value: 
-      objectReference: {fileID: 5996022}
+      objectReference: {fileID: 191641169}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[29]
       value: 
-      objectReference: {fileID: 1312500133}
+      objectReference: {fileID: 5996022}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[30]
       value: 
-      objectReference: {fileID: 68434770}
+      objectReference: {fileID: 1312500133}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[31]
       value: 
-      objectReference: {fileID: 1044823883}
+      objectReference: {fileID: 68434770}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[32]
       value: 
-      objectReference: {fileID: 841480893}
+      objectReference: {fileID: 1044823883}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[33]
       value: 
-      objectReference: {fileID: 1089592311}
+      objectReference: {fileID: 841480893}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[34]
       value: 
-      objectReference: {fileID: 1075247360}
+      objectReference: {fileID: 1089592311}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[35]
       value: 
-      objectReference: {fileID: 63057830}
+      objectReference: {fileID: 1075247360}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[36]
       value: 
-      objectReference: {fileID: 635303698}
+      objectReference: {fileID: 63057830}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[37]
       value: 
-      objectReference: {fileID: 926001962}
+      objectReference: {fileID: 635303698}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[38]
       value: 
-      objectReference: {fileID: 1990266135}
+      objectReference: {fileID: 926001962}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[39]
       value: 
-      objectReference: {fileID: 1733795067}
+      objectReference: {fileID: 1990266135}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[40]
       value: 
-      objectReference: {fileID: 1748947342}
+      objectReference: {fileID: 1733795067}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[41]
       value: 
-      objectReference: {fileID: 1694501167}
+      objectReference: {fileID: 1748947342}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[42]
       value: 
-      objectReference: {fileID: 1141487904}
+      objectReference: {fileID: 1694501167}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[43]
       value: 
-      objectReference: {fileID: 682766504}
+      objectReference: {fileID: 1141487904}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[44]
       value: 
-      objectReference: {fileID: 492836317}
+      objectReference: {fileID: 682766504}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[45]
       value: 
-      objectReference: {fileID: 1091029481}
+      objectReference: {fileID: 492836317}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[46]
       value: 
-      objectReference: {fileID: 118856137}
+      objectReference: {fileID: 1091029481}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[47]
       value: 
-      objectReference: {fileID: 1768653208}
+      objectReference: {fileID: 118856137}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[48]
       value: 
-      objectReference: {fileID: 1568679787}
+      objectReference: {fileID: 1768653208}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[49]
       value: 
-      objectReference: {fileID: 1937159238}
+      objectReference: {fileID: 1568679787}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[50]
       value: 
-      objectReference: {fileID: 276815337}
+      objectReference: {fileID: 1937159238}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[51]
       value: 
-      objectReference: {fileID: 1200515617}
+      objectReference: {fileID: 276815337}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[52]
       value: 
-      objectReference: {fileID: 2111693930}
+      objectReference: {fileID: 1200515617}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       propertyPath: wannaBeClassPrefabs.Array.data[53]
+      value: 
+      objectReference: {fileID: 2111693930}
+    - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
+        type: 3}
+      propertyPath: wannaBeClassPrefabs.Array.data[54]
       value: 
       objectReference: {fileID: 177830160}
     - target: {fileID: 851919131184770022, guid: 4fde516c38225afdf98eec7b044ed853,
@@ -6737,6 +6747,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 971382964}
+    - targetCorrespondingSourceObject: {fileID: 7183135066431669336, guid: 4fde516c38225afdf98eec7b044ed853,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1314435259}
     - targetCorrespondingSourceObject: {fileID: 7183135066431669336, guid: 4fde516c38225afdf98eec7b044ed853,
         type: 3}
       insertIndex: -1
@@ -6992,7 +7006,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 492836320}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 44
+  internalClassIndex: 45
 --- !u!4 &492836319
 Transform:
   m_ObjectHideFlags: 0
@@ -7509,7 +7523,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 635303699}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 36
+  internalClassIndex: 37
   lockstep: {fileID: 1424185750}
 --- !u!4 &635303701
 Transform:
@@ -7573,7 +7587,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 682766507}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 43
+  internalClassIndex: 44
 --- !u!4 &682766506
 Transform:
   m_ObjectHideFlags: 0
@@ -7784,7 +7798,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 780620486}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 26
+  internalClassIndex: 27
 --- !u!4 &780620488
 Transform:
   m_ObjectHideFlags: 0
@@ -8194,7 +8208,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 841480896}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 32
+  internalClassIndex: 33
   lockstep: {fileID: 1424185750}
   entitySystem: {fileID: 1621898358}
   manager: {fileID: 343222088}
@@ -8331,6 +8345,7 @@ MonoBehaviour:
   prototypeDefinitionGuid: 0d1483cf4935deae8b815c9ff069ddfa
   prototypeName: auto-hold-cube-item
   displayName: Auto Hold Cube Item
+  categoryName: 
   shortDescription: 
   longDescription: 
   defaultScale: {x: 0.2, y: 0.2, z: 0.2}
@@ -8435,7 +8450,7 @@ PrefabInstance:
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: NetworkIDs.Array.size
-      value: 151
+      value: 152
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -9205,7 +9220,7 @@ PrefabInstance:
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: NetworkIDs.Array.data[151].ID
-      value: 162
+      value: 161
       objectReference: {fileID: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
@@ -10396,7 +10411,7 @@ PrefabInstance:
         type: 3}
       propertyPath: NetworkIDs.Array.data[151].gameObject
       value: 
-      objectReference: {fileID: 1733795067}
+      objectReference: {fileID: 1314435256}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: NetworkIDs.Array.data[152].gameObject
@@ -12692,7 +12707,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 926001963}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 37
+  internalClassIndex: 38
   lockstep: {fileID: 1424185750}
   playerDataManager: {fileID: 181149562}
 --- !u!4 &926001965
@@ -13387,7 +13402,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1044823884}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 31
+  internalClassIndex: 32
   lockstep: {fileID: 1424185750}
   selectionManager: {fileID: 0}
 --- !u!4 &1044823886
@@ -13669,7 +13684,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1075247361}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 34
+  internalClassIndex: 35
   lockstep: {fileID: 1424185750}
 --- !u!4 &1075247363
 Transform:
@@ -13758,7 +13773,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1089592312}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 33
+  internalClassIndex: 34
   lockstep: {fileID: 1424185750}
 --- !u!4 &1089592314
 Transform:
@@ -13816,7 +13831,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1091029484}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 45
+  internalClassIndex: 46
 --- !u!4 &1091029483
 Transform:
   m_ObjectHideFlags: 0
@@ -14093,7 +14108,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1141487905}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 42
+  internalClassIndex: 43
   lockstep: {fileID: 1424185750}
 --- !u!4 &1141487907
 Transform:
@@ -14337,7 +14352,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1200515620}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 51
+  internalClassIndex: 52
 --- !u!4 &1200515619
 Transform:
   m_ObjectHideFlags: 0
@@ -14712,7 +14727,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1312500134}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 29
+  internalClassIndex: 30
   lockstep: {fileID: 1424185750}
   customLocationManager: {fileID: 0}
 --- !u!4 &1312500136
@@ -14722,6 +14737,90 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1312500133}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 476336293}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1314435256
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1314435259}
+  - component: {fileID: 1314435258}
+  - component: {fileID: 1314435257}
+  m_Layer: 0
+  m_Name: ObjectEntityExtensionData
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1314435257
+MonoBehaviour:
+  m_ObjectHideFlags: 2
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1314435256}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45115577ef41a5b4ca741ed302693907, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  interactTextPlacement: {fileID: 0}
+  interactText: Use
+  interactTextGO: {fileID: 0}
+  proximity: 2
+  SynchronizePosition: 0
+  AllowCollisionOwnershipTransfer: 0
+  Reliable: 0
+  _syncMethod: 1
+  serializedProgramAsset: {fileID: 0}
+  programSource: {fileID: 11400000, guid: d6c950a2731fbbd2e9487614e1924aa6, type: 2}
+  serializedPublicVariablesBytesString: Ai8AAAAAATIAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAFQAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AAAAAAAYBAAAAAAAAACcBBAAAAHQAeQBwAGUAAWgAAABTAHkAcwB0AGUAbQAuAEMAbwBsAGwAZQBjAHQAaQBvAG4AcwAuAEcAZQBuAGUAcgBpAGMALgBMAGkAcwB0AGAAMQBbAFsAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4ALgBJAG4AdABlAHIAZgBhAGMAZQBzAC4ASQBVAGQAbwBuAFYAYQByAGkAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AXQBdACwAIABtAHMAYwBvAHIAbABpAGIAAQEJAAAAVgBhAHIAaQBhAGIAbABlAHMALwEAAAABaAAAAFMAeQBzAHQAZQBtAC4AQwBvAGwAbABlAGMAdABpAG8AbgBzAC4ARwBlAG4AZQByAGkAYwAuAEwAaQBzAHQAYAAxAFsAWwBWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAEkAbgB0AGUAcgBmAGEAYwBlAHMALgBJAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlACwAIABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgBdAF0ALAAgAG0AcwBjAG8AcgBsAGkAYgABAAAABgEAAAAAAAAAAi8CAAAAAUkAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAGAAMQBbAFsAUwB5AHMAdABlAG0ALgBJAG4AdAAzADIALAAgAG0AcwBjAG8AcgBsAGkAYgBdAF0ALAAgAFYAUgBDAC4AVQBkAG8AbgAuAEMAbwBtAG0AbwBuAAIAAAAGAgAAAAAAAAAnAQQAAAB0AHkAcABlAAEXAAAAUwB5AHMAdABlAG0ALgBTAHQAcgBpAG4AZwAsACAAbQBzAGMAbwByAGwAaQBiACcBCgAAAFMAeQBtAGIAbwBsAE4AYQBtAGUAAR8AAABfAF8AXwBVAGQAbwBuAFMAaABhAHIAcABCAGUAaABhAHYAaQBvAHUAcgBWAGUAcgBzAGkAbwBuAF8AXwBfACcBBAAAAHQAeQBwAGUAARYAAABTAHkAcwB0AGUAbQAuAEkAbgB0ADMAMgAsACAAbQBzAGMAbwByAGwAaQBiABcBBQAAAFYAYQBsAHUAZQACAAAABwUHBQcF
+  publicVariablesUnityEngineObjects: []
+  publicVariablesSerializationDataFormat: 0
+--- !u!114 &1314435258
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1314435256}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09b137a4b4079a12fab8cca70219e443, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  _udonSharpBackingUdonBehaviour: {fileID: 1314435257}
+  wannaBeClasses: {fileID: 476336292}
+  internalClassIndex: 26
+  lockstep: {fileID: 1424185750}
+  entitySystem: {fileID: 1621898358}
+--- !u!4 &1314435259
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1314435256}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -15275,6 +15374,7 @@ MonoBehaviour:
   prototypeDefinitionGuid: 6146253eae290567db7241bf1064a193
   prototypeName: cube-item
   displayName: Cube Item
+  categoryName: 
   shortDescription: 
   longDescription: 
   defaultScale: {x: 0.2, y: 0.2, z: 0.2}
@@ -16607,6 +16707,7 @@ MonoBehaviour:
   prototypeDefinitionGuid: c4b3d72de54c4e69897b36b6ef7b699e
   prototypeName: throwable-item
   displayName: Throwable Item
+  categoryName: 
   shortDescription: 
   longDescription: 
   defaultScale: {x: 0.2, y: 0.2, z: 0.2}
@@ -17261,7 +17362,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1568679790}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 48
+  internalClassIndex: 49
 --- !u!4 &1568679789
 Transform:
   m_ObjectHideFlags: 0
@@ -19396,13 +19497,13 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1694501168}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 41
+  internalClassIndex: 42
   lockstep: {fileID: 1424185750}
   playersBackendManager: {fileID: 0}
   playerDataManager: {fileID: 181149562}
   playersFavoritesManager: {fileID: 0}
   itemsFavoritesManager: {fileID: 0}
-  entitySystem: {fileID: 1621898358}
+  objectsFavoritesManager: {fileID: 0}
 --- !u!4 &1694501170
 Transform:
   m_ObjectHideFlags: 0
@@ -19920,7 +20021,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1733795068}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 39
+  internalClassIndex: 40
   lockstep: {fileID: 1424185750}
   manager: {fileID: 1539895806}
 --- !u!4 &1733795070
@@ -20004,7 +20105,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1748947343}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 40
+  internalClassIndex: 41
 --- !u!4 &1748947345
 Transform:
   m_ObjectHideFlags: 0
@@ -20243,7 +20344,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1768653211}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 47
+  internalClassIndex: 48
   lockstep: {fileID: 1424185750}
 --- !u!4 &1768653210
 Transform:
@@ -20771,7 +20872,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1937159241}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 49
+  internalClassIndex: 50
 --- !u!4 &1937159240
 Transform:
   m_ObjectHideFlags: 0
@@ -21300,7 +21401,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1990266136}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 38
+  internalClassIndex: 39
   summonManager: {fileID: 0}
 --- !u!4 &1990266138
 Transform:
@@ -22490,7 +22591,7 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 2111693931}
   wannaBeClasses: {fileID: 476336292}
-  internalClassIndex: 52
+  internalClassIndex: 53
   lockstep: {fileID: 1424185750}
 --- !u!4 &2111693933
 Transform:

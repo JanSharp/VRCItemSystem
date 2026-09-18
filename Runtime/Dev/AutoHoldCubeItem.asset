@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prototypeName: auto-hold-cube-item
   displayName: Auto Hold Cube Item
+  categoryName: 
   shortDescription: 
   longDescription: 
   entityPrefab: {fileID: 3150564698386271653, guid: cfe6eba0c60fb1b9b8e8dd97d4eb104a,

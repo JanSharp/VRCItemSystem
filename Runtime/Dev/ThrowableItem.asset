@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prototypeName: throwable-item
   displayName: Throwable Item
+  categoryName: 
   shortDescription: 
   longDescription: 
   entityPrefab: {fileID: 2058130058989192168, guid: 0918a6b991e971d279290a41ce383edb,
