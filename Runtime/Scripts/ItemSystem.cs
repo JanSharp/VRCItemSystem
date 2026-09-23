@@ -6,7 +6,7 @@ namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     [SingletonScript("8ed95ab9b64568256959aa53ac3bbfe0")] // Runtime/Prefabs/ItemSystem.prefab
-    [LockstepGameStateDependency(typeof(EntitySystem))]
+    [LockstepGameStateDependency(typeof(EntitySystemAPI))]
     public class ItemSystem : LockstepGameState
     {
         public override string GameStateInternalName => "jansharp.item-system";
@@ -17,7 +17,7 @@ namespace JanSharp
         public override LockstepGameStateOptionsUI ExportUI => null;
         public override LockstepGameStateOptionsUI ImportUI => null;
 
-        [HideInInspector][SerializeField][SingletonReference] private EntitySystem entitySystem;
+        [HideInInspector][SerializeField][SingletonReference] private EntitySystemAPI entitySystem;
         [HideInInspector][SerializeField][SingletonReference] private PlayerDataManagerAPI playerDataManager;
         [HideInInspector][SerializeField][SingletonReference] private ItemTransformController transformController;
         [HideInInspector][SerializeField][SingletonReference] private CustomInteractablesManagerAPI interactables;

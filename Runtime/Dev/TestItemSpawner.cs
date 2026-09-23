@@ -1,14 +1,12 @@
 ﻿using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
-using VRC.Udon;
 
 namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class TestItemSpawner : UdonSharpBehaviour
     {
-        [HideInInspector][SerializeField][SingletonReference] EntitySystem entitySystem;
+        [HideInInspector][SerializeField][SingletonReference] private EntitySystemAPI entitySystem;
         public EntityPrototype prototype;
         public Transform spawnLocation;
 
