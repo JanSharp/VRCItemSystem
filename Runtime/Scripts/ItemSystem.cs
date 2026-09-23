@@ -914,6 +914,33 @@ namespace JanSharp
             attachedItems[attachedItemsCount] = null; // Make GC happy.
         }
 
+        public void WriteAttachedPlayer(ItemExtensionData itemData, bool isExport)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemSystem  WriteAttachedPlayer");
+#endif
+            if (!isExport)
+            {
+                lockstep.WriteSmallUInt(itemData.attachedToPlayerId);
+                return;
+            }
+            playerDataManager.WriteCorePlayerDataRef(playerDataManager.GetCorePlayerDataForPlayerId(itemData.attachedToPlayerId));
+        }
+
+        public void ReadAttachedPlayer(ItemExtensionData itemData, bool isImport)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemSystem  ReadAttachedPlayer");
+#endif
+            if (!isImport)
+            {
+                itemData.attachedToPlayerId = lockstep.ReadSmallUInt();
+                return;
+            }
+            CorePlayerData playerData = playerDataManager.ReadCorePlayerDataRef(isImport: true);
+            itemData.attachedToPlayerId = playerData == null || playerData.isOffline ? 0u : playerData.playerId;
+        }
+
         public override void SerializeGameState(bool isExport, LockstepGameStateOptionsData exportOptions)
         {
 #if ITEM_SYSTEM_DEBUG

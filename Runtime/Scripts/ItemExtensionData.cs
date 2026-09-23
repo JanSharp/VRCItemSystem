@@ -8,6 +8,7 @@ namespace JanSharp
     {
         [HideInInspector][SingletonReference] public ItemTransformController transformController;
         [HideInInspector][SingletonReference] public PlayerDataManagerAPI playerDataManager;
+        [HideInInspector][SingletonReference] public ItemSystem itemSystem;
 
         public override bool SupportsImportExport => true;
         public override uint DataVersion => 0u;
@@ -127,35 +128,6 @@ namespace JanSharp
             playerToAnchorOffsetRotation = Quaternion.identity;
         }
 
-        // TODO: These write and read functions can be moved out of this file to make it instantiate faster.
-
-        private void WriteAttachedPlayer(bool isExport)
-        {
-#if ITEM_SYSTEM_DEBUG
-            Debug.Log($"[ItemSystemDebug] ItemExtensionData  WriteAttachedPlayer");
-#endif
-            if (!isExport)
-            {
-                lockstep.WriteSmallUInt(attachedToPlayerId);
-                return;
-            }
-            playerDataManager.WriteCorePlayerDataRef(playerDataManager.GetCorePlayerDataForPlayerId(attachedToPlayerId));
-        }
-
-        private void ReadAttachedPlayer(bool isImport)
-        {
-#if ITEM_SYSTEM_DEBUG
-            Debug.Log($"[ItemSystemDebug] ItemExtensionData  ReadAttachedPlayer");
-#endif
-            if (!isImport)
-            {
-                attachedToPlayerId = lockstep.ReadSmallUInt();
-                return;
-            }
-            CorePlayerData playerData = playerDataManager.ReadCorePlayerDataRef(isImport: true);
-            attachedToPlayerId = playerData == null || playerData.isOffline ? 0u : playerData.playerId;
-        }
-
         public override void Serialize(bool isExport)
         {
 #if ITEM_SYSTEM_DEBUG
@@ -166,7 +138,7 @@ namespace JanSharp
             if (!isAttached)
                 return;
 
-            WriteAttachedPlayer(isExport);
+            itemSystem.WriteAttachedPlayer(this, isExport);
             lockstep.WriteSmallInt((int)attachedToBone);
             lockstep.WriteVector3(attachedOffsetVector);
             lockstep.WriteQuaternion(attachedOffsetRotation);
@@ -190,7 +162,7 @@ namespace JanSharp
                 return;
             }
 
-            ReadAttachedPlayer(isImport);
+            itemSystem.ReadAttachedPlayer(this, isImport);
             attachedToBone = (HumanBodyBones)lockstep.ReadSmallInt();
             attachedOffsetVector = lockstep.ReadVector3();
             attachedOffsetRotation = lockstep.ReadQuaternion();
