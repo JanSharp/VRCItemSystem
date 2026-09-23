@@ -18,6 +18,7 @@ namespace JanSharp
         public override LockstepGameStateOptionsUI ImportUI => null;
 
         [HideInInspector][SerializeField][SingletonReference] private EntitySystem entitySystem;
+        [HideInInspector][SerializeField][SingletonReference] private PlayerDataManagerAPI playerDataManager;
         [HideInInspector][SerializeField][SingletonReference] private ItemTransformController transformController;
         [HideInInspector][SerializeField][SingletonReference] private CustomInteractablesManagerAPI interactables;
         [HideInInspector][SerializeField][SingletonReference] private InterpolationManager interpolation;
@@ -486,6 +487,8 @@ namespace JanSharp
                 return;
             }
 
+            entityData.LastUserPlayerData = entitySystem.GetPlayerData(playerDataManager.SendingPlayerData);
+
             entityData.ReadPotentiallyUnknownTransformValues();
             AddToAttachedItems(itemData);
             itemData.isHeldSpecifically = true;
@@ -571,6 +574,8 @@ namespace JanSharp
                 entityData.ResetLatencyStateBecauseIAGotAppliedDifferently();
                 return;
             }
+
+            entityData.LastUserPlayerData = entitySystem.GetPlayerData(playerDataManager.SendingPlayerData);
 
             entityData.ReadPotentiallyUnknownTransformValues();
             AddToAttachedItems(itemData);
@@ -694,6 +699,8 @@ namespace JanSharp
                 return; // If attached id is 0u this'll also return, which works out nicely.
             }
 
+            entityData.LastUserPlayerData = entitySystem.GetPlayerData(playerDataManager.SendingPlayerData);
+
             lockstep.ReadFlags(out bool isHeldSpecifically, out bool boneExists);
             itemData.attachedBoneExists = boneExists;
 
@@ -775,6 +782,9 @@ namespace JanSharp
                 itemData.entityData.MarkLatencyHiddenUniqueIdAsProcessed();
                 return; // If attached id is 0u this'll also return, which works out nicely.
             }
+
+            itemData.entityData.LastUserPlayerData = entitySystem.GetPlayerData(playerDataManager.SendingPlayerData);
+
             Drop(itemData, readPositionAndRotation: true, mightHaveBeenLatencyHidden: true, mightHaveVelocity: true);
         }
 
