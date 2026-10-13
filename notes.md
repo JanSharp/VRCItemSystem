@@ -34,6 +34,7 @@
   - [ ] requires more testing
 - [x] improve velocity transfer upon dropping/throwing an item. Weight it more towards the most recent movement
 - [ ] attached item offsets after import are very off
-- [ ] handle primary and secondary held states of pickups
+- [x] handle primary and secondary held states of pickups
   - [x] handle primary
-  - [ ] handle secondary
+  - [x] handle secondary
+- [ ] handle any offset changes be it due to changing avatars or other scripts changing the offsets of a pickup relative to primary, secondary or an attached bone are not handled anymore in this first version of the refactor

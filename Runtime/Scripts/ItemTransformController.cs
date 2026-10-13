@@ -8,6 +8,8 @@ namespace JanSharp
     public class ItemTransformController : EntityTransformController
     {
         [HideInInspector][SingletonReference] public ItemSystem itemSystem;
+        [HideInInspector][SingletonReference] public ItemExtensionLogic itemLogic;
+        [HideInInspector][SingletonReference] public ItemSystemForceDroppingLogic forceDroppingLogic;
 
         public override void OnControlLost(EntityData entityData)
         {
@@ -15,7 +17,7 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemTransformController  OnControlLost");
 #endif
             ItemExtensionData itemData = entityData.GetExtensionData<ItemExtensionData>(nameof(ItemExtensionData));
-            itemSystem.UpdateDroppedItem(itemData);
+            forceDroppingLogic.UpdateForceDroppedItemInGS(itemData);
         }
 
         public override void OnControlTakenOver(EntityData entityData, EntityTransformController newController)
@@ -32,7 +34,7 @@ namespace JanSharp
             Debug.Log($"[ItemSystemDebug] ItemTransformController  OnLatencyControlLost");
 #endif
             ItemExtension item = entity.GetExtension<ItemExtension>(nameof(ItemExtensionData));
-            item.DetachFromPlayer();
+            itemLogic.DetachFromPlayer(item, moveToGameState: false, doInterpolate: false);
         }
 
         public override void OnLatencyControlTakenOver(Entity entity, EntityTransformController newController)
