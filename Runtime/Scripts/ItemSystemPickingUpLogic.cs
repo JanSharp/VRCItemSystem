@@ -76,7 +76,8 @@ namespace JanSharp
             CustomPickup pickup = item.pickup;
             if ((isPrimary ? !pickup.isHeldByPrimaryHand : !pickup.isHeldBySecondaryHand) || !pickup.controllingPlayerIsLocal)
             {
-                Debug.LogError("[ItemSystem] Attempt to send a pickup IA for an item which is not held by the local player.");
+                Debug.LogError($"[ItemSystem] Attempt to {nameof(SendPickupIA)} "
+                    + $"for an item which is not held by the local player.");
                 return false;
             }
             return true;

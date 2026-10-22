@@ -21,6 +21,8 @@ namespace JanSharp
         [HideInInspector][SerializeField][SingletonReference] private PlayerDataManagerAPI playerDataManager;
         [HideInInspector][SerializeField][SingletonReference] private ItemSystemForceDroppingLogic forceDroppingLogic;
         [HideInInspector][SerializeField][SingletonReference] private InterpolationManager interpolation;
+        [HideInInspector][SerializeField][SingletonReference] private CustomInteractablesManagerAPI interactables;
+        [HideInInspector][SerializeField][SingletonReference] private ItemSystemHandOffsetsLogic handOffsetsLogic;
 
         public CustomPickupState stateForPickupController;
         public CustomPickupAttachedState stateForAttachedPickupController;
@@ -28,26 +30,20 @@ namespace JanSharp
         private ItemExtensionData[] attachedItems = new ItemExtensionData[ArrList.MinCapacity];
         private int attachedItemsCount = 0;
 
-#if false
         private VRCPlayerApi localPlayer;
-        private uint localPlayerId;
         private bool isInVR;
-#endif
 
         public const float VelocityThreshold = 0.3f;
         public const float AngularVelocityDegreesThreshold = 30f;
 
-#if false
         private void Start()
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  Start");
 #endif
             localPlayer = Networking.LocalPlayer;
-            localPlayerId = (uint)localPlayer.playerId;
             isInVR = localPlayer.IsUserInVR();
         }
-#endif
 
         [LockstepEvent(LockstepEventType.OnClientLeft)]
         public void OnClientLeft()
@@ -65,7 +61,6 @@ namespace JanSharp
             }
         }
 
-#if false
         public override void OnAvatarChanged(VRCPlayerApi player)
         {
 #if ITEM_SYSTEM_DEBUG
@@ -89,8 +84,11 @@ namespace JanSharp
                 UpdateHeldItemDueToAvatarChange(interactables.HeldOnDesktop);
             else
             {
-                UpdateHeldItemDueToAvatarChange(interactables.HeldInLeftHand);
-                UpdateHeldItemDueToAvatarChange(interactables.HeldInRightHand);
+                CustomPickup heldInLeftHand = interactables.HeldInLeftHand;
+                CustomPickup heldInRightHand = interactables.HeldInRightHand;
+                UpdateHeldItemDueToAvatarChange(heldInLeftHand);
+                if (heldInRightHand != heldInLeftHand)
+                    UpdateHeldItemDueToAvatarChange(heldInRightHand);
             }
             // Cannot do anything for the attached items, they might move around but so be it. We don't have a
             // tracking data reference point for those, while for held items we do.
@@ -106,11 +104,12 @@ namespace JanSharp
             ItemExtension item = pickup.GetComponent<ItemExtension>();
             if (item == null)
                 return;
-            SendChangeOffsetIA(item.data);
-        }
 
-        private bool LocalPlayerHasBone(HumanBodyBones bone) => localPlayer.GetBonePosition(bone) != Vector3.zero;
-#endif
+            if (pickup.isHeldByPrimaryHand)
+                handOffsetsLogic.SendHandOffsetsChangedIA(item.data, isPrimary: true);
+            if (pickup.isHeldBySecondaryHand)
+                handOffsetsLogic.SendHandOffsetsChangedIA(item.data, isPrimary: false);
+        }
 
         public void DropAndDetachPickupLocallyAndRemotely(CustomPickup pickup)
         {
@@ -182,128 +181,6 @@ namespace JanSharp
                 physicsEntity.GoToSleep(t.position, t.rotation);
             }
         }
-
-#if false
-        private void SendChangeOffsetIA(ItemExtensionData itemData)
-        {
-#if ITEM_SYSTEM_DEBUG
-            Debug.Log($"[ItemSystemDebug] ItemSystem  SendChangeOffsetIA");
-#endif
-            if (!lockstep.IsInitialized)
-                return;
-            ItemExtension item = itemData.ext;
-            if (item == null)
-            {
-                Debug.LogError($"[ItemSystem] Attempt to use SendChangeOffsetIA on an ItemExtensionData "
-                    + $"which currently does not have an ItemExtension associated with it. "
-                    + $"It cannot determine without that.");
-                return;
-            }
-
-            CustomPickup pickup = item.pickup;
-            VRCPlayerApi.TrackingDataType trackingDataType = pickup.primaryHeldTrackingType;
-            HumanBodyBones bone = TrackingTypeToBone(trackingDataType);
-            Vector3 attachedOffsetVector = pickup.primaryOffsetVector;
-            Quaternion attachedOffsetRotation = pickup.primaryOffsetRotation;
-
-            if (item.isHeldSpecifically)
-            {
-                Vector3 anchorOffsetVector = interactables.GetAnchorOffsetVector(trackingDataType);
-                Quaternion anchorOffsetRotation = interactables.GetRotationNormalization(trackingDataType);
-
-                bool boneExists = LocalPlayerHasBone(bone);
-                if (boneExists)
-                    TrackingDataOffsetsToBoneOffsets(
-                        trackingDataType, bone,
-                        anchorOffsetVector, anchorOffsetRotation,
-                        out anchorOffsetVector, out anchorOffsetRotation);
-
-                // This comes either before or after the changeOffsetIA, depending on if it may being or stop
-                // syncing player tracking data, which sends its own input action.
-                if (!boneExists)
-                    item.SetAttachedBoneExists( // Latency hiding.
-                        boneExists,
-                        attachedOffsetVector,
-                        attachedOffsetRotation,
-                        anchorOffsetVector,
-                        anchorOffsetRotation);
-
-                entitySystem.WriteEntityExtensionDataRef(itemData);
-                lockstep.WriteFlags(true, boneExists); // isHeldSpecifically, boneExists
-                WriteOffsets(
-                    attachedOffsetVector,
-                    attachedOffsetRotation,
-                    anchorOffsetVector,
-                    anchorOffsetRotation);
-                itemData.entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(changeOffsetIAId));
-
-                if (boneExists)
-                    item.SetAttachedBoneExists( // Latency hiding.
-                        boneExists,
-                        attachedOffsetVector,
-                        attachedOffsetRotation,
-                        anchorOffsetVector,
-                        anchorOffsetRotation);
-            }
-            else
-            {
-                // Latency hiding.
-                item.SetAttachedBoneExists(
-                    boneExists: true,
-                    attachedOffsetVector,
-                    attachedOffsetRotation,
-                    playerToAnchorOffsetVector: Vector3.zero,
-                    playerToAnchorOffsetRotation: Quaternion.identity);
-
-                entitySystem.WriteEntityExtensionDataRef(itemData);
-                lockstep.WriteFlags(false, true); // isHeldSpecifically, boneExists
-                lockstep.WriteVector3(pickup.attachedOffsetVector);
-                lockstep.WriteQuaternion(pickup.attachedOffsetRotation);
-                itemData.entityData.RegisterLatencyHiddenUniqueId(lockstep.SendInputAction(changeOffsetIAId));
-            }
-        }
-
-        [HideInInspector][SerializeField] private uint changeOffsetIAId;
-        [LockstepInputAction(nameof(changeOffsetIAId))]
-        public void OnChangeOffsetIA()
-        {
-#if ITEM_SYSTEM_DEBUG
-            Debug.Log($"[ItemSystemDebug] ItemSystem  OnChangeOffsetIA");
-#endif
-            ItemExtensionData itemData = entitySystem.ReadEntityExtensionDataRef<ItemExtensionData>();
-            if (itemData == null)
-                return;
-            EntityData entityData = itemData.entityData;
-            if (lockstep.SendingPlayerId != itemData.attachedToPlayerId)
-            {
-                entityData.MarkLatencyHiddenUniqueIdAsProcessed();
-                return; // If attached id is 0u this'll also return, which works out nicely.
-            }
-
-            entityData.LastUserPlayerData = entitySystem.GetPlayerData(playerDataManager.SendingPlayerData);
-
-            lockstep.ReadFlags(out bool isHeldSpecifically, out bool boneExists);
-            itemData.primaryAttachedBoneExists = boneExists;
-
-            if (isHeldSpecifically)
-                ReadOffsets(itemData);
-            else
-            {
-                itemData.primaryAttachedOffsetVector = lockstep.ReadVector3();
-                itemData.primaryAttachedOffsetRotation = lockstep.ReadQuaternion();
-                itemData.primaryPlayerToAnchorOffsetVector = Vector3.zero;
-                itemData.primaryPlayerToAnchorOffsetRotation = Quaternion.identity;
-            }
-
-            if (entityData.ShouldApplyReceivedIAToLatencyState() && itemData.ext != null)
-                itemData.ext.SetAttachedBoneExists(
-                    boneExists,
-                    itemData.primaryAttachedOffsetVector,
-                    itemData.primaryAttachedOffsetRotation,
-                    itemData.primaryPlayerToAnchorOffsetVector,
-                    itemData.primaryPlayerToAnchorOffsetRotation);
-        }
-#endif
 
         public void SetAttachedToPlayerId(ItemExtensionData itemData, uint attachedToPlayerId)
         {

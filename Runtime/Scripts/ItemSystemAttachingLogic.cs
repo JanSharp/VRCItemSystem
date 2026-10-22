@@ -34,7 +34,8 @@ namespace JanSharp
                 return false; // TODO: Either detach the item, or send an attach IA once lockstep is initialized.
             if (!item.pickup.isAttached)
             {
-                Debug.LogError("[ItemSystem] Attempt to SendAttachIA for an item which is not attached to the local player.");
+                Debug.LogError($"[ItemSystem] Attempt to {nameof(SendAttachIA)} "
+                    + $"for an item which is not attached to the local player.");
                 return false;
             }
             return true;

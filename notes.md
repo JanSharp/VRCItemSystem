@@ -33,8 +33,8 @@
 - [ ] make VelocityThreshold and or AngularVelocityDegreesThreshold significantly less finicky
   - [ ] requires more testing
 - [x] improve velocity transfer upon dropping/throwing an item. Weight it more towards the most recent movement
-- [ ] attached item offsets after import are very off
+- [ ] attached item offsets after import are very off - this requires new testing, the todo is from before the primary+secondary+attached refactor
 - [x] handle primary and secondary held states of pickups
   - [x] handle primary
   - [x] handle secondary
-- [ ] handle any offset changes be it due to changing avatars or other scripts changing the offsets of a pickup relative to primary, secondary or an attached bone are not handled anymore in this first version of the refactor
+- [x] handle any offset changes be it due to changing avatars or other scripts changing the offsets of a pickup relative to primary, secondary or an attached bone are not handled anymore in this first version of the refactor

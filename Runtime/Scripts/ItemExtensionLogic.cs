@@ -15,6 +15,8 @@ namespace JanSharp
         [HideInInspector][SerializeField][SingletonReference] private ItemSystemDroppingLogic droppingLogic;
         [HideInInspector][SerializeField][SingletonReference] private ItemSystemDetachingLogic detachingLogic;
         [HideInInspector][SerializeField][SingletonReference] private ItemSystemForceDroppingLogic forceDroppingLogic;
+        [HideInInspector][SerializeField][SingletonReference] private ItemSystemHandOffsetsLogic handOffsetsLogic;
+        [HideInInspector][SerializeField][SingletonReference] private ItemSystemAttachedOffsetsLogic attachedOffsetsLogic;
         [HideInInspector][SerializeField][SingletonReference] private PlayerTrackingDataSyncManagerAPI trackingDataSync;
         [HideInInspector][SerializeField][SingletonReference] private PlayerDataManagerAPI playerDataManager;
         [HideInInspector][SerializeField][SingletonReference] private ItemTransformController transformController;
@@ -191,24 +193,18 @@ namespace JanSharp
             bool newIsHeldBySecondaryHand = controllingPlayerIsLocal && pickup.isHeldBySecondaryHand;
             bool newIsAttached = controllingPlayerIsLocal && pickup.isAttached;
 
-            // TODO: Detect offset changes and sync them too.
-
-            // if (!newIsHeldByPrimaryHand && !newIsHeldBySecondaryHand && !newIsAttached)
-            // {
-            //     if (!item.pickupIsHeldByPrimaryHand && !item.pickupIsHeldBySecondaryHand && !item.pickupIsAttached)
-            //         return;
-            //     bool forceNoVelocity = item.pickupIsAttached;
-            //     item.pickupIsHeldByPrimaryHand = false;
-            //     item.pickupIsHeldBySecondaryHand = false;
-            //     item.pickupIsAttached = false;
-            //     itemSystem.SendDropIA(item.data, forceNoVelocity);
-            //     return;
-            // }
-
             if (newIsAttached)
             {
                 if (item.pickupIsAttached)
+                {
+                    if (pickup.attachedToBone != item.attachedToBone
+                        || pickup.attachedOffsetVector != item.attachedOffsetVector
+                        || pickup.attachedOffsetRotation != item.attachedOffsetRotation)
+                    {
+                        FlagAttachedOffsetsChanged(item);
+                    }
                     return;
+                }
                 item.pickupIsHeldByPrimaryHand = false;
                 item.pickupIsHeldBySecondaryHand = false;
                 item.pickupIsAttached = true;
@@ -217,7 +213,17 @@ namespace JanSharp
             }
             item.pickupIsAttached = false;
 
-            if (item.pickupIsHeldByPrimaryHand != newIsHeldByPrimaryHand)
+            if (item.pickupIsHeldByPrimaryHand == newIsHeldByPrimaryHand)
+            {
+                if (newIsHeldByPrimaryHand
+                    && (pickup.primaryHeldTrackingType != ItemSystemUtil.BoneToTrackingType(item.primaryBone)
+                        || pickup.primaryOffsetVector != item.primaryOffsetVector
+                        || pickup.primaryOffsetRotation != item.primaryOffsetRotation))
+                {
+                    FlagPrimaryOffsetsChanged(item);
+                }
+            }
+            else
             {
                 item.pickupIsHeldByPrimaryHand = newIsHeldByPrimaryHand;
                 if (newIsHeldByPrimaryHand)
@@ -226,7 +232,17 @@ namespace JanSharp
                     droppingLogic.SendDropIA(item.data, isPrimary: true, forceNoVelocity: false);
             }
 
-            if (item.pickupIsHeldBySecondaryHand != newIsHeldBySecondaryHand)
+            if (item.pickupIsHeldBySecondaryHand == newIsHeldBySecondaryHand)
+            {
+                if (newIsHeldBySecondaryHand
+                    && (pickup.secondaryHeldTrackingType != ItemSystemUtil.BoneToTrackingType(item.secondaryBone)
+                        || pickup.secondaryOffsetVector != item.secondaryOffsetVector
+                        || pickup.secondaryOffsetRotation != item.secondaryOffsetRotation))
+                {
+                    FlagSecondaryOffsetsChanged(item);
+                }
+            }
+            else
             {
                 item.pickupIsHeldBySecondaryHand = newIsHeldBySecondaryHand;
                 if (newIsHeldBySecondaryHand)
@@ -236,55 +252,68 @@ namespace JanSharp
             }
         }
 
-        //         private void ApplyChangedOffsetsLocallyToPickup()
-        //         {
-        // #if ITEM_SYSTEM_DEBUG
-        //             Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  ApplyChangedOffsetsLocallyToPickup");
-        // #endif
-        //             if (isHeldSpecifically)
-        //                 itemSystem.PickUpByLocalPlayer(this, doInterpolate: true);
-        //             else if (attachedBoneExists)
-        //                 itemSystem.AttachToLocalPlayer(this, doInterpolate: true);
-        //             // Do not detach. Changing offsets should not make the local player drop the item.
-        //         }
+        private void FlagPrimaryOffsetsChanged(ItemExtension item)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  FlagPrimaryOffsetsChanged");
+#endif
+            if (item.flaggedForPrimaryOffsetsChanged)
+                return;
+            item.flaggedForPrimaryOffsetsChanged = true;
+            item.SendCustomEventDelayedSeconds(nameof(item.OnPrimaryOffsetsChangedDelayed), ItemExtension.OffsetsChangeSyncInterval);
+        }
 
-        //         public void SetAttachedBoneExists(
-        //             bool boneExists,
-        //             Vector3 attachedOffsetVector,
-        //             Quaternion attachedOffsetRotation,
-        //             Vector3 playerToAnchorOffsetVector,
-        //             Quaternion playerToAnchorOffsetRotation)
-        //         {
-        // #if ITEM_SYSTEM_DEBUG
-        //             Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  SetAttachedBoneExists");
-        // #endif
-        //             this.attachedOffsetVector = attachedOffsetVector;
-        //             this.attachedOffsetRotation = attachedOffsetRotation;
-        //             this.playerToAnchorOffsetVector = playerToAnchorOffsetVector;
-        //             this.playerToAnchorOffsetRotation = playerToAnchorOffsetRotation;
+        private void FlagSecondaryOffsetsChanged(ItemExtension item)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  FlagSecondaryOffsetsChanged");
+#endif
+            if (item.flaggedForSecondaryOffsetsChanged)
+                return;
+            item.flaggedForSecondaryOffsetsChanged = true;
+            item.SendCustomEventDelayedSeconds(nameof(item.OnSecondaryOffsetsChangedDelayed), ItemExtension.OffsetsChangeSyncInterval);
+        }
 
-        //             if (attachedBoneExists == boneExists)
-        //             {
-        //                 if (!attachedBoneExists || attachedToPlayerId == 0u)
-        //                     return; // Realistically nothing changed.
+        private void FlagAttachedOffsetsChanged(ItemExtension item)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  FlagAttachedOffsetsChanged");
+#endif
+            if (item.flaggedForAttachedOffsetsChanged)
+                return;
+            item.flaggedForAttachedOffsetsChanged = true;
+            item.SendCustomEventDelayedSeconds(nameof(item.OnAttachedOffsetsChangedDelayed), ItemExtension.OffsetsChangeSyncInterval);
+        }
 
-        //                 if (attachedToPlayerId == localPlayerId)
-        //                     ApplyChangedOffsetsLocallyToPickup();
-        //                 else
-        //                     itemSystem.AttachToRemotePlayer(this, doInterpolate: true);
-        //                 return;
-        //             }
+        public void OnPrimaryOffsetsChangedDelayed(ItemExtension item)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  OnPrimaryOffsetsChangedDelayed");
+#endif
+            item.flaggedForPrimaryOffsetsChanged = false;
+            if (item.data != null) // Entity could have been destroyed in the meantime.
+                handOffsetsLogic.SendHandOffsetsChangedIA(item.data, isPrimary: true);
+        }
 
-        //             attachedBoneExists = boneExists;
-        //             StartStopMovementLoop();
-        //             if (attachedToPlayerId == 0u)
-        //                 return;
+        public void OnSecondaryOffsetsChangedDelayed(ItemExtension item)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  OnSecondaryOffsetsChangedDelayed");
+#endif
+            item.flaggedForSecondaryOffsetsChanged = false;
+            if (item.data != null) // Entity could have been destroyed in the meantime.
+                handOffsetsLogic.SendHandOffsetsChangedIA(item.data, isPrimary: false);
+        }
 
-        //             if (attachedToPlayerId == localPlayerId)
-        //                 ApplyChangedOffsetsLocallyToPickup();
-        //             else
-        //                 itemSystem.AttachToRemotePlayer(this, doInterpolate: true);
-        //         }
+        public void OnAttachedOffsetsChangedDelayed(ItemExtension item)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  OnAttachedOffsetsChangedDelayed");
+#endif
+            item.flaggedForAttachedOffsetsChanged = false;
+            if (item.data != null) // Entity could have been destroyed in the meantime.
+                attachedOffsetsLogic.SendAttachedOffsetsChangedIA(item.data);
+        }
 
         private void TakeOrGiveBackControlOfTransformSync(ItemExtension item, bool moveToGameStateOnDetach, bool doInterpolate)
         {
@@ -500,6 +529,28 @@ namespace JanSharp
             StartStopMovementLoop(item, moveToGameState, doInterpolate);
             UpdatePickupInteractionPrevention(item);
             forceDroppingLogic.ForceDropFromLocalOrRemotePlayer(item, doInterpolate);
+        }
+
+        public void OnHandOffsetsChanged(ItemExtension item, bool isPrimary, bool doInterpolate)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  OnHandOffsetsChanged - isPrimary: {isPrimary}, doInterpolate: {doInterpolate}");
+#endif
+            if (item.attachedToPlayerId == localPlayerId)
+                handOffsetsLogic.ChangeLocalPlayerHandOffsets(item, isPrimary, doInterpolate);
+            else
+                handOffsetsLogic.ChangeRemotePlayerHandOffsets(item, isPrimary, doInterpolate);
+        }
+
+        public void OnAttachedOffsetsChanged(ItemExtension item, bool doInterpolate)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  OnAttachedOffsetsChanged - doInterpolate: {doInterpolate}");
+#endif
+            if (item.attachedToPlayerId == localPlayerId)
+                attachedOffsetsLogic.ChangeLocalPlayerAttachedOffsets(item, doInterpolate);
+            else
+                attachedOffsetsLogic.ChangeRemotePlayerAttachedOffsets(item, doInterpolate);
         }
     }
 }

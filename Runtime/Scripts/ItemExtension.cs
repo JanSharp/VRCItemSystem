@@ -70,6 +70,11 @@ namespace JanSharp
         private const float MaxVelocityWeight = 0.8f;
         private const float VelocityRollingAverageSeconds = 0.05f;
 
+        [System.NonSerialized] public bool flaggedForPrimaryOffsetsChanged = false;
+        [System.NonSerialized] public bool flaggedForSecondaryOffsetsChanged = false;
+        [System.NonSerialized] public bool flaggedForAttachedOffsetsChanged = false;
+        public const float OffsetsChangeSyncInterval = 0.275f;
+
         // /// <summary>
         // /// <para>Unlike the name might imply, the bone might actually just not exist. This is the latency
         // /// state side of <see cref="ItemExtensionData.primaryAttachedBoneExists"/>. So if the attached player is the
@@ -204,6 +209,10 @@ namespace JanSharp
             itemLogic.OnPickupStateChanged(this);
             isInOnPickupStateChanged = false;
         }
+
+        public void OnPrimaryOffsetsChangedDelayed() => itemLogic.OnPrimaryOffsetsChangedDelayed(this);
+        public void OnSecondaryOffsetsChangedDelayed() => itemLogic.OnSecondaryOffsetsChangedDelayed(this);
+        public void OnAttachedOffsetsChangedDelayed() => itemLogic.OnAttachedOffsetsChangedDelayed(this);
 
         /// <summary>Called by the <see cref="UpdateManager"/>.</summary>
         public void CustomUpdate()
