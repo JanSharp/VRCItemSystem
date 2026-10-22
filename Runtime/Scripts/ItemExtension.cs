@@ -228,7 +228,7 @@ namespace JanSharp
             if (isAttached)
             {
                 VRCPlayerApi player = pickup.controllingPlayer;
-                if (player == null)
+                if (!Utilities.IsValid(player))
                     return;
                 Vector3 bonePosition = player.GetBonePosition(attachedToBone);
                 if (bonePosition == Vector3.zero)
@@ -252,7 +252,7 @@ namespace JanSharp
                 if (primaryBoneExists)
                 {
                     VRCPlayerApi player = pickup.controllingPlayer;
-                    if (player == null)
+                    if (!Utilities.IsValid(player))
                         return;
                     Vector3 bonePosition = player.GetBonePosition(primaryBone);
                     if (bonePosition == Vector3.zero)
@@ -275,7 +275,7 @@ namespace JanSharp
                 if (secondaryBoneExists)
                 {
                     VRCPlayerApi player = pickup.controllingPlayer;
-                    if (player == null)
+                    if (!Utilities.IsValid(player))
                         return;
                     Vector3 bonePosition = player.GetBonePosition(secondaryBone);
                     if (bonePosition == Vector3.zero)
