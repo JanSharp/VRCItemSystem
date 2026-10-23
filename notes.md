@@ -13,10 +13,10 @@
 - [x] throw script, if velocity before dropping, enable physics
   - [x] if it falls through the world it has to revert to some location - moved the TODO to the entity system
 - [x] drop held items when a client leaves
-- [ ] test instantiate performance of prefab asset vs existing game object instance
+- [x] ~~test instantiate performance of prefab asset vs existing game object instance~~ very most likely identical, but also does not matter, the entity system uses existing game objects and it will remain as such. Not prefab asset references
 - [x] some way to attach items to a selection of bones, like hips, chest, legs, arms, feet, head. Something like that, maybe less than that - implemented in the custom pickups and interacts package
   - [x] use down on the right stick as the input to attach an item
-- [ ] being attached to moving platforms can break bone attachment? Check the source of smart object sync for that
+- [x] ~~being attached to moving platforms can break bone attachment? Check the source of smart object sync for that~~ irrelevant
 - [x] ItemExtension OnPickup initialization checks error when it is not yet initialized. lockstep and pickup are both null
 - [x] (fixed in the EntitySystem) Import the following state and then pick up and throw the throwable item on the ground. Receive "\[EntitySystem\] Impossible, attempt to SendRigidbodyUpdateIA on a physics entity which is asleep or the local player is not the responsible player."
   fEXPYaDl3UgPSXRlbVN5c3RlbVRlc3QABBdqYW5zaGFycC5lbnRpdHktc3lzdGVtDkVudGl0eSBTeXN0ZW0A1QEAAAYDARRhdXRvLWhvbGQtY3ViZS1pdGVtFEF1dG8gSG9sZCBDdWJlIEl0ZW0BAQIKY3ViZS1pdGVtCkN1YmUgSXRlbQEBAw90aHJvd2FibGUtaXRlbQ9UaHJvd2FibGUgSXRlbQIBAgcBAgICAwEEAQUDBgMHAwAAAABAAADAPwAAgD8AAAAAAAAAAAAAAAAAAIA/zcxMPs3MTD7NzEw+AAAAAAEBAQAAAAAgQAAAwD8AAIA/AAAAAAAAAAAAAAAAAACAP83MTD7NzEw+zcxMPgAAAAABAQEAAAAAgEAAAMA/AACAPwAAAAAAAAAAAAAAAAAAgD/NzEw+zcxMPs3MTD4AAAAAAQEBAAAAAJBAAADAPwAAgD8AAAAAAAAAAAAAAAAAAIA/zcxMPs3MTD7NzEw+AAAAAAEBAQAAAADAQAAAwD8AAIA/AAAAAAAAAAAAAAAAAACAP83MTD7NzEw+zcxMPgAAAAACAQEAAQEBAAAA0EAAAMA/AACAPwAAAAAAAAAAAAAAAAAAgD/NzEw+zcxMPs3MTD4AAAAAAgEBAAEBAQAXyRVB1czMPY7tIMCQJzS/bmSNPftjjT2IJzQ/zcxMPs3MTD7NzEw+AAAAAAIBAQABAQEVamFuc2hhcnAuaXRlbS1zeXN0ZW0MSXRlbSBTeXN0ZW0AAQAAAAAkamFuc2hhcnAubG9ja3N0ZXAtbWFzdGVyLXByZWZlcmVuY2UbTG9ja3N0ZXAgTWFzdGVyIFByZWZlcmVuY2UACwAAAAEJSmFuU2hhcnAAFWphbnNoYXJwLnBsYXllci1kYXRhDFBsYXllciBEYXRhAAwAAAABAQlKYW5TaGFycAC9FI9R
