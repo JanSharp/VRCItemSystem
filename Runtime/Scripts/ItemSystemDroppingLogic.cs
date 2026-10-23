@@ -11,7 +11,7 @@ namespace JanSharp
         [HideInInspector][SerializeField][SingletonReference] private LockstepAPI lockstep;
         [HideInInspector][SerializeField][SingletonReference] private ItemSystem itemSystem;
         [HideInInspector][SerializeField][SingletonReference] private ItemExtensionLogic itemLogic;
-        [HideInInspector][SerializeField][SingletonReference] private ItemSystemPickingUpLogic pickingUpLogic;
+        [HideInInspector][SerializeField][SingletonReference] private ItemSystemHandOffsetsLogic handOffsetsLogic;
         [HideInInspector][SerializeField][SingletonReference] private EntitySystemAPI entitySystem;
         [HideInInspector][SerializeField][SingletonReference] private PlayerDataManagerAPI playerDataManager;
         [HideInInspector][SerializeField][SingletonReference] private ItemTransformController transformController;
@@ -54,7 +54,7 @@ namespace JanSharp
 
             // Send offsets of the other hand.
             if (isHeldByOtherHand)
-                pickingUpLogic.SendPickupIA(itemData, !isPrimary);
+                handOffsetsLogic.SendHandOffsetsChangedIA(itemData, !isPrimary);
         }
 
         private bool DoApplyDropIA(ItemExtensionData itemData, bool isPrimary)
