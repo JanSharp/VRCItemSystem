@@ -11,6 +11,7 @@ namespace JanSharp
         [HideInInspector][SerializeField][SingletonReference] private LockstepAPI lockstep;
         [HideInInspector][SerializeField][SingletonReference] private ItemSystem itemSystem;
         [HideInInspector][SerializeField][SingletonReference] private ItemExtensionLogic itemLogic;
+        [HideInInspector][SerializeField][SingletonReference] private ItemSystemForceDroppingLogic forceDroppingLogic;
         [HideInInspector][SerializeField][SingletonReference] private EntitySystemAPI entitySystem;
         [HideInInspector][SerializeField][SingletonReference] private PlayerDataManagerAPI playerDataManager;
         [HideInInspector][SerializeField][SingletonReference] private ItemTransformController transformController;
@@ -131,12 +132,8 @@ namespace JanSharp
         {
             if (itemData == null)
                 return false;
-            if (itemData.IsHeldOrAttached && lockstep.SendingPlayerId != itemData.attachedToPlayerId)
-            {
-                // Handles two players picking up the same item simultaneously.
-                itemData.entityData.ResetLatencyStateBecauseIAGotAppliedDifferently();
-                return false;
-            }
+            // If theft were to be disallowed in the GS, not just client side, this would be the place to do it.
+            // If that were to be the case, call itemData.entityData.ResetLatencyStateBecauseIAGotAppliedDifferently();
             return true;
         }
 
@@ -151,8 +148,11 @@ namespace JanSharp
             if (!DoApplyPickupIA(itemData))
                 return;
             EntityData entityData = itemData.entityData;
+            uint sendingPlayerId = lockstep.SendingPlayerId;
 
-            if (itemData.isAttached)
+            if (itemData.attachedToPlayerId != 0u && itemData.attachedToPlayerId != sendingPlayerId)
+                forceDroppingLogic.UpdateForceDroppedItemInGS(itemData);
+            else if (itemData.isAttached)
                 itemData.ClearAttached();
 
             // Read IA data.
@@ -174,7 +174,7 @@ namespace JanSharp
             }
 
             // Generic picking up stuff.
-            itemSystem.SetAttachedToPlayerId(itemData, lockstep.SendingPlayerId);
+            itemSystem.SetAttachedToPlayerId(itemData, sendingPlayerId);
             entityData.LastUserPlayerData = entitySystem.GetPlayerData(playerDataManager.SendingPlayerData);
             entityData.TakeControlOfTransformSync(transformController);
 
@@ -198,7 +198,9 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystemPickingUpLogic  PrimaryPickupIALatency - playerId: {playerId}, boneExists: {boneExists}");
 #endif
-            if (item.isAttached)
+            if (item.attachedToPlayerId != 0u && item.attachedToPlayerId != playerId)
+                forceDroppingLogic.UpdateForceDroppedItemInLS(item);
+            else if (item.isAttached)
                 item.ClearAttachedValues();
 
             item.isHeldByPrimaryHand = true;
@@ -219,7 +221,9 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystemPickingUpLogic  SecondaryPickupIALatency - playerId: {playerId}, boneExists: {boneExists}");
 #endif
-            if (item.isAttached)
+            if (item.attachedToPlayerId != 0u && item.attachedToPlayerId != playerId)
+                forceDroppingLogic.UpdateForceDroppedItemInLS(item);
+            else if (item.isAttached)
                 item.ClearAttachedValues();
 
             item.isHeldBySecondaryHand = true;

@@ -12,6 +12,7 @@ namespace JanSharp
         [HideInInspector][SerializeField][SingletonReference] private ItemSystem itemSystem;
         [HideInInspector][SerializeField][SingletonReference] private ItemExtensionLogic itemLogic;
         [HideInInspector][SerializeField][SingletonReference] private ItemSystemDetachingLogic detachingLogic;
+        [HideInInspector][SerializeField][SingletonReference] private ItemSystemForceDroppingLogic forceDroppingLogic;
         [HideInInspector][SerializeField][SingletonReference] private EntitySystemAPI entitySystem;
         [HideInInspector][SerializeField][SingletonReference] private PlayerDataManagerAPI playerDataManager;
         [HideInInspector][SerializeField][SingletonReference] private ItemTransformController transformController;
@@ -76,13 +77,8 @@ namespace JanSharp
         {
             if (itemData == null)
                 return false;
-            EntityData entityData = itemData.entityData;
-            if (itemData.IsHeldOrAttached && lockstep.SendingPlayerId != itemData.attachedToPlayerId)
-            {
-                // Handles two players attaching the same item simultaneously.
-                entityData.ResetLatencyStateBecauseIAGotAppliedDifferently();
-                return false;
-            }
+            // If theft were to be disallowed in the GS, not just client side, this would be the place to do it.
+            // If that were to be the case, call itemData.entityData.ResetLatencyStateBecauseIAGotAppliedDifferently();
             return true;
         }
 
@@ -97,11 +93,17 @@ namespace JanSharp
             if (!DoApplyAttachIA(itemData))
                 return;
             EntityData entityData = itemData.entityData;
+            uint sendingPlayerId = lockstep.SendingPlayerId;
 
-            if (itemData.isHeldByPrimaryHand)
-                itemData.ClearPrimary();
-            if (itemData.isHeldBySecondaryHand)
-                itemData.ClearSecondary();
+            if (itemData.attachedToPlayerId != 0u && itemData.attachedToPlayerId != sendingPlayerId)
+                forceDroppingLogic.UpdateForceDroppedItemInGS(itemData);
+            else
+            {
+                if (itemData.isHeldByPrimaryHand)
+                    itemData.ClearPrimary();
+                if (itemData.isHeldBySecondaryHand)
+                    itemData.ClearSecondary();
+            }
 
             // Read IA data.
             entityData.ReadPotentiallyUnknownTransformValues();
@@ -111,7 +113,7 @@ namespace JanSharp
             itemData.attachedOffsetRotation = lockstep.ReadQuaternion();
 
             // Generic attaching stuff.
-            itemSystem.SetAttachedToPlayerId(itemData, lockstep.SendingPlayerId);
+            itemSystem.SetAttachedToPlayerId(itemData, sendingPlayerId);
             entityData.LastUserPlayerData = entitySystem.GetPlayerData(playerDataManager.SendingPlayerData);
             entityData.TakeControlOfTransformSync(transformController);
 
@@ -132,10 +134,15 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystemAttachingLogic  AttachIALatency - playerId: {playerId}");
 #endif
-            if (item.isHeldByPrimaryHand)
-                item.ClearPrimaryValues();
-            if (item.isHeldBySecondaryHand)
-                item.ClearSecondaryValues();
+            if (item.attachedToPlayerId != 0u && item.attachedToPlayerId != playerId)
+                forceDroppingLogic.UpdateForceDroppedItemInLS(item);
+            else
+            {
+                if (item.isHeldByPrimaryHand)
+                    item.ClearPrimaryValues();
+                if (item.isHeldBySecondaryHand)
+                    item.ClearSecondaryValues();
+            }
 
             item.isAttached = true;
             item.attachedToBone = bone;

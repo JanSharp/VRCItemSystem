@@ -103,15 +103,23 @@ namespace JanSharp
             itemSystem.SetAttachedToPlayerId(itemData, 0u);
         }
 
-        private void ForceDropIALatencyHiding(ItemExtension item, bool doApplyVelocity)
+        public void UpdateForceDroppedItemInLS(ItemExtension item)
         {
 #if ITEM_SYSTEM_DEBUG
-            Debug.Log($"[ItemSystemDebug] ItemSystemForceDroppingLogic  ForceDropIALatencyHiding - doApplyVelocity: {doApplyVelocity}");
+            Debug.Log($"[ItemSystemDebug] ItemSystemForceDroppingLogic  UpdateForceDroppedItemInLS");
 #endif
             item.ClearPrimaryValues();
             item.ClearSecondaryValues();
             item.ClearAttachedValues();
             itemLogic.SetAttachedToPlayerId(item, 0u);
+        }
+
+        private void ForceDropIALatencyHiding(ItemExtension item, bool doApplyVelocity)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemSystemForceDroppingLogic  ForceDropIALatencyHiding - doApplyVelocity: {doApplyVelocity}");
+#endif
+            UpdateForceDroppedItemInLS(item);
             itemLogic.OnForceDropped(item, moveToGameState: false, doInterpolate: false);
 
             if (!doApplyVelocity)
@@ -128,10 +136,7 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystemForceDroppingLogic  ForceDropIAGameStateToLatency - doApplyVelocity: {doApplyVelocity}");
 #endif
-            item.ClearPrimaryValues();
-            item.ClearSecondaryValues();
-            item.ClearAttachedValues();
-            itemLogic.SetAttachedToPlayerId(item, 0u);
+            UpdateForceDroppedItemInLS(item);
             itemLogic.OnForceDropped(item, moveToGameState: true, doInterpolate: !doApplyVelocity);
 
             if (!doApplyVelocity)
