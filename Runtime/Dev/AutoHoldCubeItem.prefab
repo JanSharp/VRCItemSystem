@@ -278,11 +278,14 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 7993609085724899794}
   lockstep: {fileID: 0}
   entitySystem: {fileID: 0}
+  itemLogic: {fileID: 0}
   itemSystem: {fileID: 0}
   trackingDataSync: {fileID: 0}
   playerDataManager: {fileID: 0}
   transformController: {fileID: 0}
   updateManager: {fileID: 0}
+  disallowStealingHeld: 0
+  disallowStealingAttached: 0
 --- !u!114 &7993609085724899794
 MonoBehaviour:
   m_ObjectHideFlags: 0

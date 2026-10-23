@@ -50,8 +50,19 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  UpdatePickupInteractionPrevention");
 #endif
-            SetPreventPickupInteraction(item, item.data == null
-                || (item.attachedToPlayerId != 0u && item.attachedToPlayerId != localPlayerId));
+            if (item.data == null)
+            {
+                SetPreventPickupInteraction(item, true);
+                return;
+            }
+            uint attachedToPlayerId = item.attachedToPlayerId;
+            if (attachedToPlayerId == 0u || attachedToPlayerId == localPlayerId)
+                SetPreventPickupInteraction(item, false); // Not held by anybody, or held by local player.
+            else // Is held by or attached to another player.
+                SetPreventPickupInteraction(
+                    item,
+                    item.DisallowStealingHeld && item.IsHeld
+                        || item.DisallowStealingAttached && item.isAttached);
         }
 
         public void OnInstantiate(ItemExtension item)

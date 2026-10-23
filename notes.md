@@ -4,7 +4,7 @@
 - [x] add DisallowMultipleComponent to ItemExtension
 - [x] add RequiredComponent(typeof(Entity))... right? I mean why not.
 - [ ] look at the values of pickups and see which ones of those should be synced through items, if any
-- [ ] make disallow theft an option
+- [x] make disallow theft an option
 - [x] if 2 people try to pick up the same item, make the second one drop it locally
 - [x] ItemExtensionData supports import export but it's using a VRChat player id even for exports, that doesn't work
   - [x] Use persistent ids from player data

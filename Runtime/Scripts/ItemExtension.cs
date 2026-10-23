@@ -23,6 +23,27 @@ namespace JanSharp
         /// </summary>
         private int customUpdateInternalIndex;
 
+        [SerializeField] private bool disallowStealingHeld = true;
+        [SerializeField] private bool disallowStealingAttached = true;
+        public bool DisallowStealingHeld
+        {
+            get => disallowStealingHeld;
+            set
+            {
+                disallowStealingHeld = value;
+                itemLogic.UpdatePickupInteractionPrevention(this);
+            }
+        }
+        public bool DisallowStealingAttached
+        {
+            get => disallowStealingAttached;
+            set
+            {
+                disallowStealingAttached = value;
+                itemLogic.UpdatePickupInteractionPrevention(this);
+            }
+        }
+
         [System.NonSerialized] public CustomPickupAttachedState stateForAttachedPickupController;
         [System.NonSerialized] public CustomPickupState stateForPickupController;
 
