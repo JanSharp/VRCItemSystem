@@ -125,7 +125,7 @@ namespace JanSharp
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemSystem  DropAndDetachPickupLocally");
 #endif
-            if (pickup.state == CustomPickupControlState.None || !pickup.controllingPlayerIsLocal) // TODO: Is this needed?
+            if (pickup.state == CustomPickupControlState.None || !pickup.controllingPlayerIsLocal) // Not required, but it short circuits.
                 return;
             pickup.Drop(preventAttachment: true); // Only does anything if it is held by the local player.
             pickup.Detach(); // Only does anything if it is attached to the local player.

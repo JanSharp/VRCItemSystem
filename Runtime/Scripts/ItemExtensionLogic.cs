@@ -199,10 +199,18 @@ namespace JanSharp
             if (pickup == null || !lockstep.IsInitialized)
                 return;
 
-            bool controllingPlayerIsLocal = pickup.controllingPlayerIsLocal;
-            bool newIsHeldByPrimaryHand = controllingPlayerIsLocal && pickup.isHeldByPrimaryHand;
-            bool newIsHeldBySecondaryHand = controllingPlayerIsLocal && pickup.isHeldBySecondaryHand;
-            bool newIsAttached = controllingPlayerIsLocal && pickup.isAttached;
+            if (!pickup.controllingPlayerIsLocal && pickup.state != CustomPickupControlState.None)
+            {
+                // A different player is responsible for syncing this pickup.
+                item.pickupIsHeldByPrimaryHand = false;
+                item.pickupIsHeldBySecondaryHand = false;
+                item.pickupIsAttached = false;
+                return;
+            }
+
+            bool newIsHeldByPrimaryHand = pickup.isHeldByPrimaryHand;
+            bool newIsHeldBySecondaryHand = pickup.isHeldBySecondaryHand;
+            bool newIsAttached = pickup.isAttached;
 
             if (newIsAttached)
             {

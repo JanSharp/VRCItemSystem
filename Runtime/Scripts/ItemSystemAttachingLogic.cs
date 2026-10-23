@@ -206,6 +206,9 @@ namespace JanSharp
                 return;
 
             CustomPickup pickup = item.pickup;
+            bool wasHeldOrAttachedLocally = pickup.state != CustomPickupControlState.None && pickup.controllingPlayerIsLocal;
+            if (wasHeldOrAttachedLocally)
+                pickup.BeginStateModification();
             itemSystem.DropAndDetachPickupLocallyAndRemotely(pickup);
 
             pickup.SetControllingPlayer(attachedToPlayer);
@@ -219,6 +222,9 @@ namespace JanSharp
                 pickup.StartInterpolation();
             else
                 pickup.StopInterpolation();
+
+            if (wasHeldOrAttachedLocally)
+                pickup.FinishStateModification();
         }
     }
 }
