@@ -60,7 +60,7 @@ MonoBehaviour:
   entitySystem: {fileID: 0}
   playerDataManager: {fileID: 0}
   interactables: {fileID: 0}
-  handOffsetsChangedIAId: 1
+  handOffsetsChangedIAId: 4
 --- !u!114 &241441720553152783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -425,6 +425,7 @@ MonoBehaviour:
   itemSystem: {fileID: 1946170806113999126}
   itemLogic: {fileID: 7181846144771534483}
   detachingLogic: {fileID: 5672281610094044425}
+  forceDroppingLogic: {fileID: 650749801767812588}
   entitySystem: {fileID: 0}
   playerDataManager: {fileID: 0}
   transformController: {fileID: 3531780132856583169}
@@ -512,6 +513,7 @@ MonoBehaviour:
   lockstep: {fileID: 0}
   itemSystem: {fileID: 1946170806113999126}
   itemLogic: {fileID: 7181846144771534483}
+  forceDroppingLogic: {fileID: 650749801767812588}
   entitySystem: {fileID: 0}
   playerDataManager: {fileID: 0}
   transformController: {fileID: 3531780132856583169}
@@ -600,7 +602,7 @@ MonoBehaviour:
   lockstep: {fileID: 0}
   itemSystem: {fileID: 1946170806113999126}
   itemLogic: {fileID: 7181846144771534483}
-  pickingUpLogic: {fileID: 7190406893884157714}
+  handOffsetsLogic: {fileID: 371891386941694545}
   entitySystem: {fileID: 0}
   playerDataManager: {fileID: 0}
   transformController: {fileID: 3531780132856583169}
@@ -1016,13 +1018,10 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 638739005494038881}
   lockstep: {fileID: 0}
-  itemSystem: {fileID: 1946170806113999126}
   itemLogic: {fileID: 7181846144771534483}
-  detachingLogic: {fileID: 5672281610094044425}
   entitySystem: {fileID: 0}
   playerDataManager: {fileID: 0}
-  transformController: {fileID: 3531780132856583169}
-  attachedOffsetsChangedIAId: 0
+  attachedOffsetsChangedIAId: 30
 --- !u!114 &638739005494038881
 MonoBehaviour:
   m_ObjectHideFlags: 0

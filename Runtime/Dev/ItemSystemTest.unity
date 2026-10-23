@@ -23672,11 +23672,6 @@ PrefabInstance:
       objectReference: {fileID: 181149562}
     - target: {fileID: 58329238362353295, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
         type: 3}
-      propertyPath: forceDroppingLogic
-      value: 
-      objectReference: {fileID: 2977595700103981102}
-    - target: {fileID: 58329238362353295, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
-        type: 3}
       propertyPath: serializationData.Prefab
       value: 
       objectReference: {fileID: 58329238362353295, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
@@ -23701,11 +23696,6 @@ PrefabInstance:
       propertyPath: playerDataManager
       value: 
       objectReference: {fileID: 181149562}
-    - target: {fileID: 371891386941694545, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
-        type: 3}
-      propertyPath: handOffsetsChangedIAId
-      value: 4
-      objectReference: {fileID: 0}
     - target: {fileID: 371891386941694545, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
         type: 3}
       propertyPath: serializationData.Prefab
@@ -23801,11 +23791,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2148925377289639732, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
         type: 3}
-    - target: {fileID: 2148925377289639732, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
-        type: 3}
-      propertyPath: attachedOffsetsChangedIAId
-      value: 30
-      objectReference: {fileID: 0}
     - target: {fileID: 2697108108823642119, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
         type: 3}
       propertyPath: m_Name
@@ -23940,11 +23925,6 @@ PrefabInstance:
       propertyPath: playerDataManager
       value: 
       objectReference: {fileID: 181149562}
-    - target: {fileID: 7190406893884157714, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
-        type: 3}
-      propertyPath: forceDroppingLogic
-      value: 
-      objectReference: {fileID: 2977595700103981102}
     - target: {fileID: 7190406893884157714, guid: 8ed95ab9b64568256959aa53ac3bbfe0,
         type: 3}
       propertyPath: serializationData.Prefab

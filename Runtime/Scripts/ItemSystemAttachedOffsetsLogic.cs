@@ -9,12 +9,9 @@ namespace JanSharp
     public class ItemSystemAttachedOffsetsLogic : UdonSharpBehaviour
     {
         [HideInInspector][SerializeField][SingletonReference] private LockstepAPI lockstep;
-        [HideInInspector][SerializeField][SingletonReference] private ItemSystem itemSystem;
         [HideInInspector][SerializeField][SingletonReference] private ItemExtensionLogic itemLogic;
-        [HideInInspector][SerializeField][SingletonReference] private ItemSystemDetachingLogic detachingLogic;
         [HideInInspector][SerializeField][SingletonReference] private EntitySystemAPI entitySystem;
         [HideInInspector][SerializeField][SingletonReference] private PlayerDataManagerAPI playerDataManager;
-        [HideInInspector][SerializeField][SingletonReference] private ItemTransformController transformController;
 
         private uint localPlayerId;
 
