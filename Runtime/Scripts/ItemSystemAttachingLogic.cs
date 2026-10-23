@@ -171,9 +171,17 @@ namespace JanSharp
             item.pickupIsHeldByPrimaryHand = false;
             item.pickupIsHeldBySecondaryHand = false;
             item.pickupIsAttached = true;
+            Vector3 offsetVector = item.attachedOffsetVector;
+            Quaternion offsetRotation = item.attachedOffsetRotation;
             // In theory the isInOnPickupStateChanged check is redundant, however there is no reason to risk it.
-            if (!item.isInOnPickupStateChanged && (!pickup.isAttached || pickup.attachedToBone != attachedToBone))
-                pickup.ForceBeingAttached(attachedToBone); // TODO: This needs a ForceBeingAttachedExplicit().
+            if (!item.isInOnPickupStateChanged
+                && (!pickup.isAttached
+                    || pickup.attachedToBone != attachedToBone
+                    || pickup.attachedOffsetVector != offsetVector
+                    || pickup.attachedOffsetRotation != offsetRotation))
+            {
+                pickup.ForceBeingAttachedExplicit(attachedToBone, offsetVector, offsetRotation);
+            }
 
             if (doInterpolate)
                 pickup.StartInterpolation();
