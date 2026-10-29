@@ -96,6 +96,7 @@ namespace JanSharp
 #endif
             item.data = (ItemExtensionData)item.extensionData;
             item.data.ext = item;
+            item.entity.RegisterForRuntimeEvent(item, Entity.OnLatencyChildEntitiesChangedEventName);
             ApplyExtensionData(item);
             UpdatePickupInteractionPrevention(item);
         }
@@ -334,6 +335,50 @@ namespace JanSharp
                 attachedOffsetsLogic.SendAttachedOffsetsChangedIA(item.data);
         }
 
+        public void OnLatencyChildEntitiesChanged(ItemExtension item)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  OnLatencyChildEntitiesChanged");
+#endif
+            // Since this event gets raised even during the disassociate from entity data process,
+            // so entity destruction, having this invalidate call here alone handles cleanup upon destruction.
+            item.pickup.InvalidateHighlight();
+            // Walk up the parents and invalidate their highlights too.
+            Entity currentEntity = item.entity;
+            while (true)
+            {
+                EntityData parent = currentEntity.parentEntityData;
+                if (parent == null)
+                    return;
+                currentEntity = parent.entity;
+                if (currentEntity == null)
+                    return; // Also breaks the chain, so just return, do not check further parents.
+                ItemExtension parentItem = currentEntity.GetExtension<ItemExtension>(nameof(ItemExtensionData));
+                if (parentItem != null)
+                    parentItem.pickup.InvalidateHighlight();
+            }
+        }
+
+        public void OnLatencyParentEntityChanged(ItemExtension item)
+        {
+#if ITEM_SYSTEM_DEBUG
+            Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  OnLatencyParentEntityChanged");
+#endif
+            // This event is only registered while attached.
+
+            // In theory this should work, in practice there might be recursion
+            // somewhere in the entity system and it might break.
+            // We love Udon in this house.
+
+            // On a separate note, all these checks below are required, as the state of the item
+            // is entirely unknown at this point. Such is the nature of event based systems.
+            // And checking for the local player, because we only want to send the IA once.
+            // Unfortunately this could cause it to get force dropped a bit later than desired,
+            // if it was a different client than the holding client which initiated the parent change.
+            if (item.entity.parentEntityData != null && item.IsHeldOrAttached && item.attachedToPlayerId == localPlayerId)
+                forceDroppingLogic.SendForceDropIA(item.data, forceNoVelocity: true, sendSingletonIA: false);
+        }
+
         private void TakeOrGiveBackControlOfTransformSync(ItemExtension item, bool moveToGameStateOnDetach, bool doInterpolate)
         {
 #if ITEM_SYSTEM_DEBUG
@@ -349,8 +394,12 @@ namespace JanSharp
             if (newValue)
             {
                 entity.TakeControlOfTransformSync(transformController);
+                entity.SetParentEntityInLS(null);
+                entity.RegisterForRuntimeEvent(item, Entity.OnLatencyParentEntityChangedEventName);
                 return;
             }
+
+            entity.DeregisterFromRuntimeEvent(item, Entity.OnLatencyParentEntityChangedEventName);
 
             if (moveToGameStateOnDetach)
             {
@@ -372,7 +421,7 @@ namespace JanSharp
                 entityTransform.localScale);
         }
 
-        public void StartStopMovementLoop(ItemExtension item, bool moveToGameStateOnDetach, bool doInterpolate)
+        private void StartStopMovementLoop(ItemExtension item, bool moveToGameStateOnDetach, bool doInterpolate)
         {
 #if ITEM_SYSTEM_DEBUG
             Debug.Log($"[ItemSystemDebug] ItemExtensionLogic  StartStopMovementLoop");

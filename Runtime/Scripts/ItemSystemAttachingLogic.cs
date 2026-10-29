@@ -116,6 +116,7 @@ namespace JanSharp
             itemSystem.SetAttachedToPlayerId(itemData, sendingPlayerId);
             entityData.LastUserPlayerData = entitySystem.GetPlayerData(playerDataManager.SendingPlayerData);
             entityData.TakeControlOfTransformSync(transformController);
+            entityData.SetParentEntityInGS(null);
 
             // Putting the physics entity to sleep after the item has taken control theoretically
             // reduces the total amount of work that needs to be done by the entity system.

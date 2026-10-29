@@ -235,6 +235,11 @@ namespace JanSharp
         public void OnSecondaryOffsetsChangedDelayed() => itemLogic.OnSecondaryOffsetsChangedDelayed(this);
         public void OnAttachedOffsetsChangedDelayed() => itemLogic.OnAttachedOffsetsChangedDelayed(this);
 
+        [EntityRuntimeEventListener(Entity.OnLatencyChildEntitiesChangedEventName)]
+        public void OnLatencyChildEntitiesChanged() => itemLogic.OnLatencyChildEntitiesChanged(this);
+        [EntityRuntimeEventListener(Entity.OnLatencyParentEntityChangedEventName)]
+        public void OnLatencyParentEntityChanged() => itemLogic.OnLatencyParentEntityChanged(this);
+
         /// <summary>Called by the <see cref="UpdateManager"/>.</summary>
         public void CustomUpdate()
         {
