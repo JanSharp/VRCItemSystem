@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd7fe2107e23b6a438b924d3f3d24dbc, type: 3}
+  m_Name: PlateItem
+  m_EditorClassIdentifier: 
+  prototypeName: plate-item
+  displayName: Plate Item
+  categoryName: 
+  shortDescription: 
+  longDescription: 
+  entityPrefab: {fileID: 2109700278645195535, guid: 26d7ec668e1837860aa6c8eb6550d0d2,
+    type: 3}
+  defaultScale: {x: 1, y: 1, z: 1}
+  highestExtensionId: 1
+  localExtensionIds: 01000000
+  extensionDataClassNames:
+  - ItemExtensionData
