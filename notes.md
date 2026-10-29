@@ -38,3 +38,5 @@
   - [x] handle primary
   - [x] handle secondary
 - [x] handle any offset changes be it due to changing avatars or other scripts changing the offsets of a pickup relative to primary, secondary or an attached bone are not handled anymore in this first version of the refactor
+- [ ] importing this complains about no transform sync being true but no transform sync controller having been set. This is an export from the entity system test world with just the 2 pre instantiated entities in there
+  ICMFJGxzZToAAAAAxD4c2hA230gRRW50aXR5U3lzdGVtVGVzdAADH2phbnNoYXJwLmVudGl0eS1zeXN0ZW0tb3B0aW9ucxZFbnRpdHkgU3lzdGVtIE9wdGlvbnMAAwAAAAEBARVqYW5zaGFycC5wbGF5ZXItZGF0YQxQbGF5ZXIgRGF0YQBEAAAAAAEjamFuc2hhcnAuZW50aXR5LXN5c3RlbS1wbGF5ZXItZGF0YRpFbnRpdHkgU3lzdGVtIFBsYXllciBEYXRhAAAAAAAXamFuc2hhcnAuZW50aXR5LXN5c3RlbQ5FbnRpdHkgU3lzdGVtAKIAAAAWAgEPcGh5c2ljcy1lbnRpdHkPUGh5c2ljcyBFbnRpdHkBAQIIbXktdGVzdAhNeSBUZXN0AgECAgECAgIAexSuPwAAwD8AAEBAAAAAAAAAAAAAAAAAAACAPwAAgD8AAIA/AACAPwAAAAACAQEAAQAAPgoHQAAAwD8AAEBAAAAAAAAAAAAAAAAAAACAPwAAgD8AAIA/AACAPwAAAAACAQEAAQApQjxM

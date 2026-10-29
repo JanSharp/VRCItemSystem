@@ -17,7 +17,7 @@ namespace JanSharp
             Debug.Log("[ItemSystemDebug] TestPlateEntity  OnTriggerEnter");
             if (other == null) // Some VRChat internal, if it even raises the event for those, but we have no trust.
                 return;
-            Entity otherEntity = other.GetComponent<Entity>();
+            Entity otherEntity = other.GetComponentInParent<Entity>();
             if (otherEntity == null || otherEntity == entity || otherEntity.entityData == null) // Checking entityData, coming from an untrusted event.
                 return;
 
@@ -38,7 +38,7 @@ namespace JanSharp
             Debug.Log("[ItemSystemDebug] TestPlateEntity  OnTriggerExit");
             if (other == null) // Some VRChat internal, if it even raises the event for those, but we have no trust.
                 return;
-            Entity otherEntity = other.GetComponent<Entity>();
+            Entity otherEntity = other.GetComponentInParent<Entity>();
             if (otherEntity == null)
                 return;
             if (ArrList.Remove(ref watchedEntities, ref watchedEntitiesCount, otherEntity) != -1)
